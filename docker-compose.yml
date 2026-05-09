@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: butcher_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: butcher
+      POSTGRES_PASSWORD: butcher
+      POSTGRES_DB: butcher_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - butcher_data:/var/lib/postgresql/data
+volumes:
+  butcher_data:
