@@ -25,4 +25,26 @@ model User {
   role      UserRole @default(BUYER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  store     Store?
+}
+
+enum StoreStatus {
+  OPEN
+  CLOSED
+  SUSPENDED
+}
+model Store {
+  id          Int         @id @default(autoincrement())
+  OwnerUserId Int       @unique
+  name        String
+  description String?
+  status      StoreStatus @default(OPEN)
+  deletedAt   DateTime?   
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt  
+
+  Owner       User        @relation(fields: [OwnerUserId], references: [id])
+
+  @@index([OwnerUserId])
 }
