@@ -435,7 +435,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-700 text-lg italic">
-                "{testimonials[currentTestimonial].comment}"
+                {testimonials[currentTestimonial].comment}
               </p>
             </div>
 
