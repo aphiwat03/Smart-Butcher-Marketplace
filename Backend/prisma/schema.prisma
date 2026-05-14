@@ -36,7 +36,7 @@ enum StoreStatus {
 }
 model Store {
   id          Int         @id @default(autoincrement())
-  OwnerUserId Int       @unique
+  ownerUserId Int       @unique
   name        String
   description String?
   status      StoreStatus @default(OPEN)
@@ -44,9 +44,10 @@ model Store {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt  
 
-  Owner       User        @relation(fields: [OwnerUserId], references: [id])
+  Owner       User        @relation(fields: [ownerUserId], references: [id])
+  products    Product[]
 
-  @@index([OwnerUserId])
+  @@index([ownerUserId])
 }
 model Category {
   id          Int      @id @default(autoincrement())
@@ -56,4 +57,30 @@ model Category {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  products    Product[]
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+model Product {
+  id          Int      @id @default(autoincrement())
+  storeId     Int
+  categoryId  Int
+  name        String
+  description String?
+  price       Float
+  stockQuantity Int
+  imageUrl    String?
+  status      ProductStatus @default(ACTIVE)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  store       Store    @relation(fields: [storeId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@index([storeId])
+  @@index([categoryId])
 }
