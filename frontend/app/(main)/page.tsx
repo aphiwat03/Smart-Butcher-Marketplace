@@ -1,27 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import {
-  Search,
-  User,
-  ShoppingCart,
-  ChevronDown,
-  Star,
-  Phone,
-  Mail,
-  ChevronLeft,
-  ChevronRight,
-  Beef,
-} from "lucide-react";
-import { FacebookIcon } from "@/components/ui/facebook-icon";
-import { InstagramIcon } from "@/components/ui/instagram-icon";
+import { Star, ChevronLeft, ChevronRight, Beef } from "lucide-react";
 
 export default function Home() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-
   const testimonials = [
     {
       id: 1,
@@ -65,7 +49,6 @@ export default function Home() {
       alt: "avatar",
     },
   ];
-
   const categories = [
     {
       id: 1,
@@ -98,7 +81,6 @@ export default function Home() {
       image: "mock/category/วากิวคัดพิเศษ.webp",
     },
   ];
-
   const products = [
     {
       id: 1,
@@ -149,144 +131,18 @@ export default function Home() {
       image: "mock/beef/โครงหลัง.webp",
     },
   ];
-
-  const router = useRouter();
-
-  const isLoggedIn = false; // เปลี่ยนเป็น true เพื่อทดสอบเมนูผู้ใช้เมื่อเข้าสู่ระบบแล้ว
-
-  const mockUser = {
-    name: "Aphiwat Phankham.",
-    avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason",
-  };
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
   };
-
   const prevTestimonial = () => {
     setCurrentTestimonial(
       (prev) => (prev - 1 + testimonials.length) % testimonials.length,
     );
   };
 
+
   return (
     <main>
-      {/* 1. HEADER SECTION */}
-      <header className="bg-[#4E0707] text-white sticky top-0 z-50 shadow-lg ">
-        <nav className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4 ">
-          {/* Left: Logo */}
-          <div className="flex-shrink-0 ">
-            <Image
-              src="/svg/logo.svg"
-              alt="Smart Butcher Logo"
-              width={33.61}
-              height={33.61}
-              className="rounded-md"
-            />
-          </div>
-
-          {/* Center: Navigation Menu */}
-          <div className="flex items-center space-x-8">
-            <Link href="#" className="hover:text-[#B4915B] transition-colors">
-              MEAT
-            </Link>
-            <Link href="#" className="hover:text-[#B4915B] transition-colors">
-              DEAL
-            </Link>
-            <Link href="#" className="hover:text-[#B4915B] transition-colors">
-              BUTCHER AI
-            </Link>
-            <Link href="#" className="hover:text-[#B4915B] transition-colors">
-              CONTACT US
-            </Link>
-          </div>
-
-          {/* Right: Search, Profile, Cart */}
-          <div className="flex items-center space-x-4">
-            {/* Search Bar เดิมของคุณ */}
-            <div className="relative hidden sm:block group">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-10 h-10 px-4 py-2 bg-transparent text-transparent placeholder-transparent cursor-pointer rounded-lg transition-all duration-300 ease-out focus:w-64 focus:bg-white/10 focus:text-white focus:placeholder-gray-300 focus:cursor-text focus:outline-none focus:ring-2 focus:ring-[#B4915B] pr-10"
-              />
-              <Search
-                size={18}
-                className="absolute right-3 top-2.5 text-white transition-colors duration-200 group-hover:text-[#B4915B] group-focus-within:text-[#B4915B] pointer-events-none"
-              />
-            </div>
-
-            {/* Shopping Cart เดิมของคุณ */}
-            <button className="hover:text-[#B4915B] transition-colors p-2 relative">
-              <ShoppingCart size={20} />
-              <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                0
-              </span>
-            </button>
-
-            {/* ส่วน User Dropdown ใหม่ */}
-            <div className="relative group">
-              <button className="hover:text-[#B4915B] transition-colors p-2 flex items-center">
-                <User size={20} />
-              </button>
-
-              {/* เมนู Dropdown: จะปรากฏเมื่อ Hover ที่ group */}
-              <div className="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 border border-gray-100">
-                {!isLoggedIn ? (
-                  // case: ยังไม่ได้เข้าสู่ระบบ
-                  <Link
-                    href="/login"
-                    className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors font-medium"
-                  >
-                    เข้าสู่ระบบ / สมัครสมาชิก
-                  </Link>
-                ) : (
-                  // case: เข้าสู่ระบบแล้ว
-                  <>
-                    <div className="px-4 py-3 border-b border-gray-100 mb-1 flex justify-between items-center">
-                      <div className="flex flex-col">
-                        <p className="text-xs text-[#4E0707]/70">สวัสดีคุณ</p>
-                        <p className="text-sm font-bold text-[#4E0707] truncate max-w-[100px]">
-                          {mockUser.name}
-                        </p>
-                      </div>
-
-                      <div className="w-10 h-10 rounded-full bg-[#B4915B]/20 flex items-center justify-center border border-[#B4915B]/30 overflow-hidden">
-                        <img
-                          src={mockUser.avatarUrl}
-                          alt="User Profile Avatar"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
-                    >
-                      โปรไฟล์ของคุณ
-                    </Link>
-
-                    <Link
-                      href="/orders"
-                      className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
-                    >
-                      รายการคำสั่งซื้อ
-                    </Link>
-
-                    <button
-                      onClick={() => router.push("/login")}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
-                    >
-                      ออกจากระบบ
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </nav>
-      </header>
-
       {/* 2. HERO SECTION */}
       <section
         className="relative h-150 flex items-center justify-center text-center text-white bg-cover bg-center"
@@ -435,7 +291,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-700 text-lg italic">
-                "{testimonials[currentTestimonial].comment}"
+                &quot;{testimonials[currentTestimonial].comment}&quot;
               </p>
             </div>
 
@@ -492,50 +348,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. FOOTER SECTION */}
-      <footer id="footer" className="bg-[#4E0707] text-white">
-        {/* Main Footer Content */}
-        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Left Column: Logo */}
-          <div className="flex items-center justify-center md:justify-start">
-            <Image
-              src="/svg/logo.svg"
-              alt="Smart Butcher Logo"
-              width={100}
-              height={100}
-              className="rounded-md"
-            />
-          </div>
-
-          {/* Right Column: Contact Details */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <Phone size={20} className="text-[#B4915B]" />
-              <span>+66 (0) 2-XXX-XXXX</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Mail size={20} className="text-[#B4915B]" />
-              <span>info@smartbutcher.com</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-[#B4915B]">Follow Us:</span>
-              <a href="#" className="hover:text-[#B4915B] transition-colors">
-                <FacebookIcon className="w-6 h-6 text-blue-600" />
-              </a>
-              <a href="#" className="hover:text-[#B4915B] transition-colors">
-                <InstagramIcon className="w-6 h-6 text-pink-600" />
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom: Copyright */}
-        <div className="border-t border-[#B4915B] border-opacity-30 py-6">
-          <p className="text-center text-white">
-            © 2026 Smart Butcher Marketplace. All rights reserved.
-          </p>
-        </div>
-      </footer>
     </main>
   );
 }
