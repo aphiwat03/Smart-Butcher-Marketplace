@@ -10,11 +10,15 @@ export function SiteHeader() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<unknown>(null);
   const router = useRouter();
-
+  const [isMounted, setIsMounted] = useState(false);
   const mockUser = {
     name: "Aphiwat Phankham.",
     avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason",
   };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -55,6 +59,7 @@ export function SiteHeader() {
   const isLoggedIn = !!user;
 
   if (isLoading) return null;
+  if (!isMounted) return <div className="h-16 w-full bg-white"></div>;
 
   return (
     <header className="bg-[#4E0707] text-white sticky top-0 z-50 shadow-lg ">
@@ -72,7 +77,7 @@ export function SiteHeader() {
 
         {/* Center: Navigation Menu */}
         <div className="flex items-center space-x-8">
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
+          <Link href="/" className="hover:text-[#B4915B] transition-colors">
             MEAT
           </Link>
           <Link href="#" className="hover:text-[#B4915B] transition-colors">

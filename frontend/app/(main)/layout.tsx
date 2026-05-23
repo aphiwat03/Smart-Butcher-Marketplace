@@ -20,16 +20,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={cn("font-sans", geist.variable)}>
+    <html
+      lang="th"
+      className={cn("font-sans", geist.variable)}
+      suppressHydrationWarning={true}
+    >
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Sarabun:wght@400;600;700;900&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body style={{ margin: 0, padding: 0 }}>
+      <body
+        style={{ margin: 0, padding: 0 }}
+        className="flex flex-col min-h-screen"
+      >
         <SiteHeader />
-        {children}
+
+        <div className="flex-1 flex flex-col">{children}</div>
+
         <Toaster position="top-center" richColors />
         <SiteFooter />
       </body>
