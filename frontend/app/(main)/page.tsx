@@ -140,7 +140,6 @@ export default function Home() {
     );
   };
 
-
   return (
     <main>
       {/* 2. HERO SECTION */}
@@ -158,9 +157,12 @@ export default function Home() {
           <p className="text-lg mb-8 text-gray-100">
             คัดสรรเฉพาะเนื้อเกรดดีที่สุดเพื่อมื้อพิเศษของคุณ
           </p>
-          <button className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-10 py-1 rounded-sm font-bold text-lg transition-colors">
+          <Link
+            href="/shop"
+            className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-10 py-1 rounded-sm font-bold text-lg transition-colors"
+          >
             Shop Now
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -347,7 +349,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
     </main>
   );
 }
