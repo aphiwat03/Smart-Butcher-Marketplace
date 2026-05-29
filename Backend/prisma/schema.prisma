@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,15 +16,17 @@ enum UserRole {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
   passwordHash String
-  fullName    String
-  role        UserRole @default(BUYER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  fullName     String
+  role         UserRole @default(BUYER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  store       Store?
+  stores       Store[]  
+  orders       Order[]
+  carts        Cart[]
 }
 
 enum StoreStatus {
@@ -34,9 +34,10 @@ enum StoreStatus {
   CLOSED
   SUSPENDED
 }
+
 model Store {
   id          Int         @id @default(autoincrement())
-  ownerUserId Int       @unique
+  ownerUserId Int        
   name        String
   description String?
   status      StoreStatus @default(OPEN)
@@ -46,16 +47,18 @@ model Store {
 
   Owner       User        @relation(fields: [ownerUserId], references: [id])
   products    Product[]
+  promotions  Promotion[]
 
   @@index([ownerUserId])
 }
+
 model Category {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique 
+  id          Int       @id @default(autoincrement())
+  name        String    @unique 
   description String?
   deletedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   products    Product[]
 }
@@ -64,23 +67,130 @@ enum ProductStatus {
   ACTIVE
   INACTIVE
 }
-model Product {
-  id          Int      @id @default(autoincrement())
-  storeId     Int
-  categoryId  Int
-  name        String
-  description String?
-  price       Float
-  stockQuantity Int
-  imageUrl    String?
-  status      ProductStatus @default(ACTIVE)
-  deletedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  store       Store    @relation(fields: [storeId], references: [id])
-  category    Category @relation(fields: [categoryId], references: [id])
+model Product {
+  id            Int           @id @default(autoincrement())
+  storeId       Int
+  categoryId    Int
+  name          String
+  description   String?
+  price         Float
+  stockQuantity Int
+  imageUrl      String?
+  status        ProductStatus @default(ACTIVE)
+  deletedAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  store         Store         @relation(fields: [storeId], references: [id])
+  category      Category      @relation(fields: [categoryId], references: [id])
+  
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  promotions    Promotion[]
 
   @@index([storeId])
   @@index([categoryId])
+}
+
+enum CartStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  status    CartStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id])
+  cartItems CartItem[]
+
+  @@index([userId])
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int
+  unitPrice Float
+
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([cartId])
+  @@index([productId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  totalAmount Float
+  orderStatus OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  orderItems  OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  unitPrice Float
+  subtotal  Float
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+enum DiscountType {
+  PERCENTAGE    
+  FIXED_AMOUNT 
+}
+
+enum PromotionStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Promotion {
+  id            Int             @id @default(autoincrement())
+  storeId       Int
+  productId     Int
+  title         String
+  description   String?
+  discountType  DiscountType
+  discountValue Float
+  startDate     DateTime
+  endDate       DateTime
+  status        PromotionStatus @default(ACTIVE)
+  deletedAt     DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  store         Store           @relation(fields: [storeId], references: [id])
+  product       Product         @relation(fields: [productId], references: [id])
+
+  @@index([storeId])
+  @@index([productId])
 }
