@@ -1,131 +1,161 @@
-"use client";
-import { useState } from "react";
-import { StarIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 import { ArchiveBoxIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { StarIcon } from "@heroicons/react/24/solid";
+import { Search } from "lucide-react";
+import PriceSlider from "@/components/ui/PriceSlider";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-export default function ShopPage() {
-  // 1. State สำหรับราคา
-  const [maxPrice, setMaxPrice] = useState(99999);
+type SearchParams = Promise<{
+  q?: string;
+  category?: string;
+  maxPrice?: string;
+}>;
 
-  // 2. State สำหรับหมวดหมู่ (เปลี่ยนจากตัวแปรธรรมดาเป็น State เพื่อให้ Reset ได้)
-  const [categories, setCategories] = useState([
-    { value: "beef", label: "เนื้อวัวพรีเมียม (Beef)", checked: false },
-    { value: "pork", label: "เนื้อหมู (Pork)", checked: false },
-    { value: "chicken", label: "เนื้อไก่ (Chicken)", checked: false },
-    { value: "shabu", label: "เซ็ตชาบู/ปิ้งย่าง", checked: true },
-  ]);
+type Category = {
+  id: number;
+  name: string;
+};
 
-  // ฟังก์ชันสลับค่า Checkbox
-  const handleCategoryChange = (index: number) => {
-    const newCategories = [...categories];
-    newCategories[index].checked = !newCategories[index].checked;
-    setCategories(newCategories);
+type Product = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  stockQuantity: number;
+  imageUrl: string | null;
+  category: Category;
+  store: {
+    id: number;
+    name: string;
   };
+};
 
-  // 3. ฟังก์ชันสำหรับล้างค่าทั้งหมด (Reset)
-  const handleReset = () => {
-    setMaxPrice(0); // คืนค่าราคากลับไปสูงสุด
-    setCategories(categories.map((cat) => ({ ...cat, checked: false }))); // เอาเครื่องหมายถูกออกทั้งหมด
-  };
+async function getMaxPriceLimit() {
+  try {
+    const response = await fetch(`${API_URL}/products/max-price`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return 99999;
+    const data = await response.json();
+    return data.maxPrice || data?._max?.price || 99999;
+  } catch {
+    return 99999;
+  }
+}
 
-  // 4. ฟังก์ชันสำหรับเตรียมส่งข้อมูลไป Backend (Submit)
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // ป้องกันหน้าเว็บรีโหลด
+async function getProducts(params: {
+  q?: string;
+  category?: string;
+  maxPrice?: string;
+}) {
+  const query = new URLSearchParams();
 
-    // ดึงเฉพาะ value ของหมวดหมู่ที่ถูกติ๊กเลือก
-    const selectedCategories = categories
-      .filter((cat) => cat.checked)
-      .map((cat) => cat.value);
+  if (params.q) query.set("q", params.q);
+  if (params.category) query.set("category", params.category);
+  if (params.maxPrice) query.set("maxPrice", params.maxPrice);
 
-    // แพ็กข้อมูลเตรียมส่ง API
-    const filterPayload = {
-      maxPrice: maxPrice,
-      categories: selectedCategories,
+  try {
+    const response = await fetch(`${API_URL}/products?${query.toString()}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {
+        data: [],
+        error: `Products API returned ${response.status}`,
+      };
+    }
+
+    return {
+      data: (await response.json()) as Product[],
+      error: null,
     };
+  } catch {
+    return {
+      data: [],
+      error: `Cannot connect to products API at ${API_URL}`,
+    };
+  }
+}
 
-    console.log("เตรียมส่งข้อมูลให้ Backend:", filterPayload);
-  };
+async function getCategories() {
+  try {
+    const response = await fetch(`${API_URL}/products/categories`, {
+      cache: "no-store",
+    });
 
+    if (!response.ok) return [];
+
+    return (await response.json()) as Category[];
+  } catch {
+    return [];
+  }
+}
+
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const params = await searchParams;
+  const selectedCategory = params.category ?? "";
+  const keyword = params.q ?? "";
+  const [productsResult, categories, maxPriceLimit] = await Promise.all([
+    getProducts(params),
+    getCategories(),
+    getMaxPriceLimit(),
+  ]);
+  const products = productsResult.data;
+  const title = selectedCategory || keyword || "สินค้าทั้งหมด";
+  const currentSelectedMaxPrice = params.maxPrice ?? maxPriceLimit.toString();
   return (
-    <main className="max-w-7xl mx-auto px-6 py-10">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* คอลัมน์ซ้าย: ตัวกรอง (เปลี่ยนเป็นแท็ก <form>) */}
+    <main className="mx-auto max-w-7xl px-6 py-10">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <form
-          onSubmit={handleSubmit}
-          className="lg:col-span-1 bg-gray-50 p-6 rounded-2xl border border-gray-200 h-fit"
+          action="/shop"
+          className="h-fit rounded-2xl border border-gray-200 bg-gray-50 p-6 lg:col-span-1"
         >
-          <h3 className="text-lg font-bold text-[#4E0707] mb-4 border-b pb-2 border-gray-200">
-            ค้นหารายละเอียดสินค้า
+          <h3 className="mb-4 border-b border-gray-200 pb-2 text-lg font-bold text-[#4E0707]">
+            ค้นหาสินค้า
           </h3>
 
           <div className="space-y-6 text-sm text-gray-600">
-            {/* ส่วนแบ่งตามราคา */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <p className="font-semibold text-[#4E0707]">แบ่งตามราคา</p>
-                <p className="text-sm font-bold text-[#B4915B]">
-                  สูงสุด ฿{maxPrice.toLocaleString()}
-                </p>
-              </div>
+            <PriceSlider
+              maxLimit={Number(maxPriceLimit)}
+              initialValue={Number(currentSelectedMaxPrice)}
+            />
 
-              <div className="space-y-3 mt-2">
-                <input
-                  type="range"
-                  min="0"
-                  max="99999"
-                  step="100"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#B4915B]"
-                />
-                {/* ตัวเลขกำกับหัวท้าย */}
-                <div className="flex justify-between text-xs text-[#4E0707]">
-                  <span>฿0</span>
-                  <span>฿99,999</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ส่วนแบ่งตามหมวดหมู่ */}
             <div className="border-t border-gray-200 pt-4">
-              <p className="font-semibold mb-3 text-[#4E0707]">
-                แบ่งตามหมวดหมู่
-              </p>
+              <p className="mb-3 font-semibold text-[#4E0707]">หมวดหมู่</p>
               <div className="space-y-3">
-                {categories.map((option, idx) => (
-                  <div key={option.value} className="flex items-center gap-3">
+                {categories.map((category) => (
+                  <label
+                    key={category.id}
+                    className="flex cursor-pointer items-center gap-3"
+                  >
                     <input
-                      type="checkbox"
-                      id={`category-${idx}`}
-                      checked={option.checked} // ใช้ checked คุมผ่าน State
-                      onChange={() => handleCategoryChange(idx)} // อัปเดต State เมื่อคลิก
-                      className="h-4 w-4 rounded border-gray-300 text-[#B4915B] focus:ring-[#B4915B] cursor-pointer"
+                      type="radio"
+                      name="category"
+                      value={category.name}
+                      defaultChecked={selectedCategory === category.name}
+                      className="h-4 w-4 cursor-pointer border-gray-300 text-[#B4915B] focus:ring-[#B4915B]"
                     />
-                    <label
-                      htmlFor={`category-${idx}`}
-                      className="cursor-pointer"
-                    >
-                      {option.label}
-                    </label>
-                  </div>
+                    <span>{category.name}</span>
+                  </label>
                 ))}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 border-t border-gray-200 pt-5">
-              {/* ปุ่มล้างค่าทั้งหมด (เรียก handleReset) */}
-              <button
-                type="button"
-                onClick={handleReset}
-                className="w-full bg-white hover:bg-gray-100 text-gray-700 font-bold py-2 px-4 rounded-xl border border-gray-300 transition-colors text-center"
+              <Link
+                href="/shop"
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-center font-bold text-gray-700 transition-colors hover:bg-gray-100"
               >
                 ล้างค่า
-              </button>
-
-              {/* ปุ่มค้นหา (เปลี่ยนเป็น type="submit" เพื่อสั่งงานฟอร์ม) */}
+              </Link>
               <button
                 type="submit"
-                className="w-full bg-[#4E0707] hover:bg-[#3D0505] text-white font-bold py-2 px-4 rounded-xl transition-colors text-center shadow-sm"
+                className="w-full rounded-xl bg-[#4E0707] px-4 py-2 text-center font-bold text-white shadow-sm transition-colors hover:bg-[#3D0505]"
               >
                 ค้นหา
               </button>
@@ -133,90 +163,68 @@ export default function ShopPage() {
           </div>
         </form>
 
-        {/* คอลัมน์ขวา: รายการสินค้า */}
         <div className="lg:col-span-3">
-          <h2 className="text-2xl font-bold text-gray-500 mb-6">
-            สินค้าเกี่ยวข้องกับ
-            <span className="text-2xl font-bold text-[#4E0707]"> xxx</span>
+          <h2 className="mb-6 text-2xl font-bold text-gray-500">
+            ผลลัพธ์สำหรับ <span className="text-[#4E0707]">{title}</span>
           </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Item 1 */}
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="aspect-[4/3] bg-gray-100 rounded-lg mb-3 overflow-hidden"></div>
-                <h4 className="font-bold text-[#4E0707]">Product 1</h4>
-                <p className="text-[#B4915B] font-semibold mt-1">฿500</p>
-
-                {/* ใช้ StarIcon แทน SVG และเปลี่ยนสีเป็น #4E0707 */}
-                <span className="flex items-center gap-1 text-xs text-gray-500 mt-2">
-                  <StarIcon className="size-4 text-[#4E0707]" />
-                  5.0 | ขายแล้ว 100+
-                </span>
-              </div>
-
-              <span className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100 text-xs text-[#4E0707]/80">
-                <span className="flex items-center gap-1">
-                  <ArchiveBoxIcon className="h-4 w-4 text-[#B4915B]" />
-                  ส่ง น้อยกว่า 1 วัน
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPinIcon className="h-4 w-4 text-[#B4915B]" />
-                  กรุงเทพฯ
-                </span>
-              </span>
+          {productsResult.error ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-10 text-center text-red-700">
+              {productsResult.error}
             </div>
-
-            {/* Item 2 */}
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="aspect-[4/3] bg-gray-100 rounded-lg mb-3 overflow-hidden"></div>
-                <h4 className="font-bold text-[#4E0707]">Product 2</h4>
-                <p className="text-[#B4915B] font-semibold mt-1">฿650</p>
-
-                <span className="flex items-center gap-1 text-xs text-gray-500 mt-2">
-                  <StarIcon className="size-4 text-[#4E0707]" />
-                  4.9 | ขายแล้ว 50+
-                </span>
-              </div>
-
-              <span className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100 text-xs text-[#4E0707]/80">
-                <span className="flex items-center gap-1">
-                  <ArchiveBoxIcon className="h-4 w-4 text-[#B4915B]" />
-                  ส่ง น้อยกว่า 1 วัน
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPinIcon className="h-4 w-4 text-[#B4915B]" />
-                  กรุงเทพฯ
-                </span>
-              </span>
+          ) : products.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
+              ไม่พบสินค้าที่ตรงกับเงื่อนไข
             </div>
-
-            {/* Item 3 */}
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="aspect-[4/3] bg-gray-100 rounded-lg mb-3 overflow-hidden"></div>
-                <h4 className="font-bold text-[#4E0707]">Product 3</h4>
-                <p className="text-[#B4915B] font-semibold mt-1">฿800</p>
-
-                <span className="flex items-center gap-1 text-xs text-gray-500 mt-2">
-                  <StarIcon className="size-4 text-[#4E0707]" />
-                  5.0 | ขายแล้ว 200+
-                </span>
-              </div>
-
-              <span className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100 text-xs text-[#4E0707]/80">
-                <span className="flex items-center gap-1">
-                  <ArchiveBoxIcon className="h-4 w-4 text-[#B4915B]" />
-                  ส่ง น้อยกว่า 2 วัน
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPinIcon className="h-4 w-4 text-[#B4915B]" />
-                  เชียงใหม่
-                </span>
-              </span>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {products.map((product) => (
+                <article
+                  key={product.id}
+                  className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <div>
+                    <Link
+                      href={`/product/${product.id}`}
+                      className="flex-1 cursor-pointer"
+                    >
+                      <div className="mb-3 aspect-[4/3] overflow-hidden rounded-lg bg-gray-100">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <p className="mb-1 text-xs font-semibold text-[#B4915B]">
+                        {product.category.name}
+                      </p>
+                      <h4 className="font-bold text-[#4E0707]">
+                        {product.name}
+                      </h4>
+                      <p className="mt-1 font-semibold text-[#B4915B]">
+                        ฿{product.price.toLocaleString()}
+                      </p>
+                      <span className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                        <StarIcon className="size-4 text-[#4E0707]" />
+                        5.0 | คงเหลือ {product.stockQuantity} ชิ้น
+                      </span>
+                    </Link>
+                  </div>
+                  <span className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-[#4E0707]/80">
+                    <span className="flex items-center gap-1">
+                      <ArchiveBoxIcon className="h-4 w-4 text-[#B4915B]" />
+                      ส่งน้อยกว่า 1 วัน
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPinIcon className="h-4 w-4 text-[#B4915B]" />
+                      {product.store.name}
+                    </span>
+                  </span>
+                </article>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </main>
