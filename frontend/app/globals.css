@@ -128,3 +128,17 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  html:has(.snap-page) {
+    scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
+  }
+
+  .snap-section {
+    min-height: calc(100vh - 64px);
+    scroll-margin-top: 64px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}

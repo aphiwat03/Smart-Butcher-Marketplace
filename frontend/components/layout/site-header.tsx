@@ -8,17 +8,13 @@ import { Search, ShoppingCart, User } from "lucide-react";
 
 export function SiteHeader() {
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [user, setUser] = useState<unknown>(null);
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
   const mockUser = {
     name: "Aphiwat Phankham.",
     avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason",
   };
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -57,9 +53,12 @@ export function SiteHeader() {
   }, []);
 
   const isLoggedIn = !!user;
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-  if (isLoading) return null;
-  if (!isMounted) return <div className="h-16 w-full bg-white"></div>;
+    const keyword = searchTerm.trim();
+    router.push(keyword ? `/shop?q=${encodeURIComponent(keyword)}` : "/shop");
+  };
 
   return (
     <header className="bg-[#4E0707] text-white sticky top-0 z-50 shadow-lg ">
@@ -92,21 +91,24 @@ export function SiteHeader() {
         </div>
 
         {/* Right: Search, Profile, Cart */}
-        <div className="flex items-center space-x-4">
-          {/* Search Bar เดิมของคุณ */}
-          <div className="relative hidden sm:block group">
+        <div className="flex items-center justify-end space-x-4 sm:min-w-[18rem]">
+          <form onSubmit={handleSearch} className="relative hidden sm:block">
             <input
-              type="text"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search..."
-              className="w-10 h-10 px-4 py-2 bg-transparent text-transparent placeholder-transparent cursor-pointer rounded-lg transition-all duration-300 ease-out focus:w-64 focus:bg-white/10 focus:text-white focus:placeholder-gray-300 focus:cursor-text focus:outline-none focus:ring-2 focus:ring-[#B4915B] pr-10"
+              className="h-10 w-48 rounded-lg bg-white/10 px-4 py-2 pr-10 text-white placeholder-gray-300 outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#B4915B] [&::-webkit-search-cancel-button]:appearance-none"
             />
-            <Search
-              size={18}
-              className="absolute right-3 top-2.5 text-white transition-colors duration-200 group-hover:text-[#B4915B] group-focus-within:text-[#B4915B] pointer-events-none"
-            />
-          </div>
+            <button
+              type="submit"
+              aria-label="Search products"
+              className="absolute right-3 top-2.5 text-white hover:text-[#B4915B]"
+            >
+              <Search size={18} />
+            </button>
+          </form>
 
-          {/* Shopping Cart เดิมของคุณ */}
           <button className="hover:text-[#B4915B] transition-colors p-2 relative">
             <ShoppingCart size={20} />
             <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
@@ -114,16 +116,17 @@ export function SiteHeader() {
             </span>
           </button>
 
-          {/* ส่วน User Dropdown ใหม่ */}
           <div className="relative group">
             <button className="hover:text-[#B4915B] transition-colors p-2 flex items-center">
               <User size={20} />
             </button>
 
-            {/* เมนู Dropdown: จะปรากฏเมื่อ Hover ที่ group */}
             <div className="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 border border-gray-100">
-              {!isLoggedIn ? (
-                // case: ยังไม่ได้เข้าสู่ระบบ
+              {isLoading ? (
+                <div className="px-4 py-2 text-sm text-[#4E0707]/70">
+                  Checking account...
+                </div>
+              ) : !isLoggedIn ? (
                 <Link
                   href="/login"
                   className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors font-medium"
@@ -131,7 +134,6 @@ export function SiteHeader() {
                   เข้าสู่ระบบ / สมัครสมาชิก
                 </Link>
               ) : (
-                // case: เข้าสู่ระบบแล้ว
                 <>
                   <div className="px-4 py-3 border-b border-gray-100 mb-1 flex justify-between items-center">
                     <div className="flex flex-col">

@@ -6,6 +6,7 @@ import { Star, ChevronLeft, ChevronRight, Beef } from "lucide-react";
 
 export default function Home() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
   const testimonials = [
     {
       id: 1,
@@ -52,39 +53,40 @@ export default function Home() {
   const categories = [
     {
       id: 1,
-      name: "พรีเมียมสเต็ก",
+      name: "เนื้อสำหรับสเต็ก",
       image: "mock/category/พรีเมียมสเต็ก.jpg",
     },
     {
       id: 2,
-      name: "เนื้อชาบู",
-      image: "mock/category/เนื้อชาบู.jpg",
+      name: "เนื้อวากิวคัดพิเศษ",
+      image: "mock/category/วากิวคัดพิเศษ.webp",
     },
     {
       id: 3,
-      name: "เนื้อบด",
-      image: "mock/category/เนื้อบด.jpg",
-    },
-    {
-      id: 4,
-      name: "เนื้อคัดพิเศษ",
-      image: "mock/category/เนื้อคัดพิเศษ.jpg",
-    },
-    {
-      id: 5,
       name: "เนื้อดรายเอจ",
       image: "mock/category/ดรายเอจ.jpg",
     },
     {
+      id: 4,
+      name: "เนื้อแปรรูป",
+      image: "mock/category/เนื้อคัดพิเศษ.jpg",
+    },
+    {
+      id: 5,
+      name: "เนื้อบด",
+      image: "mock/category/เนื้อบด.jpg",
+    },
+    {
       id: 6,
-      name: "เนื้อวากิวคัดพิเศษ",
-      image: "mock/category/วากิวคัดพิเศษ.webp",
+      name: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
+      image: "mock/category/เนื้อชาบู.jpg",
     },
   ];
+
   const products = [
     {
       id: 1,
-      name: "เนื้อวากิว",
+      name: "เนื้อวากิวคัดพิเศษ",
       price: "฿899",
       image: "mock/beef/วากิว.jpg",
     },
@@ -131,6 +133,7 @@ export default function Home() {
       image: "mock/beef/โครงหลัง.webp",
     },
   ];
+
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
   };
@@ -138,6 +141,40 @@ export default function Home() {
     setCurrentTestimonial(
       (prev) => (prev - 1 + testimonials.length) % testimonials.length,
     );
+  };
+
+  const scrollToCategories = () => {
+    const target = document.getElementById("categories");
+
+    if (!target) return;
+
+    const headerOffset = 64;
+    const startPosition = window.scrollY;
+    const targetPosition =
+      target.getBoundingClientRect().top + window.scrollY - headerOffset;
+    const distance = targetPosition - startPosition;
+    const duration = 1200;
+    let startTime: number | null = null;
+
+    const easeInOutCubic = (progress: number) =>
+      progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    const animate = (currentTime: number) => {
+      startTime ??= currentTime;
+
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
   };
 
   return (
@@ -157,26 +194,27 @@ export default function Home() {
           <p className="text-lg mb-8 text-gray-100">
             คัดสรรเฉพาะเนื้อเกรดดีที่สุดเพื่อมื้อพิเศษของคุณ
           </p>
-          <Link
-            href="/shop"
-            className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-10 py-1 rounded-sm font-bold text-lg transition-colors"
+          <button
+            type="button"
+            onClick={scrollToCategories}
+            className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-10 py-1 rounded-sm font-bold text-lg transition-colors cursor-pointer"
           >
             Shop Now
-          </Link>
+          </button>
         </div>
       </section>
 
       {/* 3. OUR Category SECTION */}
-      <section className="py-16 px-6 bg-white">
+      <section id="categories" className="scroll-mt-24 py-16 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
-            Shop by Category
+            Category
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
             {categories.slice(0, 6).map((category) => (
               <Link
                 key={category.id}
-                href={`/category/${category.id}`}
+                href={`/shop?category=${encodeURIComponent(category.name)}`}
                 className="block relative w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
               >
                 <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
@@ -330,21 +368,24 @@ export default function Home() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.slice(0, 4).map((product) => (
-              <div
+              <Link
                 key={product.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden"
+                href={`/shop?q=${encodeURIComponent(product.name)}`}
+                className="block relative w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
               >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-48 object-cover hover:scale-105 transition-transform"
-                />
-                <div className="p-4">
-                  <h3 className="font-bold text-lg text-[#4E0707] mb-2">
-                    {product.name}
-                  </h3>
+                <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-48 object-cover hover:scale-105 transition-transform"
+                  />
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg text-[#4E0707] mb-2">
+                      {product.name}
+                    </h3>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
