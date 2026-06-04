@@ -133,8 +133,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center">
+        <div className="flex items-center justify-end text-sm">
+          {/* <label className="flex items-center">
             <Checkbox
               id="terms-checkbox-basic"
               name="terms-checkbox-basic"
@@ -146,7 +146,7 @@ export default function LoginPage() {
             >
               จดจำฉันไว้
             </FieldLabel>
-          </label>
+          </label> */}
           <Link
             href="/forgot-password"
             className="font-medium text-[#4E0707] hover:underline"

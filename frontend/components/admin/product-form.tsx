@@ -1,18 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ProductFormProps {
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: ProductFormData) => Promise<void>;
   isLoading?: boolean;
-  initialData?: any;
+  initialData?: Partial<ProductFormData>;
   isEditing?: boolean;
 }
+
+export type ProductFormData = {
+  name: string;
+  description: string;
+  price: string;
+  quantity: string;
+  categoryId: string;
+};
+
+const categories = [
+  { id: "1", name: "เนื้อสำหรับสเต็ก" },
+  { id: "2", name: "เนื้อสไลซ์ชาบู / ปิ้งย่าง" },
+  { id: "3", name: "เนื้อบด" },
+  { id: "4", name: "เนื้อแปรรูป" },
+  { id: "5", name: "เนื้อดรายเอจ" },
+  { id: "6", name: "เนื้อวากิวคัดพิเศษ" },
+];
 
 export function ProductForm({
   onSubmit,
@@ -20,115 +37,60 @@ export function ProductForm({
   initialData,
   isEditing = false,
 }: ProductFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     description: "",
     price: "",
     quantity: "",
     categoryId: "",
-    image: null as File | null,
-    imagePreview: "",
   });
-
-  const [categories, setCategories] = useState<any[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchCategories();
+    if (!initialData) return;
 
-    if (initialData) {
-      setFormData((prev) => ({
-        ...prev,
-        name: initialData.name || "",
-        description: initialData.description || "",
-        price: initialData.price || "",
-        quantity: initialData.quantity || "",
-        categoryId: initialData.categoryId || "",
-        imagePreview: initialData.image || "",
-      }));
-    }
+    setFormData((current) => ({
+      ...current,
+      ...initialData,
+    }));
   }, [initialData]);
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch("/api/products/categories");
-      const data = await response.json();
-
-      console.log("ข้อมูลจาก API:", data);
-      setCategories(data.data || []);
-    } catch (err) {
-      console.error("Error fetching categories:", err);
-    }
-  };
-
   const handleInputChange = (
-    e: React.ChangeEvent<
+    event: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
+    const { name, value } = event.target;
+
+    setFormData((current) => ({
+      ...current,
       [name]: value,
     }));
     setError("");
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("ไฟล์ต้องไม่เกิน 5MB");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          image: file,
-          imagePreview: reader.result as string,
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveImage = () => {
-    setFormData((prev) => ({
-      ...prev,
-      image: null,
-      imagePreview: "",
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     if (!formData.name || !formData.price || !formData.categoryId) {
-      setError("กรุณากรอกข้อมูลที่จำเป็นทั้งหมด");
+      setError("กรุณากรอกชื่อสินค้า ราคา และหมวดหมู่");
       return;
     }
 
-    try {
-      await onSubmit(formData);
-    } catch (err: any) {
-      setError(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-    }
+    await onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg">
+        <div className="rounded-lg border border-destructive bg-destructive/10 px-4 py-3 text-destructive">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* ชื่อสินค้า */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="md:col-span-2">
-          <Label htmlFor="name" className="block mb-2">
+          <Label htmlFor="name" className="mb-2 block">
             ชื่อสินค้า *
           </Label>
           <Input
@@ -137,14 +99,13 @@ export function ProductForm({
             type="text"
             value={formData.name}
             onChange={handleInputChange}
-            placeholder="เช่น เนื้อวากิวพรีเมียม"
+            placeholder="เช่น ริบอายสเต็ก"
             disabled={isLoading}
           />
         </div>
 
-        {/* คำอธิบาย */}
         <div className="md:col-span-2">
-          <Label htmlFor="description" className="block mb-2">
+          <Label htmlFor="description" className="mb-2 block">
             คำอธิบาย
           </Label>
           <Textarea
@@ -152,38 +113,38 @@ export function ProductForm({
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            placeholder="เขียนรายละเอียดเกี่ยวกับสินค้า"
+            placeholder="รายละเอียดสินค้าแบบสั้น ๆ"
             rows={4}
             disabled={isLoading}
           />
         </div>
 
-        {/* ราคา */}
         <div>
-          <Label htmlFor="price" className="block mb-2">
+          <Label htmlFor="price" className="mb-2 block">
             ราคา (บาท) *
           </Label>
           <Input
             id="price"
             name="price"
             type="number"
-            step="0.01"
+            min="0"
+            step="1"
             value={formData.price}
             onChange={handleInputChange}
-            placeholder="0.00"
+            placeholder="0"
             disabled={isLoading}
           />
         </div>
 
-        {/* จำนวน */}
         <div>
-          <Label htmlFor="quantity" className="block mb-2">
+          <Label htmlFor="quantity" className="mb-2 block">
             จำนวน
           </Label>
           <Input
             id="quantity"
             name="quantity"
             type="number"
+            min="0"
             value={formData.quantity}
             onChange={handleInputChange}
             placeholder="0"
@@ -191,9 +152,8 @@ export function ProductForm({
           />
         </div>
 
-        {/* หมวดหมู่ */}
         <div className="md:col-span-2">
-          <Label htmlFor="categoryId" className="block mb-2">
+          <Label htmlFor="categoryId" className="mb-2 block">
             หมวดหมู่ *
           </Label>
           <select
@@ -202,64 +162,19 @@ export function ProductForm({
             value={formData.categoryId}
             onChange={handleInputChange}
             disabled={isLoading}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">-- เลือกหมวดหมู่ --</option>
-            {categories?.map((category) => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
             ))}
           </select>
         </div>
-
-        {/* รูปภาพ */}
-        <div className="md:col-span-2">
-          <Label className="block mb-2">รูปภาพสินค้า</Label>
-          <div className="space-y-4">
-            {formData.imagePreview ? (
-              <div className="relative inline-block">
-                <img
-                  src={formData.imagePreview}
-                  alt="Preview"
-                  className="h-48 w-full object-cover rounded-lg border border-border"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  disabled={isLoading}
-                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground p-1 rounded-full hover:bg-destructive/90"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-accent/5 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    <span className="font-semibold">คลิกเพื่ออัพโหลด</span> หรือ
-                    ลาก-วาง
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG, GIF (ไม่เกิน 5MB)
-                  </p>
-                </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  disabled={isLoading}
-                />
-              </label>
-            )}
-          </div>
-        </div>
       </div>
 
-      {/* ปุ่ม */}
-      <div className="flex gap-4 pt-6 border-t border-border">
+      <div className="flex gap-4 border-t border-border pt-6">
         <Button
           type="submit"
           disabled={isLoading}

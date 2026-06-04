@@ -136,7 +136,7 @@ export default function RegisterPage() {
         <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Full Name
+              ชื่อ-นามสกุล
             </label>
             <input
               type="text"
@@ -150,7 +150,7 @@ export default function RegisterPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Email
+            อีเมล์
           </label>
           <input
             type="email"
@@ -168,7 +168,7 @@ export default function RegisterPage() {
         </div>
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700">
-            Password
+            รหัสผ่าน
           </label>
           <div className="relative mt-1">
             <input
@@ -196,7 +196,7 @@ export default function RegisterPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Confirm Password
+            ยืนยันรหัสผ่าน
           </label>
           <div className="relative mt-1">
             <input
@@ -245,7 +245,7 @@ export default function RegisterPage() {
       </form>
 
       <p className="text-center text-sm text-gray-600">
-        Already have an account?{" "}
+        คุณมีบัญชีอยู่แล้วใช่ไหม?{" "}
         <Link
           href="/login"
           className="font-medium text-[#4E0707] hover:text-[#4E0707]"

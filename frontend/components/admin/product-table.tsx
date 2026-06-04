@@ -1,9 +1,9 @@
 "use client";
 
-import { Edit2, Trash2, Eye } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface Product {
   id: string;
@@ -31,26 +31,21 @@ export function ProductTable({
   const handleDelete = async (id: string) => {
     if (!window.confirm("คุณต้องการลบสินค้านี้ใช่หรือไม่?")) return;
 
-    try {
-      await onDelete?.(id);
-    } catch (error) {
-      console.error("Error deleting product:", error);
-    }
+    await onDelete?.(id);
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
       ACTIVE: {
-        color:
-          "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
+        color: "bg-green-100 text-green-800",
         label: "ใช้งาน",
       },
       INACTIVE: {
-        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+        color: "bg-gray-100 text-gray-800",
         label: "ไม่ใช้งาน",
       },
       OUT_OF_STOCK: {
-        color: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+        color: "bg-red-100 text-red-800",
         label: "หมด",
       },
     };
@@ -65,8 +60,8 @@ export function ProductTable({
 
   if (products.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground mb-4">ไม่มีสินค้า</p>
+      <div className="rounded-lg border border-dashed border-border bg-card py-12 text-center">
+        <p className="mb-4 text-muted-foreground">ไม่มีสินค้า</p>
         <Link href="/admin/products/new">
           <Button className="bg-primary hover:bg-primary/90">
             เพิ่มสินค้าใหม่
@@ -77,74 +72,76 @@ export function ProductTable({
   }
 
   return (
-    <div className="overflow-x-auto border border-border rounded-lg">
-      <table className="w-full">
-        <thead className="bg-accent/5 border-b border-border">
-          <tr>
-            <th className="px-6 py-3 text-left text-sm font-medium text-foreground">
-              ชื่อสินค้า
-            </th>
-            <th className="px-6 py-3 text-left text-sm font-medium text-foreground">
-              หมวดหมู่
-            </th>
-            <th className="px-6 py-3 text-right text-sm font-medium text-foreground">
-              ราคา
-            </th>
-            <th className="px-6 py-3 text-center text-sm font-medium text-foreground">
-              จำนวน
-            </th>
-            <th className="px-6 py-3 text-center text-sm font-medium text-foreground">
-              สถานะ
-            </th>
-            <th className="px-6 py-3 text-center text-sm font-medium text-foreground">
-              ดำเนินการ
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {products.map((product) => (
-            <tr
-              key={product.id}
-              className="hover:bg-accent/5 transition-colors"
-            >
-              <td className="px-6 py-4 text-sm text-foreground font-medium">
-                {product.name}
-              </td>
-              <td className="px-6 py-4 text-sm text-muted-foreground">
-                {product.category?.name || "-"}
-              </td>
-              <td className="px-6 py-4 text-sm text-right text-foreground font-medium">
-                ฿{product.price.toFixed(2)}
-              </td>
-              <td className="px-6 py-4 text-sm text-center text-foreground">
-                {product.quantity} หน่วย
-              </td>
-              <td className="px-6 py-4 text-sm text-center">
-                {getStatusBadge(product.status)}
-              </td>
-              <td className="px-6 py-4 text-center">
-                <div className="flex items-center justify-center gap-2">
-                  <Link
-                    href={`/admin/products/${product.id}`}
-                    className="inline-flex p-2 hover:bg-accent/20 rounded-lg transition-colors"
-                    title="แก้ไข"
-                  >
-                    <Edit2 size={18} className="text-blue-500" />
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(product.id)}
-                    disabled={isLoading}
-                    className="inline-flex p-2 hover:bg-accent/20 rounded-lg transition-colors"
-                    title="ลบ"
-                  >
-                    <Trash2 size={18} className="text-red-500" />
-                  </button>
-                </div>
-              </td>
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px]">
+          <thead className="border-b border-border bg-accent/5">
+            <tr>
+              <th className="px-6 py-3 text-left text-sm font-medium text-foreground">
+                ชื่อสินค้า
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-foreground">
+                หมวดหมู่
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-medium text-foreground">
+                ราคา
+              </th>
+              <th className="px-6 py-3 text-center text-sm font-medium text-foreground">
+                จำนวน
+              </th>
+              <th className="px-6 py-3 text-center text-sm font-medium text-foreground">
+                สถานะ
+              </th>
+              <th className="px-6 py-3 text-center text-sm font-medium text-foreground">
+                ดำเนินการ
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {products.map((product) => (
+              <tr
+                key={product.id}
+                className="transition-colors hover:bg-accent/5"
+              >
+                <td className="px-6 py-4 text-sm font-medium text-foreground">
+                  {product.name}
+                </td>
+                <td className="px-6 py-4 text-sm text-muted-foreground">
+                  {product.category?.name || "-"}
+                </td>
+                <td className="px-6 py-4 text-right text-sm font-medium text-foreground">
+                  ฿{product.price.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-center text-sm text-foreground">
+                  {product.quantity} หน่วย
+                </td>
+                <td className="px-6 py-4 text-center text-sm">
+                  {getStatusBadge(product.status)}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <Link
+                      href={`/admin/products/${product.id}`}
+                      className="inline-flex rounded-lg p-2 transition-colors hover:bg-accent/20"
+                      title="แก้ไข"
+                    >
+                      <Edit2 size={18} className="text-blue-500" />
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      disabled={isLoading}
+                      className="inline-flex rounded-lg p-2 transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      title="ลบ"
+                    >
+                      <Trash2 size={18} className="text-red-500" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

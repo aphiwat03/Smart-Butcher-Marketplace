@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -39,7 +41,7 @@ export default function SellerSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[#4E0707] text-white shadow-lg flex flex-col">
+    <aside className="sticky top-0 h-screen w-64 shrink-0 bg-[#4E0707] text-white shadow-lg flex flex-col">
       {/* Logo/Brand */}
       <div className="p-6 border-b border-[#B4915B]">
         <h1 className="text-2xl font-bold flex items-center gap-2">

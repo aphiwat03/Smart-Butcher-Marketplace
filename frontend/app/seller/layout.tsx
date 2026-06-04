@@ -10,16 +10,16 @@ interface SellerLayoutProps {
 
 export default function SellerLayout({ children }: SellerLayoutProps) {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <SellerSidebar />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex min-w-0 flex-1 flex-col">
         <SellerHeader />
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-8">{children}</div>
+        <div className="flex-1">
+          <div className="p-6 lg:p-8">{children}</div>
         </div>
       </main>
     </div>

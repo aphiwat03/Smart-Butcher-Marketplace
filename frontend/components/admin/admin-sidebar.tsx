@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Package,
-  Home,
   BarChart3,
-  Settings,
-  LogOut,
-  Verified,
   ChevronDown,
+  Home,
+  LogOut,
+  Package,
+  Settings,
+  ShoppingCart,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -22,7 +22,7 @@ interface MenuItem {
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>("products");
 
   const menuItems: MenuItem[] = [
     {
@@ -52,7 +52,7 @@ export function AdminSidebar() {
       href: "/admin/analytics",
     },
     {
-      icon: <Verified size={20} />,
+      icon: <ShoppingCart size={20} />,
       label: "คำสั่งซื้อ",
       href: "/admin/orders",
     },
@@ -63,57 +63,59 @@ export function AdminSidebar() {
     },
   ];
 
+  useEffect(() => {
+    if (pathname.startsWith("/admin/products")) {
+      setExpandedMenu("products");
+    }
+  }, [pathname]);
+
   const isActive = (href?: string) => {
     if (!href) return false;
     return pathname === href || pathname.startsWith(href + "/");
   };
 
   return (
-    <aside className="w-64 bg-card border-r border-border min-h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-border">
-        <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-card">
+      <div className="border-b border-border p-6">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-primary">
           <Package size={28} />
           SmartButcher
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Admin Panel</p>
+        <p className="mt-1 text-sm text-muted-foreground">Admin Panel</p>
       </div>
 
-      {/* Menu Items */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 overflow-y-auto p-4">
         <ul className="space-y-2">
-          {menuItems.map((item, index) => (
-            <li key={index}>
+          {menuItems.map((item) => (
+            <li key={item.label}>
               {item.submenu ? (
                 <>
                   <button
                     onClick={() =>
                       setExpandedMenu(
-                        expandedMenu === item.label ? null : item.label,
+                        expandedMenu === "products" ? null : "products",
                       )
                     }
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-foreground hover:bg-accent/10 transition-colors group"
+                    className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-foreground transition-colors hover:bg-accent/10"
                   >
-                    <span className="text-muted-foreground group-hover:text-primary transition-colors">
-                      {item.icon}
-                    </span>
+                    <span className="text-muted-foreground">{item.icon}</span>
                     <span className="flex-1 text-left">{item.label}</span>
                     <ChevronDown
                       size={16}
                       className={`transition-transform ${
-                        expandedMenu === item.label ? "rotate-180" : ""
+                        expandedMenu === "products" ? "rotate-180" : ""
                       }`}
                     />
                   </button>
-                  {expandedMenu === item.label && (
-                    <ul className="ml-4 mt-1 space-y-1 border-l border-border">
-                      {item.submenu.map((subitem, subindex) => (
-                        <li key={subindex}>
+                  {expandedMenu === "products" && (
+                    <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-2">
+                      {item.submenu.map((subitem) => (
+                        <li key={subitem.href}>
                           <Link
                             href={subitem.href!}
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                            className={`flex items-center gap-3 rounded-lg px-4 py-2 transition-colors ${
                               isActive(subitem.href)
-                                ? "bg-primary/10 text-primary font-medium"
+                                ? "bg-primary/10 font-medium text-primary"
                                 : "text-foreground hover:bg-accent/10"
                             }`}
                           >
@@ -130,15 +132,13 @@ export function AdminSidebar() {
               ) : (
                 <Link
                   href={item.href!}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors group ${
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
                     isActive(item.href)
-                      ? "bg-primary/10 text-primary font-medium"
+                      ? "bg-primary/10 font-medium text-primary"
                       : "text-foreground hover:bg-accent/10"
                   }`}
                 >
-                  <span className="text-muted-foreground group-hover:text-primary transition-colors">
-                    {item.icon}
-                  </span>
+                  <span className="text-muted-foreground">{item.icon}</span>
                   <span>{item.label}</span>
                 </Link>
               )}
@@ -147,22 +147,14 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      {/* Bottom Section */}
-      <div className="p-4 border-t border-border space-y-2">
+      <div className="space-y-2 border-t border-border p-4">
         <Link
-          href="/admin/settings"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-foreground hover:bg-accent/10 transition-colors group"
+          href="/"
+          className="flex items-center gap-3 rounded-lg px-4 py-3 text-destructive transition-colors hover:bg-destructive/10"
         >
-          <Settings
-            size={20}
-            className="text-muted-foreground group-hover:text-primary transition-colors"
-          />
-          <span>ตั้งค่าบัญชี</span>
-        </Link>
-        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-destructive hover:bg-destructive/10 transition-colors group">
-          <LogOut size={20} className="text-destructive" />
+          <LogOut size={20} />
           <span>ออกจากระบบ</span>
-        </button>
+        </Link>
       </div>
     </aside>
   );
