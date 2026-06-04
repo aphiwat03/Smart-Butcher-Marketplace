@@ -74,4 +74,114 @@ export class CartService {
       });
     }
   }
+
+  async getCartItemCount(userId: number) {
+    const cart = await this.prisma.cart.findFirst({
+      where: {
+        userId: userId,
+        status: 'ACTIVE',
+      },
+      include: {
+        cartItems: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+    if (!cart) {
+      return { totalItem: '0', totalPrice: '0' };
+    }
+
+    const totalItem = cart.cartItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    const totalPrice = cart.cartItems.reduce((sum, item) => {
+      const price = item.unitPrice;
+      return sum + item.quantity * price;
+    }, 0);
+
+    return {
+      totalItem,
+      totalPrice,
+    };
+  }
+
+  async updateItemQuantity(userId: number, itemId: string, quantity: number) {
+    const currebtQuantity = await this.prisma.cartItem.findFirst({
+      where: {
+        id: Number(itemId),
+        cart: {
+          userId: userId,
+          status: 'ACTIVE',
+        },
+      },
+    });
+    if (!currebtQuantity) {
+      throw new NotFoundException('ไม่พบรายการสินค้านี้ในตะกร้า');
+    }
+    const updatedItem = await this.prisma.cartItem.update({
+      where: {
+        id: Number(itemId),
+      },
+      data: {
+        quantity: quantity,
+      },
+    });
+    return updatedItem;
+  }
+
+  async clearCart(userId: number) {
+    const currentCart = await this.prisma.cart.findFirst({
+      where: {
+        userId: userId,
+        status: 'ACTIVE',
+      },
+    });
+
+    if (!currentCart) {
+      return { message: 'ไม่มีสินค้าในตะกร้าอยู่แล้ว' };
+    }
+
+    const result = await this.prisma.cartItem.deleteMany({
+      where: {
+        cartId: currentCart.id,
+      },
+    });
+
+    return {
+      message: 'ล้างตะกร้าสำเร็จ',
+      deletedCount: result.count,
+    };
+  }
+
+  async removeItem(userId: number, itemId: string) {
+    const currentItem = await this.prisma.cartItem.findFirst({
+      where: {
+        id: Number(itemId),
+        cart: {
+          userId: userId,
+          status: 'ACTIVE',
+        },
+      },
+    });
+
+    if (!currentItem) {
+      throw new NotFoundException(
+        'ไม่พบสินค้านี้ในตะกร้าของคุณ หรือถูกลบไปแล้ว',
+      );
+    }
+
+    const deletedItem = await this.prisma.cartItem.delete({
+      where: {
+        id: Number(itemId),
+      },
+    });
+
+    return {
+      message: 'ลบสินค้าออกจากตะกร้าสำเร็จ',
+      item: deletedItem,
+    };
+  }
 }
