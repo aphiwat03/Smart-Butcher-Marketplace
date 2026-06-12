@@ -1,25 +1,26 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, ShoppingCart, User } from "lucide-react";
+import { useCartStore } from "@/store/useCartStore";
 
 export function SiteHeader() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [user, setUser] = useState<unknown>(null);
+  const [user, setUser] = useState<{
+    fullName: string;
+    avatarUrl?: string;
+  } | null>(null);
+  const cartCount = useCartStore((e) => e.cartCount);
+  const fetchCartCount = useCartStore((e) => e.fetchCartCount);
+  const token = localStorage.getItem("accessToken");
   const router = useRouter();
-  const mockUser = {
-    name: "Aphiwat Phankham.",
-    avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason",
-  };
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("accessToken");
-
       if (!token) {
         setUser(null);
         setIsLoading(false);
@@ -36,7 +37,11 @@ export function SiteHeader() {
 
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData);
+          setUser({
+            ...userData,
+            name: userData.fullName,
+            avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason", // คงรูปเดิม
+          });
         } else {
           localStorage.removeItem("accessToken");
           setUser(null);
@@ -52,6 +57,10 @@ export function SiteHeader() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount]);
+  console.log(cartCount);
   const isLoggedIn = !!user;
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -62,7 +71,7 @@ export function SiteHeader() {
 
   return (
     <header className="bg-[#4E0707] text-white sticky top-0 z-50 shadow-lg ">
-      <nav className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4 ">
+      <nav className="relative max-w-7xl mx-auto flex justify-between items-center px-6 py-4 ">
         {/* Left: Logo */}
         <div className="flex-shrink-0 ">
           <Image
@@ -75,17 +84,17 @@ export function SiteHeader() {
         </div>
 
         {/* Center: Navigation Menu */}
-        <div className="flex items-center space-x-8">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-8 ">
           <Link href="/" className="hover:text-[#B4915B] transition-colors">
             MEAT
           </Link>
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
+          <Link href="/chat" className="hover:text-[#B4915B] transition-colors">
             DEAL
           </Link>
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
-            BUTCHER AI
-          </Link>
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
+          <Link
+            href="/contact"
+            className="hover:text-[#B4915B] transition-colors"
+          >
             CONTACT US
           </Link>
         </div>
@@ -111,9 +120,11 @@ export function SiteHeader() {
 
           <button className="hover:text-[#B4915B] transition-colors p-2 relative">
             <ShoppingCart size={20} />
-            <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-              0
-            </span>
+            {token && (
+              <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {cartCount}
+              </span>
+            )}
           </button>
 
           <div className="relative group">
@@ -139,13 +150,13 @@ export function SiteHeader() {
                     <div className="flex flex-col">
                       <p className="text-xs text-[#4E0707]/70">สวัสดีคุณ</p>
                       <p className="text-sm font-bold text-[#4E0707] truncate max-w-[100px]">
-                        {mockUser.name}
+                        {user?.fullName}
                       </p>
                     </div>
 
                     <div className="w-10 h-10 rounded-full bg-[#B4915B]/20 flex items-center justify-center border border-[#B4915B]/30 overflow-hidden">
                       <img
-                        src={mockUser.avatarUrl}
+                        src={user?.avatarUrl}
                         alt="User Profile Avatar"
                         className="w-full h-full object-cover"
                       />
@@ -167,7 +178,11 @@ export function SiteHeader() {
                   </Link>
 
                   <button
-                    onClick={() => router.push("/login")}
+                    onClick={() => {
+                      localStorage.removeItem("accessToken");
+                      setUser(null);
+                      router.push("/login");
+                    }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
                   >
                     ออกจากระบบ
