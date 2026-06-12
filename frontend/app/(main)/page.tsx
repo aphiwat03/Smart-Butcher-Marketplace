@@ -50,6 +50,7 @@ export default function Home() {
       alt: "avatar",
     },
   ];
+  
   const categories = [
     {
       id: 1,
