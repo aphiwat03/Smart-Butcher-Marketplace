@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArchiveBoxIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { Search } from "lucide-react";
 import PriceSlider from "@/components/ui/PriceSlider";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
