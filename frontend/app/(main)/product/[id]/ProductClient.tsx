@@ -3,13 +3,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarIcon } from "@heroicons/react/24/solid";
+import Swal from "sweetalert2";
+import { useCartStore } from "@/store/useCartStore";
+import { ArrowLeft } from "lucide-react";
 import {
   MinusIcon,
   PlusIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
-import Swal from "sweetalert2";
-import { useCartStore } from "@/store/useCartStore";
 
 interface ProductDetailProps {
   product: {
@@ -94,6 +95,15 @@ export default function ProductClient({ product }: ProductDetailProps) {
     <main className="mx-auto max-w-7xl px-6 py-10 space-y-12">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
         <div className="lg:col-span-2 space-y-4">
+          <div>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 text-gray-500 hover:text-[#4E0707] transition-colors font-medium w-fit"
+            >
+              <ArrowLeft className="size-5" />
+              <span>กลับไปเลือกซื้อสินค้า</span>
+            </Link>
+          </div>
           <div className="aspect-[4/3] bg-gray-100 rounded-2xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
             <img
               src={product.imageUrl}
@@ -163,7 +173,7 @@ export default function ProductClient({ product }: ProductDetailProps) {
               </div>
 
               <button
-                className="flex-1 flex items-center justify-center gap-2 bg-[#4E0707] hover:bg-[#3D0505] text-white font-bold py-3.5 px-6 rounded-xl transition-colors shadow-md"
+                className="flex-1 flex items-center justify-center gap-2 bg-[#4E0707] hover:bg-[#3D0505] text-white font-bold py-3.5 px-6 cursor-pointer rounded-xl transition-colors shadow-md"
                 onClick={addCart}
               >
                 <ShoppingCartIcon className="size-5" />
