@@ -85,16 +85,61 @@ export function SiteHeader() {
         </div>
 
         {/* Center: Navigation Menu */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-8 ">
-          <Link href="/" className="hover:text-[#B4915B] transition-colors">
-            MEAT
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-8">
+          <Link
+            href="/"
+            className="hover:text-[#B4915B] transition-colors font-medium"
+          >
+            HOME
           </Link>
-          <Link href="/chat" className="hover:text-[#B4915B] transition-colors">
-            DEAL
-          </Link>
+
+          {/* SHOP Menu with Categories Dropdown */}
+          <div className="relative group/shop py-2">
+            <button className="flex items-center space-x-1 hover:text-[#B4915B] transition-colors font-medium cursor-pointer">
+              <span>SHOP</span>
+              {/* เพิ่มไอคอนลูกศรชี้ลงเล็กๆ ให้รู้ว่ากด/hover ได้ */}
+              <svg
+                className="w-4 h-4 transition-transform group-hover/shop:rotate-180 duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown Items */}
+            <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover/shop:visible opacity-0 group-hover/shop:opacity-100 transition-all duration-200 border border-gray-100">
+              {[
+                { name: "เนื้อสำหรับสเต็ก", slug: "เนื้อสำหรับสเต็ก" },
+                { name: "เนื้อวากิวคัดพิเศษ", slug: "เนื้อวากิวคัดพิเศษ" },
+                { name: "เนื้อดรายเอจ", slug: "เนื้อดรายเอจ" },
+                { name: "เนื้อแปรรูป", slug: "เนื้อแปรรูป" },
+                { name: "เนื้อบด", slug: "เนื้อบด" },
+                {
+                  name: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
+                  slug: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
+                },
+              ].map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/shop?category=${category.slug}`}
+                  className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors font-medium"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           <Link
             href="/contact"
-            className="hover:text-[#B4915B] transition-colors"
+            className="hover:text-[#B4915B] transition-colors font-medium"
           >
             CONTACT US
           </Link>
@@ -102,13 +147,18 @@ export function SiteHeader() {
 
         {/* Right: Search, Profile, Cart */}
         <div className="flex items-center justify-end space-x-4 sm:min-w-[18rem]">
-          <form onSubmit={handleSearch} className="relative hidden sm:block">
+          <form
+            onSubmit={handleSearch}
+            className="relative hidden sm:block w-full max-w-[15rem]"
+          >
+            {" "}
+            {/* ใช้ max-w เพื่อคุมความยาว */}
             <input
               type="search"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search..."
-              className="h-10 w-48 rounded-lg bg-white/10 px-4 py-2 pr-10 text-white placeholder-gray-300 outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#B4915B] [&::-webkit-search-cancel-button]:appearance-none"
+              placeholder="ค้นหาสินค้า..."
+              className="h-10 w-full rounded-lg bg-white/10 px-4 py-2 pr-10 text-white placeholder-gray-300 outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#B4915B] [&::-webkit-search-cancel-button]:appearance-none transition-all"
             />
             <button
               type="submit"
