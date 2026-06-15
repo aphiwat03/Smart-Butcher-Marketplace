@@ -13,15 +13,17 @@ export function SiteHeader() {
     fullName: string;
     avatarUrl?: string;
   } | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const cartCount = useCartStore((e) => e.cartCount);
   const fetchCartCount = useCartStore((e) => e.fetchCartCount);
-  const token = localStorage.getItem("accessToken");
   const router = useRouter();
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
+      const storedToken = localStorage.getItem("accessToken");
+      setToken(storedToken);
+
+      if (!storedToken) {
         setUser(null);
         setIsLoading(false);
         return;
@@ -31,7 +33,7 @@ export function SiteHeader() {
         const response = await fetch("http://localhost:3001/auth/me", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${storedToken}`,
           },
         });
 
@@ -60,7 +62,6 @@ export function SiteHeader() {
   useEffect(() => {
     fetchCartCount();
   }, [fetchCartCount]);
-  console.log(cartCount);
   const isLoggedIn = !!user;
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -118,14 +119,17 @@ export function SiteHeader() {
             </button>
           </form>
 
-          <button className="hover:text-[#B4915B] transition-colors p-2 relative">
+          <Link
+            href="/cart"
+            className="hover:text-[#B4915B] transition-colors p-2 relative"
+          >
             <ShoppingCart size={20} />
             {token && (
               <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                 {cartCount}
               </span>
             )}
-          </button>
+          </Link>
 
           <div className="relative group">
             <button className="hover:text-[#B4915B] transition-colors p-2 flex items-center">
@@ -181,7 +185,8 @@ export function SiteHeader() {
                     onClick={() => {
                       localStorage.removeItem("accessToken");
                       setUser(null);
-                      router.push("/login");
+                      setToken(null);
+                      router.push("/");
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
                   >
