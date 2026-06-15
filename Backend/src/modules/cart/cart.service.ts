@@ -108,8 +108,37 @@ export class CartService {
     };
   }
 
+  async getCartItems(userId: number) {
+    const cart = await this.prisma.cart.findFirst({
+      where: {
+        userId: userId,
+        status: 'ACTIVE',
+      },
+      select: {
+        id: true,
+        cartItems: {
+          select: {
+            id: true,
+            quantity: true,
+            unitPrice: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                store: true,
+                imageUrl: true,
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    return cart?.cartItems || [];
+  }
+
   async updateItemQuantity(userId: number, itemId: string, quantity: number) {
-    const currebtQuantity = await this.prisma.cartItem.findFirst({
+    const currentQuantity = await this.prisma.cartItem.findFirst({
       where: {
         id: Number(itemId),
         cart: {
@@ -118,7 +147,7 @@ export class CartService {
         },
       },
     });
-    if (!currebtQuantity) {
+    if (!currentQuantity) {
       throw new NotFoundException('ไม่พบรายการสินค้านี้ในตะกร้า');
     }
     const updatedItem = await this.prisma.cartItem.update({

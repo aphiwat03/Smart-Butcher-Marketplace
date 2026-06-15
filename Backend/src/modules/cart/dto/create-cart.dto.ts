@@ -1,11 +1,4 @@
-import {
-  IsOptional,
-  IsString,
-  IsNumber,
-  Min,
-  IsNotEmpty,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNumber, Min, IsNotEmpty } from 'class-validator';
 export class AddToCartDto {
   @IsNumber()
   @IsNotEmpty()

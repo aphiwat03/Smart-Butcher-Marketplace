@@ -30,6 +30,12 @@ export class CartController {
     return this.cartService.getCartItemCount(userId);
   }
 
+  @Get()
+  findAll(@Req() req: any) {
+    const userId = req.user.userId;
+    return this.cartService.getCartItems(userId);
+  }
+
   @Patch(':itemId')
   countItem(
     @Req() req: any,
@@ -39,6 +45,7 @@ export class CartController {
     const userId = req.user.userId;
     return this.cartService.updateItemQuantity(userId, itemId, body.quantity);
   }
+
   @Delete()
   clearCart(@Req() req: any) {
     const userId = req.user.userId;
