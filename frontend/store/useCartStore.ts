@@ -1,9 +1,9 @@
-// store/useCartStore.ts
 import { create } from "zustand";
 
 interface CartState {
   cartCount: number;
   fetchCartCount: () => Promise<void>;
+  clearCartCount: () => void;
 }
 
 export const useCartStore = create<CartState>((set) => ({
@@ -29,4 +29,6 @@ export const useCartStore = create<CartState>((set) => ({
       console.error("ดึงข้อมูลตะกร้าไม่สำเร็จ", error);
     }
   },
+
+  clearCartCount: () => set({ cartCount: 0 }),
 }));
