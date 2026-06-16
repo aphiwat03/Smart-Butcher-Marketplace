@@ -64,6 +64,9 @@ export class OrderService {
           userId,
           totalAmount,
           orderStatus: 'PENDING',
+          shippingName: dto.shippingName,
+          shippingPhone: dto.shippingPhone,
+          shippingAddressText: dto.shippingAddressText,
           orderItems: {
             create: cart.cartItems.map((item) => ({
               productId: item.productId,
@@ -111,11 +114,28 @@ export class OrderService {
     const orders = await this.prisma.order.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        totalAmount: true,
+        orderStatus: true,
+        createdAt: true,
         orderItems: {
-          include: {
+          select: {
+            id: true,
+            quantity: true,
+            unitPrice: true,
+            subtotal: true,
             product: {
-              select: { id: true, name: true, imageUrl: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                store: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
             },
           },
         },
