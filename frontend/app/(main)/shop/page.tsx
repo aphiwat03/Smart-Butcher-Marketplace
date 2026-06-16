@@ -195,7 +195,7 @@ export default async function ShopPage({
                           />
                         ) : null}
                       </div>
-                      <p className="mb-1 text-xs font-semibold text-[#B4915B]">
+                      <p className="mb-1 truncate text-xs font-semibold text-[#B4915B]">
                         {product.category.name}
                       </p>
                       <h4 className="font-bold text-[#4E0707]">

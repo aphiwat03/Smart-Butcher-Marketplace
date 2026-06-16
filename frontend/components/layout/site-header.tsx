@@ -97,7 +97,6 @@ export function SiteHeader() {
           <div className="relative group/shop py-2">
             <button className="flex items-center space-x-1 hover:text-[#B4915B] transition-colors font-medium cursor-pointer">
               <span>SHOP</span>
-              {/* เพิ่มไอคอนลูกศรชี้ลงเล็กๆ ให้รู้ว่ากด/hover ได้ */}
               <svg
                 className="w-4 h-4 transition-transform group-hover/shop:rotate-180 duration-200"
                 fill="none"
