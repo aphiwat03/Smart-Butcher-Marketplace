@@ -31,6 +31,16 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem("accessToken", data.accessToken);
 
+        const userRole = data.user.role; //
+
+        let targetPath = "/";
+
+        if (userRole === "admin" || userRole === "seller") {
+          targetPath = "/admin";
+        } else if (userRole === "admin") {
+          targetPath = "/admin";
+        }
+
         Swal.fire({
           title: "Login Success!",
           text: "ยินดีต้อนรับเข้าสู่ระบบ Smart Butcher",
@@ -38,11 +48,9 @@ export default function LoginPage() {
           confirmButtonColor: "#4E0707",
           confirmButtonText: "OK",
           customClass: { container: "backdrop-blur-sm" },
-        }).then((result) => {
-          router.push("/");
+        }).then(() => {
+          router.push(targetPath);
         });
-
-        router.push("/");
       } else {
         Swal.fire({
           title: "Login Failed",
