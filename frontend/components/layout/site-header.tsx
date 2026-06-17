@@ -14,6 +14,7 @@ export function SiteHeader() {
     avatarUrl?: string;
   } | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const cartCount = useCartStore((e) => e.cartCount);
   const fetchCartCount = useCartStore((e) => e.fetchCartCount);
   const router = useRouter();
@@ -42,8 +43,9 @@ export function SiteHeader() {
           setUser({
             ...userData,
             name: userData.fullName,
-            avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason", // คงรูปเดิม
+            avatarUrl: `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData.email}`,
           });
+          setRole(userData.role);
         } else {
           localStorage.removeItem("accessToken");
           setUser(null);
@@ -229,6 +231,22 @@ export function SiteHeader() {
                   >
                     รายการคำสั่งซื้อ
                   </Link>
+
+                  {role === "SELLER" || role === "ADMIN" ? (
+                    <Link
+                      href="/seller"
+                      className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
+                    >
+                      Seller Center
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/create-store"
+                      className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
+                    >
+                      เปิดร้านค้าฟรี
+                    </Link>
+                  )}
 
                   <button
                     onClick={() => {

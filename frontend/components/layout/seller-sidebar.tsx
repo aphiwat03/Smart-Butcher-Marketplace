@@ -8,13 +8,17 @@ import {
   ShoppingCart,
   User,
   LogOut,
+  Store,
 } from "lucide-react";
 
 export default function SellerSidebar() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => {
-    return pathname === path || pathname.startsWith(path + "/");
+  const isActive = (itemHref: string) => {
+    if (itemHref === "/seller") {
+      return pathname === "/seller";
+    }
+    return pathname.startsWith(itemHref);
   };
 
   const navItems = [
@@ -72,15 +76,20 @@ export default function SellerSidebar() {
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-[#B4915B]">
+      {/* Action Buttons */}
+      <div className="p-4 border-t border-[#B4915B] space-y-2">
         <Link
           href="/"
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-200 hover:bg-[#6B0909] transition-colors"
         >
+          <Store className="w-5 h-5" />
+          <span className="font-medium">Marketplace</span>
+        </Link>
+
+        <button className="w-full flex items-center cursor-pointer gap-3 px-4 py-3 rounded-lg text-red-300 hover:bg-red-900/50 transition-colors text-left">
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );
