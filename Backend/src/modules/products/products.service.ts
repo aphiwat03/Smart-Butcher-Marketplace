@@ -81,6 +81,34 @@ export class ProductsService {
     return product;
   }
 
+  async findMyStoreProducts(userId: number) {
+    const store = await this.prisma.store.findFirst({
+      where: { ownerUserId: userId },
+    });
+
+    if (!store) {
+      throw new NotFoundException('ไม่พบร้านค้าที่ผูกกับบัญชีผู้ใช้นี้');
+    }
+
+    return this.prisma.product.findMany({
+      where: {
+        storeId: store.id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        stockQuantity: true,
+        status: true,
+        imageUrl: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
   async findCategories() {
     return this.prisma.category.findMany({
       where: { deletedAt: null },
@@ -96,7 +124,19 @@ export class ProductsService {
     });
   }
 
-  async create(createProductDto: CreateProductDto) {
+  async create(
+    createProductDto: CreateProductDto,
+    userId: number,
+    uploadedImageUrl?: string,
+  ) {
+    const store = await this.prisma.store.findFirst({
+      where: { ownerUserId: userId },
+    });
+
+    if (!store) {
+      throw new Error('ไม่พบร้านค้าที่ผูกกับบัญชีผู้ใช้นี้');
+    }
+
     return this.prisma.product.create({
       data: {
         name: createProductDto.name,
@@ -104,24 +144,19 @@ export class ProductsService {
         price: createProductDto.price,
         stockQuantity: createProductDto.stockQuantity,
         categoryId: createProductDto.categoryId,
-        storeId: createProductDto.storeId,
-        imageUrl: createProductDto.imageUrl,
-        status: ProductStatus.ACTIVE,
+        storeId: store.id,
+        // 🌟 ถ้าระบบอัปโหลดไฟล์สำเร็จให้ใช้ค่าจากไฟล์ ถ้าไม่มีให้ใช้จากดีทีโอเดิม
+        imageUrl: uploadedImageUrl || createProductDto.imageUrl,
+        status: 'ACTIVE',
       },
       include: {
         category: true,
-        store: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        store: { select: { id: true, name: true } },
       },
     });
   }
 
   async update(id: number, updateProductDto: UpdateProductDto) {
-    // Verify product exists
     await this.findById(id);
 
     return this.prisma.product.update({
@@ -158,7 +193,6 @@ export class ProductsService {
   }
 
   async remove(id: number) {
-    // Verify product exists
     await this.findById(id);
 
     return this.prisma.product.update({

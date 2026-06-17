@@ -34,11 +34,6 @@ export class CreateProductDto {
   @IsInt()
   categoryId!: number;
 
-  @IsNotEmpty()
-  @Type(() => Number)
-  @IsInt()
-  storeId!: number;
-
   @IsOptional()
   @IsString()
   imageUrl?: string;
