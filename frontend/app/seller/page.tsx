@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -17,124 +18,221 @@ import {
   ShoppingCart,
   DollarSign,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
+import { API_URL } from "@/lib/api";
+
+interface DashboardTransaction {
+  id: number;
+  storeId: number;
+  amount: number;
+  description: string;
+  createdAt: string;
+}
+
+interface DashboardOrderItem {
+  quantity: number;
+  subtotal: number;
+  product: {
+    name: string;
+    imageUrl: string | null;
+  };
+}
+
+interface DashboardOrder {
+  id: number;
+  totalAmount: number;
+  orderStatus: string;
+  createdAt: string;
+  user: {
+    fullName: string;
+  };
+  orderItems: DashboardOrderItem[];
+}
+
+interface DashboardTopProduct {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+  totalSold: number;
+}
+
+interface DashboardChartPoint {
+  date: string;
+  revenue: number;
+  orders: number;
+}
+
+interface DashboardData {
+  storeName: string;
+  balance: number;
+  totalSales: number;
+  totalItemsSold: number;
+  totalOrders: number;
+  recentTransactions: DashboardTransaction[];
+  activeProductsCount: number;
+  recentOrders: DashboardOrder[];
+  topProducts: DashboardTopProduct[];
+  growth: {
+    revenueGrowthPercent: number;
+    ordersGrowthPercent: number;
+  };
+  charts: DashboardChartPoint[];
+}
+
+interface AuthMeResponse {
+  id: number;
+  email: string;
+  fullName: string;
+  role: string;
+  createdAt: string;
+  store?: {
+    id: number;
+    ownerUserId: number;
+    [key: string]: unknown;
+  };
+}
+
+const formatCurrency = (value: number) => `฿${value.toLocaleString()}`;
+
+const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+  });
 
 export default function SellerDashboard() {
-  const salesData = [
-    { month: "Jan", sales: 4000, orders: 24 },
-    { month: "Feb", sales: 3000, orders: 13 },
-    { month: "Mar", sales: 2000, orders: 9 },
-    { month: "Apr", sales: 2780, orders: 39 },
-    { month: "May", sales: 1890, orders: 23 },
-    { month: "Jun", sales: 2390, orders: 34 },
-  ];
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const token = localStorage.getItem("accessToken");
+        const authHeaders: HeadersInit = {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        // 1. Resolve the seller's storeId from /auth/me
+        const meRes = await fetch(`${API_URL}/auth/me`, {
+          headers: authHeaders,
+        });
+
+        if (!meRes.ok) {
+          throw new Error(`Failed to load user (${meRes.status})`);
+        }
+
+        const me: AuthMeResponse = await meRes.json();
+        const storeId = me.store?.id;
+
+        if (!storeId) {
+          throw new Error("ไม่พบร้านค้าของผู้ใช้นี้");
+        }
+
+        const res = await fetch(`${API_URL}/stores/${storeId}/dashboard`, {
+          headers: authHeaders,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to load dashboard (${res.status})`);
+        }
+
+        const json: DashboardData = await res.json();
+        setData(json);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  const getStatusBadge = (status: string) => {
+    const styles: { [key: string]: string } = {
+      paid: "bg-green-100 text-green-800",
+      completed: "bg-green-100 text-green-800",
+      pending: "bg-yellow-100 text-yellow-800",
+      processing: "bg-blue-100 text-blue-800",
+      cancelled: "bg-red-100 text-red-800",
+    };
+    return styles[status.toLowerCase()] || "bg-gray-100 text-gray-800";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-[#B4915B] animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex gap-3">
+        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-semibold text-red-900 mb-1">
+            ไม่สามารถโหลดข้อมูลแดชบอร์ดได้
+          </h3>
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   const stats = [
     {
       label: "Total Revenue",
-      value: "฿18,060",
+      value: formatCurrency(data.totalSales),
       icon: DollarSign,
       color: "text-[#B4915B]",
       bgColor: "bg-[#B4915B]/10",
     },
     {
       label: "Total Orders",
-      value: "142",
+      value: data.totalOrders.toString(),
       icon: ShoppingCart,
       color: "text-[#4E0707]",
       bgColor: "bg-[#4E0707]/10",
     },
     {
       label: "Active Products",
-      value: "28",
+      value: data.activeProductsCount.toString(),
       icon: Package,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
       label: "Growth Rate",
-      value: "+12.5%",
+      value: `${data.growth.revenueGrowthPercent > 0 ? "+" : ""}${data.growth.revenueGrowthPercent}%`,
       icon: TrendingUp,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
   ];
 
-  const recentOrders = [
-    {
-      id: "ORD-001",
-      product: "เนื้อวากิวคัดพิเศษ",
-      customer: "สมชาย สุดหล่อ",
-      amount: "฿899",
-      status: "completed",
-    },
-    {
-      id: "ORD-002",
-      product: "เนื้อสันนอก",
-      customer: "ศรีลักษณ์ ใจดี",
-      amount: "฿699",
-      status: "pending",
-    },
-    {
-      id: "ORD-003",
-      product: "เนื้อบด",
-      customer: "ปิยะ อ่อนมาก",
-      amount: "฿399",
-      status: "completed",
-    },
-    {
-      id: "ORD-004",
-      product: "เนื้อสันใน",
-      customer: "เอกพล สายเนื้อ",
-      amount: "฿799",
-      status: "processing",
-    },
-  ];
-
-  const topProducts = [
-    {
-      id: 1,
-      name: "เนื้อวากิวคัดพิเศษ",
-      sales: 45,
-      revenue: "฿40,455",
-    },
-    {
-      id: 2,
-      name: "เนื้อสันนอก",
-      sales: 32,
-      revenue: "฿22,368",
-    },
-    {
-      id: 3,
-      name: "เนื้อบด",
-      sales: 28,
-      revenue: "฿11,172",
-    },
-    {
-      id: 4,
-      name: "เนื้อสันใน",
-      sales: 19,
-      revenue: "฿15,181",
-    },
-  ];
-
-  const getStatusBadge = (status: string) => {
-    const styles: { [key: string]: string } = {
-      completed: "bg-green-100 text-green-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      processing: "bg-blue-100 text-blue-800",
-    };
-    return styles[status] || "bg-gray-100 text-gray-800";
-  };
-
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-[#4E0707] mb-2">
-          ยินดีต้อนรับ Seller Dashboard
+          ยินดีต้อนรับ {data.storeName}
         </h1>
-        <p className="text-gray-600">จัดการร้านค้าและติดตามยอดขายของคุณ</p>
+        <p className="text-gray-600">
+          จัดการร้านค้าและติดตามยอดขายของคุณ · ยอดคงเหลือ{" "}
+          <span className="font-semibold text-[#B4915B]">
+            {formatCurrency(data.balance)}
+          </span>
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -170,14 +268,16 @@ export default function SellerDashboard() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-lg font-bold text-[#4E0707] mb-4">Sales Trend</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={salesData}>
+            <LineChart data={data.charts}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
+              <XAxis dataKey="date" tickFormatter={formatDate} />
               <YAxis />
-              <Tooltip />
+              <Tooltip
+                labelFormatter={(label) => formatDate(label as string)}
+              />
               <Line
                 type="monotone"
-                dataKey="sales"
+                dataKey="revenue"
                 stroke="#B4915B"
                 strokeWidth={2}
                 dot={{ fill: "#B4915B" }}
@@ -192,11 +292,13 @@ export default function SellerDashboard() {
             Orders Chart
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={salesData}>
+            <BarChart data={data.charts}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
+              <XAxis dataKey="date" tickFormatter={formatDate} />
               <YAxis />
-              <Tooltip />
+              <Tooltip
+                labelFormatter={(label) => formatDate(label as string)}
+              />
               <Bar dataKey="orders" fill="#4E0707" />
             </BarChart>
           </ResponsiveContainer>
@@ -211,27 +313,43 @@ export default function SellerDashboard() {
             Recent Orders
           </h2>
           <div className="space-y-3">
-            {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-[#B4915B] transition-colors"
-              >
-                <div>
-                  <p className="font-semibold text-[#4E0707]">{order.id}</p>
-                  <p className="text-sm text-gray-600">{order.product}</p>
+            {data.recentOrders.length === 0 && (
+              <p className="text-sm text-gray-500">ยังไม่มีคำสั่งซื้อ</p>
+            )}
+            {data.recentOrders.map((order) => {
+              const firstItem = order.orderItems[0];
+              const productLabel =
+                order.orderItems.length > 1
+                  ? `${firstItem?.product.name ?? "-"} +${order.orderItems.length - 1} รายการ`
+                  : (firstItem?.product.name ?? "-");
+
+              return (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-[#B4915B] transition-colors"
+                >
+                  <div>
+                    <p className="font-semibold text-[#4E0707]">#{order.id}</p>
+                    <p className="text-sm text-gray-600">{productLabel}</p>
+                    <p className="text-xs text-gray-400">
+                      {order.user.fullName}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-600">
+                      {formatCurrency(order.totalAmount)}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded ${getStatusBadge(
+                        order.orderStatus,
+                      )}`}
+                    >
+                      {order.orderStatus}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">{order.amount}</span>
-                  <span
-                    className={`text-xs font-semibold px-2 py-1 rounded ${getStatusBadge(
-                      order.status,
-                    )}`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -241,7 +359,10 @@ export default function SellerDashboard() {
             Top Products
           </h2>
           <div className="space-y-3">
-            {topProducts.map((product, index) => (
+            {data.topProducts.length === 0 && (
+              <p className="text-sm text-gray-500">ยังไม่มีข้อมูลสินค้า</p>
+            )}
+            {data.topProducts.map((product, index) => (
               <div
                 key={product.id}
                 className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-[#B4915B] transition-colors"
@@ -255,16 +376,42 @@ export default function SellerDashboard() {
                       {product.name}
                     </p>
                     <p className="text-xs text-gray-600">
-                      {product.sales} sales
+                      {product.totalSold} sales
                     </p>
                   </div>
                 </div>
-                <p className="font-bold text-[#B4915B]">{product.revenue}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Recent Transactions */}
+      {data.recentTransactions.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-bold text-[#4E0707] mb-4">
+            Recent Transactions
+          </h2>
+          <div className="space-y-3">
+            {data.recentTransactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+              >
+                <div>
+                  <p className="text-sm text-gray-700">{tx.description}</p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(tx.createdAt).toLocaleString("th-TH")}
+                  </p>
+                </div>
+                <p className="font-bold text-[#B4915B]">
+                  {formatCurrency(tx.amount)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Alert Section */}
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg flex gap-3">
