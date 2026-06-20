@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 type CheckoutStep = "details" | "shipping" | "payment" | "upload" | "success";
@@ -82,7 +83,7 @@ export default function CheckoutFlowPage() {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
-        const cartResponse = await fetch("http://localhost:3001/cart", {
+        const cartResponse = await fetch(`${API_URL}/cart`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -93,7 +94,7 @@ export default function CheckoutFlowPage() {
         }
 
         let userEmail = "";
-        const profileResponse = await fetch("http://localhost:3001/auth/me", {
+        const profileResponse = await fetch(`${API_URL}/auth/me`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -121,13 +122,10 @@ export default function CheckoutFlowPage() {
           }));
         }
 
-        const addressResponse = await fetch(
-          "http://localhost:3001/users/address",
-          {
-            method: "GET",
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const addressResponse = await fetch(`${API_URL}/users/address`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (addressResponse.ok) {
           const fetchedAddresses = await addressResponse.json();
@@ -220,7 +218,6 @@ export default function CheckoutFlowPage() {
       case "firstName":
       case "lastName":
       case "city":
-        // ห้ามตัวเลขอารบิก/ไทย และห้ามอักขระพิเศษพวกรหัสสัญลักษณ์ อนุญาตเฉพาะตัวอักษรและช่องว่าง
         formattedValue = value.replace(
           /[0-9๐-๙!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/g,
           "",
@@ -231,7 +228,6 @@ export default function CheckoutFlowPage() {
         formattedValue = value;
     }
 
-    // ล้างข้อความแจ้งเตือน Error ของฟิลด์นั้นๆ ทันทีเมื่อผู้ใช้เริ่มแก้ไขข้อมูลใหม่
     if (errors[name as keyof FormData]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -291,8 +287,8 @@ export default function CheckoutFlowPage() {
 
       const method = editingAddressId ? "PATCH" : "POST";
       const url = editingAddressId
-        ? `http://localhost:3001/users/address/${editingAddressId}`
-        : "http://localhost:3001/users/address";
+        ? `${API_URL}/${editingAddressId}`
+        : `${API_URL}/users/address`;
 
       const res = await fetch(url, {
         method: method,
@@ -306,12 +302,9 @@ export default function CheckoutFlowPage() {
       if (!res.ok) {
         throw new Error("เกิดข้อผิดพลาดในการบันทึกที่อยู่");
       }
-      const fetchNewAddresses = await fetch(
-        "http://localhost:3001/users/address",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const fetchNewAddresses = await fetch(`${API_URL}/users/address`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (fetchNewAddresses.ok) {
         const newData = await fetchNewAddresses.json();
@@ -344,13 +337,10 @@ export default function CheckoutFlowPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(
-        `http://localhost:3001/users/address/${addressId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`${API_URL}/users/address/${addressId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!res.ok) throw new Error("ไม่สามารถลบที่อยู่ได้");
 
@@ -385,7 +375,7 @@ export default function CheckoutFlowPage() {
         shippingAddressText: `${saved.address} ${saved.city} ${saved.postalCode}`,
       };
 
-      const orderResponse = await fetch("http://localhost:3001/orders", {
+      const orderResponse = await fetch(`${API_URL}/users/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -415,7 +405,7 @@ export default function CheckoutFlowPage() {
       formData.append("amount", totalAmount.toString());
 
       const paymentResponse = await fetch(
-        "http://localhost:3001/payments/upload-slip",
+        `${API_URL}/users/payments/upload-slip`,
         {
           method: "POST",
           headers: {

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarIcon } from "@heroicons/react/24/solid";
@@ -28,6 +29,7 @@ interface ProductDetailProps {
       description: string;
     };
     store: {
+      id: number;
       name: string;
     };
   };
@@ -50,7 +52,7 @@ export default function ProductClient({ product }: ProductDetailProps) {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3001/cart", {
+      const response = await fetch(`${API_URL}/cart`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_URL } from "@/lib/api";
 import { Store, Info, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,7 +25,7 @@ export default function CreateStorePage() {
         throw new Error("กรุณาล็อกอินก่อนทำการเปิดร้านค้า");
       }
 
-      const response = await fetch("http://localhost:3001/store", {
+      const response = await fetch(`${API_URL}/users/stores`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

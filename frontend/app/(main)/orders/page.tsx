@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { API_URL } from "@/lib/api";
 
 type OrderStatus =
   | "All"
@@ -52,7 +53,6 @@ interface ApiResponse {
 const statusOptions: { label: string; value: OrderStatus }[] = [
   { label: "All", value: "All" },
   { label: "ที่ต้องชำระ", value: "PENDING" },
-  { label: "ที่ต้องจัดส่ง", value: "SHIPPED" },
   { label: "ที่ต้องได้รับ", value: "DELIVERED" },
   { label: "สำเร็จ", value: "COMPLETED" },
   { label: "ยกเลิก", value: "CANCELLED" },
@@ -102,7 +102,7 @@ export default function OrderPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("http://localhost:3001/orders", {
+      const response = await fetch(`${API_URL}/users/orders`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -113,8 +113,8 @@ export default function OrderPage() {
       if (!response.ok) {
         throw new Error(`Failed to fetch orders (Status: ${response.status})`);
       }
-
       const result = await response.json();
+      console.log(result);
       const orderData = Array.isArray(result) ? result : result.data || [];
       setAllOrders(orderData);
     } catch (err) {

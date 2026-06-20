@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Edit2, Trash2, Eye, Search } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 export default function SellerProducts() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -9,10 +10,8 @@ export default function SellerProducts() {
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [productData, setProductData] = useState({
     name: "",
     description: "",
@@ -24,7 +23,7 @@ export default function SellerProducts() {
     try {
       setLoading(true);
       const token = localStorage.getItem("accessToken");
-      const response = await fetch("http://localhost:3001/products/my-store", {
+      const response = await fetch(`${API_URL}/stores/products/my-store`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -44,9 +43,7 @@ export default function SellerProducts() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3001/products/categories",
-        );
+        const response = await fetch(`${API_URL}/users/products/categories`);
         const data = await response.json();
         setCategories(data);
       } catch (error) {
@@ -76,7 +73,7 @@ export default function SellerProducts() {
     }
 
     try {
-      const response = await fetch("http://localhost:3001/products", {
+      const response = await fetch(`${API_URL}/stores/products`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
@@ -88,7 +85,6 @@ export default function SellerProducts() {
         alert("บันทึกสินค้าสำเร็จ!");
         setShowForm(false);
 
-        // รีเซ็ตค่าในฟอร์ม
         setProductData({
           name: "",
           description: "",
@@ -316,7 +312,7 @@ export default function SellerProducts() {
                           src={
                             product.imageUrl ||
                             "https://placehold.co/150?text=No+Image"
-                          } // รองรับกรณีรูปภาพเป็น null
+                          }
                           alt={product.name}
                           className="w-12 h-12 rounded object-cover"
                         />

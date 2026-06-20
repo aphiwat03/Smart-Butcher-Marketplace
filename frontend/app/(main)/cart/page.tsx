@@ -1,16 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Trash2,
-  Minus,
-  Plus,
-  ShoppingBag,
-  Home,
-  ShoppingCart,
-} from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, Home } from "lucide-react";
 import { useCartItems } from "@/hooks/useCartItems";
 import { useCartStore } from "@/store/useCartStore";
 
@@ -238,7 +232,7 @@ export default function CartPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:3001/cart/${id}`, {
+      const response = await fetch(`${API_URL}/cart/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -262,7 +256,7 @@ export default function CartPage() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:3001/cart/${id}`, {
+      const response = await fetch(`${API_URL}/cart/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -284,7 +278,7 @@ export default function CartPage() {
   const handleClearCart = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`http://localhost:3001/cart`, {
+      const response = await fetch(`${API_URL}/cart`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

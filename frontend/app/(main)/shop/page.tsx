@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 import { ArchiveBoxIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import PriceSlider from "@/components/ui/PriceSlider";
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 type SearchParams = Promise<{
   q?: string;
@@ -31,7 +31,7 @@ type Product = {
 
 async function getMaxPriceLimit() {
   try {
-    const response = await fetch(`${API_URL}/products/max-price`, {
+    const response = await fetch(`${API_URL}/users/products/max-price`, {
       cache: "no-store",
     });
     if (!response.ok) return 99999;
@@ -54,9 +54,12 @@ async function getProducts(params: {
   if (params.maxPrice) query.set("maxPrice", params.maxPrice);
 
   try {
-    const response = await fetch(`${API_URL}/products?${query.toString()}`, {
-      cache: "no-store",
-    });
+    const response = await fetch(
+      `${API_URL}/users/products?${query.toString()}`,
+      {
+        cache: "no-store",
+      },
+    );
 
     if (!response.ok) {
       return {

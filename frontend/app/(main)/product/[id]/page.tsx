@@ -1,4 +1,5 @@
 import ProductClient from "./ProductClient";
+import { API_URL } from "@/lib/api";
 
 export default async function ProductDetailPage({
   params,
@@ -6,7 +7,7 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const res = await fetch(`http://localhost:3001/products/${id}`);
+  const res = await fetch(`${API_URL}/users/products/${id}`);
 
   if (!res.ok) {
     return (
