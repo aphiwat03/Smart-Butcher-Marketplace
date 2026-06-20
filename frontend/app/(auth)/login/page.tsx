@@ -31,13 +31,15 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem("accessToken", data.accessToken);
 
-        const userRole = data.user.role; //
+        const userRole = data.user.role;
 
         let targetPath = "/";
 
-        if (userRole === "admin" || userRole === "seller") {
-          targetPath = "/admin";
-        } else if (userRole === "admin") {
+        if (userRole === "BUYER") {
+          targetPath = "/";
+        } else if (userRole === "SELLER") {
+          targetPath = "/seller";
+        } else if (userRole === "ADMIN") {
           targetPath = "/admin";
         }
 
