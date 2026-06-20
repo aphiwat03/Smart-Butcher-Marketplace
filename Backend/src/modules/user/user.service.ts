@@ -2,10 +2,54 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma-db/prisma.service';
 import { CreateUserAddressDto } from './dto/create-user-address.dto';
 import { UpdateUserAddressDto } from './dto/update-user-address.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAllForAdmin() {
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        createdAt: true,
+        role: true,
+      },
+    });
+  }
+
+  async changePasswordForAdmin(userId: number, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        createdAt: true,
+        role: true,
+      },
+    });
+
+    return {
+      message: 'Password changed successfully',
+      user: updatedUser,
+    };
+  }
 
   async createUserAddress(userId: number, dto: CreateUserAddressDto) {
     const existingCount = await this.prisma.userAddress.count({

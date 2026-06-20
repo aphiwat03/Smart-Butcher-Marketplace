@@ -1,47 +1,47 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
   Param,
   Patch,
-  UseGuards,
+  Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import { OrderService } from './order.service';
-import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderService } from './order.service';
 
-@Controller('orders')
+@Controller('users')
 @UseGuards(JwtAuthGuard)
-export class OrderController {
+export class UserController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Post()
+  @Post('orders')
   createOrder(@Req() req: any, @Body() createOrderDto: CreateOrderDto) {
     const userId = req.user.userId;
     return this.orderService.createOrderFromCart(userId, createOrderDto);
   }
 
-  @Get()
+  @Get('orders')
   getMyOrders(@Req() req: any) {
     const userId = req.user.userId;
     return this.orderService.getMyOrders(userId);
   }
 
-  @Get(':orderId')
+  @Get('orders/:orderId')
   getOrderById(@Req() req: any, @Param('orderId') orderId: string) {
     const userId = req.user.userId;
     return this.orderService.getOrderById(userId, orderId);
   }
 
-  @Patch(':orderId/cancel')
+  @Patch('orders/:orderId/cancel')
   cancelOrder(@Req() req: any, @Param('orderId') orderId: string) {
     const userId = req.user.userId;
     return this.orderService.cancelOrder(userId, orderId);
   }
 
-  @Patch(':orderId/pay')
+  @Patch('orders/:orderId/pay')
   payOrder(@Req() req: any, @Param('orderId') orderId: string) {
     const userId = req.user.userId;
     return this.orderService.payOrder(userId, orderId);

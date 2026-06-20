@@ -18,12 +18,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @Post()
-  create(@Req() req: any, @Body() addToCartDto: AddToCartDto) {
-    const userId = req.user.userId;
-    return this.cartService.addToCart(userId, addToCartDto);
-  }
-
   @Get('count/total')
   getCartItemCount(@Req() req: any) {
     const userId = req.user.userId;
@@ -34,6 +28,12 @@ export class CartController {
   findAll(@Req() req: any) {
     const userId = req.user.userId;
     return this.cartService.getCartItems(userId);
+  }
+
+  @Post()
+  create(@Req() req: any, @Body() addToCartDto: AddToCartDto) {
+    const userId = req.user.userId;
+    return this.cartService.addToCart(userId, addToCartDto);
   }
 
   @Patch(':itemId')

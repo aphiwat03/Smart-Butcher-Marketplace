@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma-db/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrderService {
@@ -169,6 +170,48 @@ export class OrderService {
     return order;
   }
 
+  async getAllOrders(status?: OrderStatus) {
+    const orders = await this.prisma.order.findMany({
+      where: status ? { orderStatus: status } : {},
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        totalAmount: true,
+        orderStatus: true,
+        createdAt: true,
+
+        user: {
+          select: {
+            fullName: true,
+          },
+        },
+
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            slipImageUrl: true,
+          },
+        },
+
+        orderItems: {
+          select: {
+            quantity: true,
+            product: {
+              select: {
+                name: true,
+                imageUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return orders;
+  }
+
   async cancelOrder(userId: number, orderId: string) {
     const order = await this.prisma.order.findFirst({
       where: {
@@ -248,5 +291,51 @@ export class OrderService {
       message: 'ชำระเงินสำเร็จ',
       order: paidOrder,
     };
+  }
+
+  async getOrdersForSeller(storeId: number) {
+    return this.prisma.order.findMany({
+      where: {
+        orderItems: {
+          some: {
+            product: { storeId: storeId },
+          },
+        },
+      },
+      // 🌟 เปลี่ยนจาก include ใหญ่ เป็น select เพื่อเจาะจงฟิลด์ที่จะใช้จริง
+      select: {
+        id: true,
+        totalAmount: true,
+        orderStatus: true,
+        createdAt: true,
+        shippingAddressText: true,
+        shippingPhone: true,
+        user: {
+          select: {
+            fullName: true,
+          },
+        },
+        orderItems: {
+          where: {
+            product: { storeId: storeId },
+          },
+          select: {
+            id: true,
+            quantity: true,
+            unitPrice: true,
+            subtotal: true,
+            product: {
+              select: {
+                name: true,
+                imageUrl: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 }

@@ -1,27 +1,23 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  UseInterceptors,
-  UploadedFile,
+  Controller,
+  Post,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import 'multer';
-import { PaymentService } from './payment.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import 'multer';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaymentService } from './payment.service';
 
-@Controller('payments')
-export class PaymentController {
+@Controller('users')
+@UseGuards(JwtAuthGuard)
+export class UserController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Post('upload-slip')
+  @Post('payments/upload-slip')
   @UseInterceptors(FileInterceptor('file'))
   async uploadSlip(
     @Req() req: any,

@@ -7,15 +7,15 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SellerOrAdminGuard } from './guards/seller-or-admin.guard';
-import { StoreService } from './store.service';
+import { OrderService } from './order.service';
 
 @Controller('stores')
 @UseGuards(JwtAuthGuard, SellerOrAdminGuard)
 export class StoreController {
-  constructor(private readonly storeService: StoreService) {}
+  constructor(private readonly orderService: OrderService) {}
 
-  @Get(':id/dashboard')
-  async getDashboard(@Param('id', ParseIntPipe) id: number) {
-    return this.storeService.getDashboard(Number(id));
+  @Get(':storeId/orders')
+  async getOrdersForSeller(@Param('storeId', ParseIntPipe) storeId: number) {
+    return this.orderService.getOrdersForSeller(storeId);
   }
 }
