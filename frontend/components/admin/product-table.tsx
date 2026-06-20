@@ -61,9 +61,9 @@ export function ProductTable({
   if (products.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border bg-card py-12 text-center">
-        <p className="mb-4 text-muted-foreground">ไม่มีสินค้า</p>
+        <p className="mb-4 text-gray-500">ไม่มีสินค้า</p>
         <Link href="/admin/products/new">
-          <Button className="bg-primary hover:bg-primary/90">
+          <Button className="bg-[#4E0707] hover:bg-[#6B0909] text-white">
             เพิ่มสินค้าใหม่
           </Button>
         </Link>

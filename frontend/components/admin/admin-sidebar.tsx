@@ -2,27 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart3,
-  ChevronDown,
-  Home,
-  LogOut,
-  Package,
-  Settings,
-  ShoppingCart,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { BarChart3, Home, LogOut, Package, Store, Users } from "lucide-react";
 
 interface MenuItem {
   icon: React.ReactNode;
   label: string;
-  href?: string;
-  submenu?: MenuItem[];
+  href: string;
 }
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const [expandedMenu, setExpandedMenu] = useState<string | null>("products");
 
   const menuItems: MenuItem[] = [
     {
@@ -31,130 +20,82 @@ export function AdminSidebar() {
       href: "/admin",
     },
     {
+      icon: <Store size={20} />,
+      label: "จัดการร้านค้า",
+      href: "/admin/stores",
+    },
+    {
+      icon: <Users size={20} />,
+      label: "ผู้ใช้งานทั้งหมด",
+      href: "/admin/users",
+    },
+    {
       icon: <Package size={20} />,
-      label: "สินค้า",
-      submenu: [
-        {
-          icon: <Package size={18} />,
-          label: "รายการสินค้า",
-          href: "/admin/products",
-        },
-        {
-          icon: <Package size={18} />,
-          label: "เพิ่มสินค้าใหม่",
-          href: "/admin/products/new",
-        },
-      ],
-    },
-    {
-      icon: <BarChart3 size={20} />,
-      label: "สถิติ",
-      href: "/admin/analytics",
-    },
-    {
-      icon: <ShoppingCart size={20} />,
-      label: "คำสั่งซื้อ",
+      label: "ตรวจสอบคำสั่งซื้อ",
       href: "/admin/orders",
     },
     {
-      icon: <Settings size={20} />,
-      label: "ตั้งค่า",
-      href: "/admin/settings",
+      icon: <BarChart3 size={20} />,
+      label: "สถิติและรายได้",
+      href: "/admin/analytics",
     },
   ];
 
-  useEffect(() => {
-    if (pathname.startsWith("/admin/products")) {
-      setExpandedMenu("products");
-    }
-  }, [pathname]);
-
-  const isActive = (href?: string) => {
-    if (!href) return false;
+  const isActive = (href: string) => {
+    if (href === "/admin") return pathname === "/admin";
     return pathname === href || pathname.startsWith(href + "/");
+  };
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    window.location.href = "/login";
   };
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-border bg-card">
-      <div className="border-b border-border p-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-primary">
-          <Package size={28} />
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-[#4E0707] text-white shadow-lg">
+      {/* Brand Header */}
+      <div className="border-b border-[#B4915B] p-6">
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-white">
+          <Package size={28} className="text-[#B4915B]" />
           SmartButcher
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">Admin Panel</p>
+        <p className="mt-1 text-sm text-gray-300">Admin Panel</p>
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-4">
         <ul className="space-y-2">
-          {menuItems.map((item) => (
-            <li key={item.label}>
-              {item.submenu ? (
-                <>
-                  <button
-                    onClick={() =>
-                      setExpandedMenu(
-                        expandedMenu === "products" ? null : "products",
-                      )
-                    }
-                    className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-foreground transition-colors hover:bg-accent/10"
-                  >
-                    <span className="text-muted-foreground">{item.icon}</span>
-                    <span className="flex-1 text-left">{item.label}</span>
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform ${
-                        expandedMenu === "products" ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {expandedMenu === "products" && (
-                    <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-2">
-                      {item.submenu.map((subitem) => (
-                        <li key={subitem.href}>
-                          <Link
-                            href={subitem.href!}
-                            className={`flex items-center gap-3 rounded-lg px-4 py-2 transition-colors ${
-                              isActive(subitem.href)
-                                ? "bg-primary/10 font-medium text-primary"
-                                : "text-foreground hover:bg-accent/10"
-                            }`}
-                          >
-                            <span className="text-muted-foreground">
-                              {subitem.icon}
-                            </span>
-                            <span>{subitem.label}</span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              ) : (
+          {menuItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <li key={item.label}>
                 <Link
-                  href={item.href!}
+                  href={item.href}
                   className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-colors ${
-                    isActive(item.href)
-                      ? "bg-primary/10 font-medium text-primary"
-                      : "text-foreground hover:bg-accent/10"
+                    active
+                      ? "bg-[#B4915B] font-medium text-white"
+                      : "text-gray-200 hover:bg-[#6B0909]"
                   }`}
                 >
-                  <span className="text-muted-foreground">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className={active ? "text-white" : "text-gray-200"}>
+                    {item.icon}
+                  </span>
+                  <span className="font-medium">{item.label}</span>
                 </Link>
-              )}
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
-      <div className="space-y-2 border-t border-border p-4">
-        <Link
-          href="/"
-          className="flex items-center gap-3 rounded-lg px-4 py-3 text-destructive transition-colors hover:bg-destructive/10"
+      {/* Logout Section */}
+      <div className="space-y-2 border-t border-[#B4915B] p-4">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 cursor-pointer rounded-lg px-4 py-3 text-red-300 transition-colors hover:bg-red-900/50 text-left"
         >
           <LogOut size={20} />
-          <span>ออกจากระบบ</span>
-        </Link>
+          <span className="font-medium">ออกจากระบบ</span>
+        </button>
       </div>
     </aside>
   );

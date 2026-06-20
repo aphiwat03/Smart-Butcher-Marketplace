@@ -44,6 +44,11 @@ export default function SellerSidebar() {
     },
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    window.location.href = "/";
+  };
+
   return (
     <aside className="sticky top-0 h-screen w-64 shrink-0 bg-[#4E0707] text-white shadow-lg flex flex-col">
       {/* Logo/Brand */}
@@ -86,7 +91,10 @@ export default function SellerSidebar() {
           <span className="font-medium">Marketplace</span>
         </Link>
 
-        <button className="w-full flex items-center cursor-pointer gap-3 px-4 py-3 rounded-lg text-red-300 hover:bg-red-900/50 transition-colors text-left">
+        <button
+          className="w-full flex items-center cursor-pointer gap-3 px-4 py-3 rounded-lg text-red-300 hover:bg-red-900/50 transition-colors text-left"
+          onClick={handleLogout}
+        >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>
         </button>

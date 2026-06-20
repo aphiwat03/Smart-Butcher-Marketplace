@@ -83,14 +83,17 @@ export function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-lg border border-destructive bg-destructive/10 px-4 py-3 text-destructive">
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-800">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="md:col-span-2">
-          <Label htmlFor="name" className="mb-2 block">
+          <Label
+            htmlFor="name"
+            className="mb-2 block text-[#4E0707] font-semibold"
+          >
             ชื่อสินค้า *
           </Label>
           <Input
@@ -178,7 +181,7 @@ export function ProductForm({
         <Button
           type="submit"
           disabled={isLoading}
-          className="flex-1 bg-primary hover:bg-primary/90"
+          className="flex-1 bg-[#4E0707] hover:bg-[#6B0909] text-white"
         >
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditing ? "บันทึกการเปลี่ยนแปลง" : "เพิ่มสินค้าใหม่"}
