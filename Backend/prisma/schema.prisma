@@ -16,9 +16,9 @@ enum UserRole {
 }
 
 enum PaymentStatus {
-  PENDING
-  VERIFIED
-  REJECTED
+  PENDING     
+  VERIFIED    
+  REJECTED    
 }
 
 enum PaymentMethod {
@@ -36,7 +36,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  stores    Store[]
+  store     Store?
   orders    Order[]
   carts     Cart[]
   addresses UserAddress[]
@@ -51,7 +51,7 @@ enum StoreStatus {
 
 model Store {
   id          Int         @id @default(autoincrement())
-  ownerUserId Int
+  ownerUserId Int         @unique
   name        String
   description String?
   status      StoreStatus @default(OPEN)
@@ -59,11 +59,27 @@ model Store {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  Owner      User        @relation(fields: [ownerUserId], references: [id])
-  products   Product[]
-  promotions Promotion[]
+  Owner       User        @relation(fields: [ownerUserId], references: [id])
+  products    Product[]
+  promotions  Promotion[]
 
-  @@index([ownerUserId])
+  balance      Float              @default(0.0)
+  totalSales   Float              @default(0.0) 
+  transactions StoreTransaction[]
+
+}
+
+model StoreTransaction {
+  id          Int      @id @default(autoincrement())
+  storeId     Int
+  amount      Float   
+  description String  
+  createdAt   DateTime @default(now()) 
+
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([createdAt])
 }
 
 model Category {

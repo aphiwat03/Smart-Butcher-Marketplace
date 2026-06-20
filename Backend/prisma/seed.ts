@@ -249,13 +249,13 @@ async function main() {
     update: {
       fullName: 'เจ้าของร้าน',
       passwordHash,
-      role: UserRole.SELLER,
+      role: UserRole.ADMIN,
     },
     create: {
       email: 'admin@butcher.com',
       passwordHash,
       fullName: 'เจ้าของร้าน',
-      role: UserRole.SELLER,
+      role: UserRole.ADMIN,
     },
   });
 
