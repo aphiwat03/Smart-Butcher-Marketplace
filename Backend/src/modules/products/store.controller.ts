@@ -6,6 +6,7 @@ import {
   Req,
   UseGuards,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express/multer/interceptors/file.interceptor';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -18,9 +19,10 @@ export class StoreController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get('products/my-store')
-  async findMyStoreProducts(@Req() req: any) {
+  async findMyStoreProducts(@Req() req: any, @Query('page') page?: string) {
     const userId = req.user.userId;
-    return this.productsService.findMyStoreProducts(userId);
+    const pageNumber = parseInt(page || '1', 10);
+    return this.productsService.findMyStoreProducts(userId, pageNumber, 8);
   }
 
   @Post('products')

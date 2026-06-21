@@ -81,7 +81,7 @@ export class ProductsService {
     return product;
   }
 
-  async findMyStoreProducts(userId: number) {
+  async findMyStoreProducts(userId: number, page: number = 1, limit: number = 8) {
     const store = await this.prisma.store.findFirst({
       where: { ownerUserId: userId },
     });
@@ -90,29 +90,51 @@ export class ProductsService {
       throw new NotFoundException('ไม่พบร้านค้าที่ผูกกับบัญชีผู้ใช้นี้');
     }
 
-    return this.prisma.product.findMany({
-      where: {
-        storeId: store.id,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        stockQuantity: true,
-        status: true,
-        imageUrl: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where: {
+          storeId: store.id,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          stockQuantity: true,
+          status: true,
+          imageUrl: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.product.count({
+        where: {
+          storeId: store.id,
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      data: products,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 
   async findCategories() {
