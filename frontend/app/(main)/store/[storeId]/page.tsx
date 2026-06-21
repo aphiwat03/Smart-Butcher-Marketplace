@@ -8,32 +8,7 @@ import {
   IdCard,
 } from "lucide-react";
 import { StoreProductList } from "@/components/store/store-product-list";
-
-type StoreProduct = {
-  id: number;
-  name: string;
-  price: number;
-  unit: string;
-  image: string | null;
-  badge: string | null;
-};
-
-type Store = {
-  id: string;
-  name: string;
-  tagline: string;
-  imageUrl: string | null;
-  rating: number;
-  reviewCount: number;
-  productCount: number;
-  joinedAt: string;
-  taxId: string;
-  location: string;
-  responseTime: string;
-  isVerified: boolean;
-  tags: string[];
-  products: StoreProduct[];
-};
+import { StoreProduct, Store } from "@/types/store";
 
 async function getStoreData(storeId: string): Promise<Store> {
   return {

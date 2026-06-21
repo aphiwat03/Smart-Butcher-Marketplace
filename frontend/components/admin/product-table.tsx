@@ -5,23 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  category: {
-    name: string;
-  };
-  status: string;
-  createdAt: string;
-}
-
-interface ProductTableProps {
-  products: Product[];
-  onDelete?: (id: string) => Promise<void>;
-  isLoading?: boolean;
-}
+import { ProductTableProps } from "@/types/admin";
 
 export function ProductTable({
   products,

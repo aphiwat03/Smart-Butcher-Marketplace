@@ -12,47 +12,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-interface OrderItem {
-  id: number;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-  product: {
-    name: string;
-    imageUrl: string | null;
-  };
-}
-
-interface Order {
-  id: number;
-  totalAmount: number;
-  orderStatus: string;
-  createdAt: string;
-  shippingAddressText: string;
-  shippingPhone: string;
-  user: {
-    fullName: string;
-  };
-  orderItems: OrderItem[];
-}
-
-interface AuthMeResponse {
-  id: number;
-  email: string;
-  fullName: string;
-  role: string;
-  createdAt: string;
-  store?: {
-    id: number;
-    ownerUserId: number;
-    [key: string]: unknown;
-  };
-}
+import { AuthMeResponse } from "@/types/auth";
+import { SellerOrder, SellerOrderItem } from "@/types/seller";
 
 const formatCurrency = (value: number) => `฿${value.toLocaleString()}`;
 
 export default function SellerOrders() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +60,7 @@ export default function SellerOrders() {
           throw new Error(`Failed to load orders (${res.status})`);
         }
 
-        const json: Order[] = await res.json();
+        const json: SellerOrder[] = await res.json();
         setOrders(json);
       } catch (err) {
         setError(
@@ -108,10 +74,11 @@ export default function SellerOrders() {
     fetchOrders();
   }, []);
 
-  // ฟังก์ชันแปลงสถานะ PAID ให้กลายเป็น COMPLETED อัตโนมัติใน UI
+  // ฟังก์ชันแปลงสถานะ PAID ให้กลายเป็น success อัตโนมัติใน UI
   const normalizeStatus = (status: string) => {
     const s = status.toLowerCase();
-    if (s === "paid") return "completed";
+    if (s === "paid") return "success";
+    if (s === "cancelled") return "reject";
     return s;
   };
 
@@ -138,9 +105,9 @@ export default function SellerOrders() {
   const getStatusBadge = (status: string) => {
     const normStatus = normalizeStatus(status);
     const styles: { [key: string]: string } = {
-      completed: "bg-green-100 text-green-800",
+      success: "bg-green-100 text-green-800",
       pending: "bg-yellow-100 text-yellow-800",
-      cancelled: "bg-red-100 text-red-800",
+      reject: "bg-red-100 text-red-800",
     };
     return styles[normStatus] || "bg-gray-100 text-gray-800";
   };
@@ -148,9 +115,9 @@ export default function SellerOrders() {
   const getStatusLabel = (status: string) => {
     const normStatus = normalizeStatus(status);
     const labels: { [key: string]: string } = {
-      completed: "เสร็จสิ้น",
-      pending: "รอดำเนินการ",
-      cancelled: "ยกเลิก",
+      success: "success",
+      pending: "pending",
+      reject: "Reject",
     };
     return labels[normStatus] || status;
   };
@@ -169,9 +136,9 @@ export default function SellerOrders() {
       color: "text-yellow-600",
     },
     {
-      label: "Completed",
+      label: "Success",
       value: orders
-        .filter((o) => normalizeStatus(o.orderStatus) === "completed")
+        .filter((o) => normalizeStatus(o.orderStatus) === "success")
         .length.toString(),
       color: "text-green-600",
     },
@@ -244,8 +211,8 @@ export default function SellerOrders() {
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="success">Success</option>
+            <option value="reject">Reject</option>
           </select>
         </div>
       </div>

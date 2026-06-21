@@ -3,31 +3,7 @@ import { API_URL } from "@/lib/api";
 import { ArchiveBoxIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import PriceSlider from "@/components/ui/PriceSlider";
-
-type SearchParams = Promise<{
-  q?: string;
-  category?: string;
-  maxPrice?: string;
-}>;
-
-type Category = {
-  id: number;
-  name: string;
-};
-
-type Product = {
-  id: number;
-  name: string;
-  description: string | null;
-  price: number;
-  stockQuantity: number;
-  imageUrl: string | null;
-  category: Category;
-  store: {
-    id: number;
-    name: string;
-  };
-};
+import { ShopSearchParams, Category, ShopProduct } from "@/types/shop";
 
 async function getMaxPriceLimit() {
   try {
@@ -69,7 +45,7 @@ async function getProducts(params: {
     }
 
     return {
-      data: (await response.json()) as Product[],
+      data: (await response.json()) as ShopProduct[],
       error: null,
     };
   } catch {
@@ -82,7 +58,7 @@ async function getProducts(params: {
 
 async function getCategories() {
   try {
-    const response = await fetch(`${API_URL}/products/categories`, {
+    const response = await fetch(`${API_URL}/users/products/categories`, {
       cache: "no-store",
     });
 
@@ -97,7 +73,7 @@ async function getCategories() {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: ShopSearchParams;
 }) {
   const params = await searchParams;
   const selectedCategory = params.category ?? "";

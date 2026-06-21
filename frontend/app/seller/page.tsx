@@ -22,76 +22,8 @@ import {
 } from "lucide-react";
 import { API_URL } from "@/lib/api";
 
-interface DashboardTransaction {
-  id: number;
-  storeId: number;
-  amount: number;
-  description: string;
-  createdAt: string;
-}
-
-interface DashboardOrderItem {
-  quantity: number;
-  subtotal: number;
-  product: {
-    name: string;
-    imageUrl: string | null;
-  };
-}
-
-interface DashboardOrder {
-  id: number;
-  totalAmount: number;
-  orderStatus: string;
-  createdAt: string;
-  user: {
-    fullName: string;
-  };
-  orderItems: DashboardOrderItem[];
-}
-
-interface DashboardTopProduct {
-  id: number;
-  name: string;
-  imageUrl: string | null;
-  totalSold: number;
-}
-
-interface DashboardChartPoint {
-  date: string;
-  revenue: number;
-  orders: number;
-}
-
-interface DashboardData {
-  storeName: string;
-  balance: number;
-  totalSales: number;
-  totalItemsSold: number;
-  totalOrders: number;
-  recentTransactions: DashboardTransaction[];
-  activeProductsCount: number;
-  recentOrders: DashboardOrder[];
-  topProducts: DashboardTopProduct[];
-  growth: {
-    revenueGrowthPercent: number;
-    ordersGrowthPercent: number;
-  };
-  charts: DashboardChartPoint[];
-}
-
-interface AuthMeResponse {
-  id: number;
-  email: string;
-  fullName: string;
-  role: string;
-  createdAt: string;
-  store?: {
-    id: number;
-    ownerUserId: number;
-    [key: string]: unknown;
-  };
-}
+import { AuthMeResponse } from "@/types/auth";
+import { DashboardData } from "@/types/seller";
 
 const formatCurrency = (value: number) => `฿${value.toLocaleString()}`;
 
@@ -316,7 +248,7 @@ export default function SellerDashboard() {
             {data.recentOrders.length === 0 && (
               <p className="text-sm text-gray-500">ยังไม่มีคำสั่งซื้อ</p>
             )}
-            {data.recentOrders.map((order) => {
+            {data.recentOrders.slice(0, 5).map((order) => {
               const firstItem = order.orderItems[0];
               const productLabel =
                 order.orderItems.length > 1
@@ -362,7 +294,7 @@ export default function SellerDashboard() {
             {data.topProducts.length === 0 && (
               <p className="text-sm text-gray-500">ยังไม่มีข้อมูลสินค้า</p>
             )}
-            {data.topProducts.map((product, index) => (
+            {data.topProducts.slice(0, 5).map((product, index) => (
               <div
                 key={product.id}
                 className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-[#B4915B] transition-colors"
@@ -393,7 +325,7 @@ export default function SellerDashboard() {
             Recent Transactions
           </h2>
           <div className="space-y-3">
-            {data.recentTransactions.map((tx) => (
+            {data.recentTransactions.slice(0, 5).map((tx) => (
               <div
                 key={tx.id}
                 className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"

@@ -7,16 +7,7 @@ import Link from "next/link";
 import { Trash2, Minus, Plus, ShoppingBag, Home } from "lucide-react";
 import { useCartItems } from "@/hooks/useCartItems";
 import { useCartStore } from "@/store/useCartStore";
-
-type CartItem = {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl: string | null;
-  store: string;
-  category: string;
-};
+import { CartItem } from "@/types/cart";
 
 const GRID_COLS = "grid-cols-[80px_1fr_140px_120px_120px_48px]";
 

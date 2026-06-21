@@ -7,20 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-interface ProductFormProps {
-  onSubmit: (data: ProductFormData) => Promise<void>;
-  isLoading?: boolean;
-  initialData?: Partial<ProductFormData>;
-  isEditing?: boolean;
-}
-
-export type ProductFormData = {
-  name: string;
-  description: string;
-  price: string;
-  quantity: string;
-  categoryId: string;
-};
+import { ProductFormProps, ProductFormData } from "@/types/admin";
 
 const categories = [
   { id: "1", name: "เนื้อสำหรับสเต็ก" },

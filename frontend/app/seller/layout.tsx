@@ -3,10 +3,7 @@
 import { ReactNode } from "react";
 import SellerSidebar from "@/components/layout/seller-sidebar";
 import SellerHeader from "@/components/layout/seller-header";
-
-interface SellerLayoutProps {
-  children: ReactNode;
-}
+import { SellerLayoutProps } from "@/types/seller";
 
 export default function SellerLayout({ children }: SellerLayoutProps) {
   return (

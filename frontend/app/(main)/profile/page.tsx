@@ -5,15 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-
-interface UserProfile {
-  id: number;
-  fullName: string;
-  email: string;
-  avatar: string;
-  phone?: string;
-  address?: string;
-}
+import { UserProfile } from "@/types/profile";
 
 export default function ProfilePage() {
   // Mock initial data

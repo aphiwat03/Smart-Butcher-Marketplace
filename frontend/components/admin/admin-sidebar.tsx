@@ -14,17 +14,13 @@ import {
   X,
 } from "lucide-react";
 
-interface MenuItem {
-  icon: React.ReactNode;
-  label: string;
-  href: string;
-}
+import { AdminMenuItem } from "@/types/admin";
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const menuItems: MenuItem[] = [
+  const menuItems: AdminMenuItem[] = [
     {
       icon: <Home size={20} />,
       label: "Dashboard",

@@ -6,49 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { API_URL } from "@/lib/api";
-
-type OrderStatus =
-  | "All"
-  | "PENDING"
-  | "SHIPPED"
-  | "DELIVERED"
-  | "COMPLETED"
-  | "CANCELLED";
-
-interface Product {
-  id: number;
-  name: string;
-  imageUrl: string;
-  store: {
-    name: string;
-  };
-}
-
-interface OrderItem {
-  id: number;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-  product: Product;
-}
-
-interface Order {
-  id: number;
-  totalAmount: number;
-  orderStatus: OrderStatus;
-  createdAt: string;
-  orderItems: OrderItem[];
-}
-
-interface ApiResponse {
-  data: Order[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+import { OrderStatus, OrderProduct, OrderItem, Order, OrderApiResponse } from "@/types/order";
 
 const statusOptions: { label: string; value: OrderStatus }[] = [
   { label: "All", value: "All" },

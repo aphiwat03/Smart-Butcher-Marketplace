@@ -12,28 +12,7 @@ import {
   PlusIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
-
-interface ProductDetailProps {
-  product: {
-    id: number;
-    storeId: number;
-    categoryId: number;
-    name: string;
-    description: string;
-    price: number;
-    stockQuantity: number;
-    imageUrl: string;
-    status: string;
-    category: {
-      name: string;
-      description: string;
-    };
-    store: {
-      id: number;
-      name: string;
-    };
-  };
-}
+import { ProductDetailProps } from "@/types/product";
 
 export default function ProductClient({ product }: ProductDetailProps) {
   const router = useRouter();
