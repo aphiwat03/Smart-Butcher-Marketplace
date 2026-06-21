@@ -140,19 +140,19 @@ export default function OrdersPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between gap-4 -mx-6 -mt-6 bg-white border-b border-[#B4915B] px-6 py-4 lg:px-8 shadow-sm">
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 -mx-4 -mt-14 lg:-mx-6 lg:-mt-6 bg-white border-b border-[#B4915B] px-4 py-3 lg:px-8 lg:py-4 pt-14 lg:pt-4 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold text-[#4E0707] mb-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#4E0707] mb-1">
             จัดการคำสั่งซื้อ
           </h1>
-          <p className="text-gray-500">
+          <p className="text-sm md:text-base text-gray-500">
             ตรวจสอบสลิปโอนเงินและอนุมัติคำสั่งซื้อทั้งหมด
           </p>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
         <div className="bg-white border-l-4 border-blue-500 shadow-sm rounded-lg p-6">
           <p className="text-gray-500 text-sm mb-1">คำสั่งซื้อทั้งหมด</p>
           <p className="text-3xl font-bold text-[#4E0707]">{stats.total}</p>

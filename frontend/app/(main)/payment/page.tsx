@@ -637,7 +637,7 @@ export default function CheckoutFlowPage() {
                       href="/cart"
                       className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-[#4E0707] transition-colors"
                     >
-                      <span className="text-lg">←</span> ย้อนกลับไปตะกร้า
+                      <span className="text-lg">←</span> ไปที่ตะกร้า
                     </Link>
                   )}
 
@@ -761,13 +761,13 @@ export default function CheckoutFlowPage() {
                     href="/cart"
                     className="text-sm font-medium text-gray-500 hover:text-[#4E0707]"
                   >
-                    ← ย้อนกลับไปตะกร้า
+                    ← ไปที่ตะกร้า
                   </Link>
                   <button
                     onClick={() => setStep("payment")}
                     className="bg-[#4E0707] hover:bg-[#3D0505] text-white font-bold py-3 px-6 rounded-xl text-sm"
                   >
-                    ไปที่การชำระเงิน →
+                    ชำระเงิน →
                   </button>
                 </div>
               </div>

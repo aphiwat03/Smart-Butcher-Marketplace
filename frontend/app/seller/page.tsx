@@ -224,10 +224,10 @@ export default function SellerDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-[#4E0707] mb-2">
+        <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1 md:mb-2">
           ยินดีต้อนรับ {data.storeName}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm md:text-base text-gray-600">
           จัดการร้านค้าและติดตามยอดขายของคุณ · ยอดคงเหลือ{" "}
           <span className="font-semibold text-[#B4915B]">
             {formatCurrency(data.balance)}
@@ -236,20 +236,20 @@ export default function SellerDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+              className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">
+                  <p className="text-gray-600 text-xs md:text-sm font-medium mb-1">
                     {stat.label}
                   </p>
-                  <p className="text-2xl font-bold text-[#4E0707]">
+                  <p className="text-lg md:text-2xl font-bold text-[#4E0707]">
                     {stat.value}
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export default function SellerDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-bold text-[#4E0707] mb-4">Sales Trend</h2>
+          <h2 className="text-base md:text-lg font-bold text-[#4E0707] mb-3 md:mb-4">Sales Trend</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data.charts}>
               <CartesianGrid strokeDasharray="3 3" />

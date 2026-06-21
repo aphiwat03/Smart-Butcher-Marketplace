@@ -182,23 +182,23 @@ export default function Home() {
     <main>
       {/* 2. HERO SECTION */}
       <section
-        className="relative h-150 flex items-center justify-center text-center text-white bg-cover bg-center"
+        className="relative h-[60vh] md:h-150 flex items-center justify-center text-center text-white bg-cover bg-center"
         style={{
           backgroundImage: 'url("/picture/hero-bg.jpg")',
         }}
       >
-        <div className="max-w-2xl mx-auto px-20 bg-white/10 backdrop-blur-md p-20">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <Beef className="w-12 h-12 text-[#4E0707]" strokeWidth={2} />
-            <h2 className="text-5xl font-extrabold">Meat Excellence</h2>
+        <div className="max-w-2xl mx-auto px-6 py-10 md:px-20 bg-white/10 backdrop-blur-md md:p-20">
+          <div className="flex items-center justify-center space-x-3 md:space-x-4 mb-3 md:mb-4">
+            <Beef className="w-8 h-8 md:w-12 md:h-12 text-[#4E0707]" strokeWidth={2} />
+            <h2 className="text-3xl md:text-5xl font-extrabold">Meat Excellence</h2>
           </div>
-          <p className="text-lg mb-8 text-gray-100">
+          <p className="text-sm md:text-lg mb-6 md:mb-8 text-gray-100">
             คัดสรรเฉพาะเนื้อเกรดดีที่สุดเพื่อมื้อพิเศษของคุณ
           </p>
           <button
             type="button"
             onClick={scrollToCategories}
-            className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-10 py-1 rounded-sm font-bold text-lg transition-colors cursor-pointer"
+            className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-6 py-1 md:px-10 rounded-sm font-bold text-base md:text-lg transition-colors cursor-pointer"
           >
             Shop Now
           </button>
@@ -206,9 +206,9 @@ export default function Home() {
       </section>
 
       {/* 3. OUR Category SECTION */}
-      <section id="categories" className="scroll-mt-24 py-16 px-6 bg-white">
+      <section id="categories" className="scroll-mt-24 py-10 px-4 md:py-16 md:px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
             Category
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
@@ -216,7 +216,7 @@ export default function Home() {
               <Link
                 key={category.id}
                 href={`/shop?category=${encodeURIComponent(category.name)}`}
-                className="block relative w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
+                className="block relative w-full sm:w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
               >
                 <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
                   <img
@@ -238,12 +238,12 @@ export default function Home() {
       </section>
 
       {/* 4. PROMOTION SECTION */}
-      <section id="Promotion" className="py-16 px-6 bg-gray-50">
+      <section id="Promotion" className="py-10 px-4 md:py-16 md:px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Column */}
             <div>
-              <h2 className="text-4xl font-bold text-[#4E0707] mb-8">
+              <h2 className="text-2xl md:text-4xl font-bold text-[#4E0707] mb-4 md:mb-8">
                 The Finest Cuts for You
               </h2>
               <ul className="space-y-6 text-gray-700">
@@ -291,9 +291,9 @@ export default function Home() {
       </section>
 
       {/* 5. TESTIMONIALS SECTION */}
-      <section id="Testimonials" className="py-16 px-6 bg-[#E1E1E1]">
+      <section id="Testimonials" className="py-10 px-4 md:py-16 md:px-6 bg-[#E1E1E1]">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
             What Our Customers Say
           </h2>
 
@@ -307,7 +307,7 @@ export default function Home() {
             </button>
 
             {/* Testimonial Card */}
-            <div className="flex-1 mx-6 bg-white rounded-lg shadow-lg p-8 max-w-2xl">
+            <div className="flex-1 mx-2 md:mx-6 bg-white rounded-lg shadow-lg p-4 md:p-8 max-w-2xl">
               <div className="flex items-center space-x-4 mb-4">
                 <img
                   src={testimonials[currentTestimonial].image}
@@ -315,7 +315,7 @@ export default function Home() {
                   className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
-                  <h3 className="font-bold text-lg text-[#4E0707]">
+                  <h3 className="font-bold text-sm md:text-lg text-[#4E0707]">
                     {testimonials[currentTestimonial].name}
                   </h3>
                   <div className="flex items-center space-x-1">
@@ -331,7 +331,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <p className="text-gray-700 text-lg italic">
+              <p className="text-gray-700 text-sm md:text-lg italic">
                 &quot;{testimonials[currentTestimonial].comment}&quot;
               </p>
             </div>
@@ -362,9 +362,9 @@ export default function Home() {
       </section>
 
       {/* 6. POPULAR PRODUCTS SECTION */}
-      <section id="products" className="py-16 px-6 bg-white">
+      <section id="products" className="py-10 px-4 md:py-16 md:px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
             Popular Products
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -372,7 +372,7 @@ export default function Home() {
               <Link
                 key={product.id}
                 href={`/shop?q=${encodeURIComponent(product.name)}`}
-                className="block relative w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
+                className="block relative w-full sm:w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
               >
                 <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
                   <img

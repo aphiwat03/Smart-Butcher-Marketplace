@@ -19,7 +19,7 @@ export default function SellerLayout({ children }: SellerLayoutProps) {
 
         {/* Content Area */}
         <div className="flex-1">
-          <div className="p-6 lg:p-8">{children}</div>
+          <div className="p-4 lg:p-8">{children}</div>
         </div>
       </main>
     </div>

@@ -111,7 +111,7 @@ export default async function ShopPage({
   const title = selectedCategory || keyword || "สินค้าทั้งหมด";
   const currentSelectedMaxPrice = params.maxPrice ?? maxPriceLimit.toString();
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <form
           action="/shop"

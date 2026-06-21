@@ -106,10 +106,10 @@ export default function AdminDashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between gap-4 -mx-6 -mt-6 mb-8 bg-white border-b border-gray-200 px-6 py-4 lg:px-8">
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 -mx-4 -mt-14 lg:-mx-6 lg:-mt-6 mb-6 md:mb-8 bg-white border-b border-gray-200 px-4 py-3 lg:px-8 lg:py-4 pt-14 lg:pt-4">
         <div>
-          <h1 className="text-4xl font-bold text-[#4E0707] mb-2">Dashboard</h1>
-          <p className="text-gray-500">ยินดีต้อนรับเข้าสู่ระบบจัดการสินค้า</p>
+          <h1 className="text-2xl md:text-4xl font-bold text-[#4E0707] mb-1 md:mb-2">Dashboard</h1>
+          <p className="text-sm md:text-base text-gray-500">ยินดีต้อนรับเข้าสู่ระบบจัดการสินค้า</p>
         </div>
       </div>
 
@@ -120,21 +120,21 @@ export default function AdminDashboard() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-card border border-border rounded-lg p-6 hover:shadow-lg transition-shadow"
+            className="bg-card border border-border rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm mb-1">
+                <p className="text-muted-foreground text-xs md:text-sm mb-1">
                   {stat.title}
                 </p>
                 {isLoading ? (
                   <div className="h-8 w-20 animate-pulse rounded bg-muted" />
                 ) : (
-                  <p className="text-3xl font-bold text-foreground">
+                  <p className="text-xl md:text-3xl font-bold text-foreground">
                     {stat.value}
                   </p>
                 )}

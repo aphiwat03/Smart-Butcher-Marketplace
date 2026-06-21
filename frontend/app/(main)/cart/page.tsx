@@ -57,93 +57,156 @@ function CartItemRow({
   };
 
   return (
-    <div
-      className={`grid ${GRID_COLS} items-center gap-4 py-4 border-b border-gray-100 last:border-0 overflow-hidden`}
-    >
-      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
-        {item.imageUrl ? (
-          <Image
-            src={item.imageUrl}
-            alt={item.name}
-            width={80}
-            height={80}
-            className="object-cover w-full h-full"
-          />
-        ) : (
-          <span className="text-3xl">🥩</span>
-        )}
-      </div>
+    <>
+      {/* Desktop Grid View */}
+      <div
+        className={`hidden lg:grid ${GRID_COLS} items-center gap-4 py-4 border-b border-gray-100 last:border-0 overflow-hidden`}
+      >
+        <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+          {item.imageUrl ? (
+            <Image
+              src={item.imageUrl}
+              alt={item.name}
+              width={80}
+              height={80}
+              className="object-cover w-full h-full"
+            />
+          ) : (
+            <span className="text-3xl">🥩</span>
+          )}
+        </div>
 
-      <div className="flex flex-col gap-1 min-w-0 overflow-hidden">
-        <p className="text-xs text-[#B4915B] font-semibold truncate">
-          {item.category}
-        </p>
-        <Link
-          href={`/product/${item.id}`}
-          className="font-bold text-[#4E0707] hover:underline leading-snug line-clamp-2"
-        >
-          {item.name}
-        </Link>
-        <p className="text-xs text-gray-400 truncate">{item.store}</p>
-      </div>
-
-      {/* Price */}
-      <div className="text-center overflow-hidden">
-        <p className="text-sm font-semibold text-gray-700 tabular-nums truncate">
-          ฿{item.price.toLocaleString()}
-        </p>
-      </div>
-
-      {/* Quantity stepper */}
-      <div className="overflow-hidden w-full">
-        <div className="flex items-center justify-center gap-2">
-          <button
-            onClick={() => onQuantityChange(item.id, item.quantity - 1)}
-            disabled={item.quantity <= 1}
-            className="w-7 h-7 flex-none rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#4E0707] hover:text-[#4E0707] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        <div className="flex flex-col gap-1 min-w-0 overflow-hidden">
+          <p className="text-xs text-[#B4915B] font-semibold truncate">
+            {item.category}
+          </p>
+          <Link
+            href={`/product/${item.id}`}
+            className="font-bold text-[#4E0707] hover:underline leading-snug line-clamp-2"
           >
-            <Minus size={12} />
-          </button>
+            {item.name}
+          </Link>
+          <p className="text-xs text-gray-400 truncate">{item.store}</p>
+        </div>
 
-          <input
-            type="number"
-            min="1"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onBlur={handleBlur}
-            disabled={isUpdating}
-            className={`w-10 text-center font-bold text-[#4E0707] bg-transparent outline-none focus:ring-1 focus:ring-gray-200 rounded 
-              [-moz-appearance:_textfield] [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none 
-              [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none 
-              transition-all ${isUpdating ? "opacity-50" : "opacity-100"}`}
-          />
+        {/* Price */}
+        <div className="text-center overflow-hidden">
+          <p className="text-sm font-semibold text-gray-700 tabular-nums truncate">
+            ฿{item.price.toLocaleString()}
+          </p>
+        </div>
 
+        {/* Quantity stepper */}
+        <div className="overflow-hidden w-full">
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+              disabled={item.quantity <= 1}
+              className="w-7 h-7 flex-none rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#4E0707] hover:text-[#4E0707] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <Minus size={12} />
+            </button>
+
+            <input
+              type="number"
+              min="1"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={handleBlur}
+              disabled={isUpdating}
+              className={`w-10 text-center font-bold text-[#4E0707] bg-transparent outline-none focus:ring-1 focus:ring-gray-200 rounded 
+                [-moz-appearance:_textfield] [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none 
+                [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none 
+                transition-all ${isUpdating ? "opacity-50" : "opacity-100"}`}
+            />
+
+            <button
+              onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+              className="w-7 h-7 flex-none rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#4E0707] hover:text-[#4E0707] transition-colors"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* Total */}
+        <div className="text-right overflow-hidden">
+          <p className="font-bold tabular-nums text-[#4E0707] truncate">
+            ฿{total.toLocaleString()}
+          </p>
+        </div>
+
+        {/* Delete */}
+        <div className="flex justify-center">
           <button
-            onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-            className="w-7 h-7 flex-none rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#4E0707] hover:text-[#4E0707] transition-colors"
+            onClick={() => onRemove(item.id)}
+            className="w-8 h-8 flex-none rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
           >
-            <Plus size={12} />
+            <Trash2 size={15} />
           </button>
         </div>
       </div>
 
-      {/* Total */}
-      <div className="text-right overflow-hidden">
-        <p className="font-bold tabular-nums text-[#4E0707] truncate">
-          ฿{total.toLocaleString()}
-        </p>
+      {/* Mobile Card View */}
+      <div className="flex lg:hidden gap-3 py-4 border-b border-gray-100 last:border-0">
+        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
+          {item.imageUrl ? (
+            <Image
+              src={item.imageUrl}
+              alt={item.name}
+              width={64}
+              height={64}
+              className="object-cover w-full h-full"
+            />
+          ) : (
+            <span className="text-2xl">🥩</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-[#B4915B] font-semibold truncate">
+            {item.category}
+          </p>
+          <Link
+            href={`/product/${item.id}`}
+            className="font-bold text-sm text-[#4E0707] hover:underline leading-snug line-clamp-1"
+          >
+            {item.name}
+          </Link>
+          <p className="text-xs text-gray-400 truncate">{item.store}</p>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                disabled={item.quantity <= 1}
+                className="w-6 h-6 flex-none rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#4E0707] hover:text-[#4E0707] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <Minus size={10} />
+              </button>
+              <span className="text-sm font-bold text-[#4E0707] tabular-nums w-6 text-center">
+                {item.quantity}
+              </span>
+              <button
+                onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                className="w-6 h-6 flex-none rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#4E0707] hover:text-[#4E0707] transition-colors"
+              >
+                <Plus size={10} />
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-sm tabular-nums text-[#4E0707]">
+                ฿{total.toLocaleString()}
+              </p>
+              <button
+                onClick={() => onRemove(item.id)}
+                className="w-7 h-7 flex-none rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* Delete */}
-      <div className="flex justify-center">
-        <button
-          onClick={() => onRemove(item.id)}
-          className="w-8 h-8 flex-none rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-        >
-          <Trash2 size={15} />
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -299,9 +362,9 @@ export default function CartPage() {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <div className="flex items-start justify-between gap-3 mb-8">
-        <h1 className="text-2xl font-bold text-[#4E0707]">
+    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
+      <div className="flex items-start justify-between gap-3 mb-4 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-[#4E0707]">
           ตะกร้าสินค้า
           {cartItems.length > 0 && (
             <span className="ml-2 text-sm font-normal text-gray-400">
@@ -324,7 +387,7 @@ export default function CartPage() {
         <div className="lg:col-span-3">
           <div className="rounded-xl border border-gray-200 bg-white px-6 ">
             <div
-              className={`grid ${GRID_COLS} gap-4 py-3 border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wider`}
+              className={`hidden lg:grid ${GRID_COLS} gap-4 py-3 border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wider`}
             >
               <div />
               <div>สินค้า</div>

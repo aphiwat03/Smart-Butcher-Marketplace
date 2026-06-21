@@ -6,24 +6,27 @@ import { API_URL } from "@/lib/api";
 
 export default function SellerProducts() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [productData, setProductData] = useState({
     name: "",
     description: "",
     price: 0,
     stockQuantity: 0,
   });
+  const itemsPerPage = 8;
 
-  const fetchMyProducts = async () => {
+  const fetchMyProducts = async (page = 1) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_URL}/stores/products/my-store`, {
+      const response = await fetch(`${API_URL}/stores/products/my-store?page=${page}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -32,7 +35,14 @@ export default function SellerProducts() {
       });
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
-      setProducts(data);
+      // Handle backward compatibility just in case data is array
+      if (Array.isArray(data)) {
+        setProducts(data);
+        setTotalPages(1);
+      } else {
+        setProducts(data.data || []);
+        setTotalPages(data.meta?.totalPages || 1);
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
@@ -52,8 +62,11 @@ export default function SellerProducts() {
     };
 
     fetchCategories();
-    fetchMyProducts();
   }, []);
+
+  useEffect(() => {
+    fetchMyProducts(currentPage);
+  }, [currentPage]);
 
   const handleSaveProduct = async () => {
     if (!productData.name || !categoryId) {
@@ -94,7 +107,7 @@ export default function SellerProducts() {
         setCategoryId(null);
         setImageFile(null);
 
-        fetchMyProducts();
+        fetchMyProducts(currentPage);
       } else {
         const errorData = await response.json();
         alert(`บันทึกไม่สำเร็จ: ${errorData.message}`);
@@ -125,16 +138,18 @@ export default function SellerProducts() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-[#4E0707] mb-1">
+          <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">
             My Products
           </h1>
-          <p className="text-gray-600">Manage your product listings</p>
+          <p className="text-sm md:text-base text-gray-600">
+            Manage your product listings
+          </p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+          className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm md:text-base transition-colors self-start sm:self-auto"
         >
           <Plus className="w-5 h-5" />
           Add Product
@@ -359,12 +374,76 @@ export default function SellerProducts() {
                   </tr>
                 ))}
               </tbody>
+              <tfoot></tfoot>
             </table>
           )}
         </div>
         {!loading && filteredProducts.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No products found.
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+            <div className="flex justify-between flex-1 sm:hidden">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing page <span className="font-medium">{currentPage}</span> of{" "}
+                  <span className="font-medium">{totalPages}</span>
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Previous</span>
+                    &laquo;
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i + 1}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === i + 1
+                          ? "z-10 bg-[#B4915B] border-[#B4915B] text-white"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="sr-only">Next</span>
+                    &raquo;
+                  </button>
+                </nav>
+              </div>
+            </div>
           </div>
         )}
       </div>

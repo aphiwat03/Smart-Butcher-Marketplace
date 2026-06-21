@@ -162,12 +162,12 @@ export default function AdminUsersPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between gap-4 -mx-6 -mt-6 bg-white border-b border-gray-200 px-6 py-4 lg:px-8">
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 -mx-4 -mt-14 lg:-mx-6 lg:-mt-6 bg-white border-b border-gray-200 px-4 py-3 lg:px-8 lg:py-4 pt-14 lg:pt-4">
         <div>
-          <h1 className="text-4xl font-bold text-[#4E0707] mb-2">
+          <h1 className="text-2xl md:text-4xl font-bold text-[#4E0707] mb-1 md:mb-2">
             จัดการผู้ใช้งาน
           </h1>
-          <p className="text-gray-500">รายชื่อผู้ใช้งานทั้งหมดในระบบ</p>
+          <p className="text-sm md:text-base text-gray-500">รายชื่อผู้ใช้งานทั้งหมดในระบบ</p>
         </div>
       </div>
 

@@ -202,19 +202,19 @@ export default function SellerOrders() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-[#4E0707] mb-1">My Orders</h1>
-          <p className="text-gray-600">Manage customer orders and shipments</p>
+          <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">My Orders</h1>
+          <p className="text-sm md:text-base text-gray-600">Manage customer orders and shipments</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+        <button className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm md:text-base transition-colors self-start sm:self-auto">
           <Download className="w-5 h-5" />
           Export
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         {stats.map((stat, index) => (
           <div key={index} className="bg-white rounded-lg shadow-md p-4">
             <p className="text-gray-600 text-sm mb-1">{stat.label}</p>
@@ -267,7 +267,7 @@ export default function SellerOrders() {
               key={order.id}
               className="bg-white rounded-lg shadow-md p-6 border-l-4 border-[#B4915B] hover:shadow-lg transition-shadow"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4">
                 {/* Order Info */}
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Order ID</p>
@@ -308,7 +308,7 @@ export default function SellerOrders() {
 
               {/* Customer Details */}
               <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Customer</p>
                     <p className="font-semibold text-[#4E0707]">

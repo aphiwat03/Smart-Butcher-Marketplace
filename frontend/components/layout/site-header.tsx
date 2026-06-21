@@ -3,12 +3,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 
 export function SiteHeader() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<{
     fullName: string;
     avatarUrl?: string;
@@ -70,11 +71,24 @@ export function SiteHeader() {
 
     const keyword = searchTerm.trim();
     router.push(keyword ? `/shop?q=${encodeURIComponent(keyword)}` : "/shop");
+    setMobileMenuOpen(false);
   };
+
+  const categories = [
+    { name: "เนื้อสำหรับสเต็ก", slug: "เนื้อสำหรับสเต็ก" },
+    { name: "เนื้อวากิวคัดพิเศษ", slug: "เนื้อวากิวคัดพิเศษ" },
+    { name: "เนื้อดรายเอจ", slug: "เนื้อดรายเอจ" },
+    { name: "เนื้อแปรรูป", slug: "เนื้อแปรรูป" },
+    { name: "เนื้อบด", slug: "เนื้อบด" },
+    {
+      name: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
+      slug: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
+    },
+  ];
 
   return (
     <header className="bg-[#4E0707] text-white sticky top-0 z-50 shadow-lg ">
-      <nav className="relative max-w-7xl mx-auto flex justify-between items-center px-6 py-4 ">
+      <nav className="relative max-w-7xl mx-auto flex justify-between items-center px-4 py-3 md:px-6 md:py-4 ">
         {/* Left: Logo */}
         <div className="flex-shrink-0 ">
           <Image
@@ -86,8 +100,8 @@ export function SiteHeader() {
           />
         </div>
 
-        {/* Center: Navigation Menu */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-8">
+        {/* Center: Navigation Menu — Desktop only */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center space-x-8">
           <Link
             href="/"
             className="hover:text-[#B4915B] transition-colors font-medium"
@@ -116,17 +130,7 @@ export function SiteHeader() {
 
             {/* Dropdown Items */}
             <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover/shop:visible opacity-0 group-hover/shop:opacity-100 transition-all duration-200 border border-gray-100">
-              {[
-                { name: "เนื้อสำหรับสเต็ก", slug: "เนื้อสำหรับสเต็ก" },
-                { name: "เนื้อวากิวคัดพิเศษ", slug: "เนื้อวากิวคัดพิเศษ" },
-                { name: "เนื้อดรายเอจ", slug: "เนื้อดรายเอจ" },
-                { name: "เนื้อแปรรูป", slug: "เนื้อแปรรูป" },
-                { name: "เนื้อบด", slug: "เนื้อบด" },
-                {
-                  name: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
-                  slug: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
-                },
-              ].map((category) => (
+              {categories.map((category) => (
                 <Link
                   key={category.slug}
                   href={`/shop?category=${category.slug}`}
@@ -146,8 +150,8 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        {/* Right: Search, Profile, Cart */}
-        <div className="flex items-center justify-end space-x-4 sm:min-w-[18rem]">
+        {/* Right: Search, Profile, Cart + Mobile hamburger */}
+        <div className="flex items-center justify-end space-x-3 md:space-x-4 sm:min-w-[18rem]">
           <form
             onSubmit={handleSearch}
             className="relative hidden sm:block w-full max-w-[15rem]"
@@ -182,7 +186,8 @@ export function SiteHeader() {
             )}
           </Link>
 
-          <div className="relative group">
+          {/* User dropdown — Desktop */}
+          <div className="relative group hidden md:block">
             <button className="hover:text-[#B4915B] transition-colors p-2 flex items-center">
               <User size={20} />
             </button>
@@ -263,8 +268,151 @@ export function SiteHeader() {
               )}
             </div>
           </div>
+
+          {/* Mobile Hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 hover:text-[#B4915B] transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-white/10 bg-[#4E0707] px-4 pb-4 space-y-3">
+          {/* Mobile Search */}
+          <form onSubmit={handleSearch} className="relative sm:hidden">
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="ค้นหาสินค้า..."
+              className="h-10 w-full rounded-lg bg-white/10 px-4 py-2 pr-10 text-sm text-white placeholder-gray-300 outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#B4915B] [&::-webkit-search-cancel-button]:appearance-none"
+            />
+            <button
+              type="submit"
+              aria-label="Search products"
+              className="absolute right-3 top-2.5 text-white hover:text-[#B4915B]"
+            >
+              <Search size={18} />
+            </button>
+          </form>
+
+          {/* Navigation Links */}
+          <div className="flex flex-col space-y-1">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              HOME
+            </Link>
+            <Link
+              href="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              SHOP
+            </Link>
+            {/* Category sub-links */}
+            <div className="pl-4 space-y-1">
+              {categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/shop?category=${category.slug}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-1.5 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              CONTACT US
+            </Link>
+          </div>
+
+          {/* Mobile User Section */}
+          <div className="border-t border-white/10 pt-3 space-y-1">
+            {isLoading ? (
+              <p className="px-3 py-2 text-sm text-gray-300">กำลังตรวจสอบ...</p>
+            ) : !isLoggedIn ? (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                เข้าสู่ระบบ / สมัครสมาชิก
+              </Link>
+            ) : (
+              <>
+                <div className="px-3 py-2 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#B4915B]/20 flex items-center justify-center border border-[#B4915B]/30 overflow-hidden">
+                    <img
+                      src={user?.avatarUrl}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm font-medium truncate">
+                    {user?.fullName}
+                  </span>
+                </div>
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                >
+                  โปรไฟล์ของคุณ
+                </Link>
+                <Link
+                  href="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                >
+                  รายการคำสั่งซื้อ
+                </Link>
+                {role === "SELLER" || role === "ADMIN" ? (
+                  <Link
+                    href="/seller"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                  >
+                    Seller Center
+                  </Link>
+                ) : (
+                  <Link
+                    href="/create-store"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                  >
+                    เปิดร้านค้าฟรี
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("accessToken");
+                    setUser(null);
+                    setToken(null);
+                    setMobileMenuOpen(false);
+                    router.push("/");
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-300 hover:bg-red-900/30 transition-colors"
+                >
+                  ออกจากระบบ
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
