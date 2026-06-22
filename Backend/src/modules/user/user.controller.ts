@@ -12,12 +12,19 @@ import {
 import { UsersService } from './user.service';
 import { CreateUserAddressDto } from './dto/create-user-address.dto';
 import { UpdateUserAddressDto } from './dto/update-user-address.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Patch('profile')
+  updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+    const userId = req.user.userId;
+    return this.usersService.updateProfile(userId, dto);
+  }
 
   @Post('address')
   createAddress(@Req() req: any, @Body() dto: CreateUserAddressDto) {

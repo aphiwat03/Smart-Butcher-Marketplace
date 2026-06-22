@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma-db/prisma.service';
 import { CreateUserAddressDto } from './dto/create-user-address.dto';
 import { UpdateUserAddressDto } from './dto/update-user-address.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -47,6 +48,36 @@ export class UsersService {
 
     return {
       message: 'Password changed successfully',
+      user: updatedUser,
+    };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    if (dto.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (existingUser && existingUser.id !== userId) {
+        throw new BadRequestException('อีเมลนี้ถูกใช้งานแล้ว');
+      }
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.fullName && { fullName: dto.fullName }),
+        ...(dto.email && { email: dto.email }),
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+      },
+    });
+
+    return {
+      message: 'อัปเดตโปรไฟล์สำเร็จ',
       user: updatedUser,
     };
   }

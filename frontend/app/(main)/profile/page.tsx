@@ -1,72 +1,145 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { UserProfile } from "@/types/profile";
+import { API_URL } from "@/lib/api";
+import { toast } from "react-toastify";
 
 export default function ProfilePage() {
-  // Mock initial data
-  const [profile, setProfile] = useState<UserProfile>({
-    id: 1,
-    fullName: "สมชาย ใจดี",
-    email: "somchai@example.com",
-    avatar: "/mock/category/วากิวคัดพิเศษ.webp",
-    phone: "089-123-4567",
-    address: "123 ถนนประเทศไทย กรุงเทพ",
-  });
-
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<UserProfile>(profile);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [formData, setFormData] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          avatar: reader.result as string,
-        }));
+  const fetchProfileData = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch User Info
+      const userRes = await fetch(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!userRes.ok) throw new Error("Failed to fetch user");
+      const userData = await userRes.json();
+
+      // Fetch Default Address
+      const addressRes = await fetch(`${API_URL}/users/address`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const addresses = addressRes.ok ? await addressRes.json() : [];
+      const defaultAddress = addresses.length > 0 ? addresses[0] : null;
+
+      const loadedProfile: UserProfile = {
+        id: userData.userId || userData.id,
+        fullName: userData.fullName || "",
+        email: userData.email || "",
+        addressId: defaultAddress?.id,
+        receiverName: defaultAddress?.receiverName || "",
+        phone: defaultAddress?.phoneNumber || "",
+        addressLine: defaultAddress?.addressLine || "",
+        city: defaultAddress?.city || "",
+        postalCode: defaultAddress?.postalCode || "",
       };
-      reader.readAsDataURL(file);
+
+      setProfile(loadedProfile);
+      setFormData(loadedProfile);
+    } catch (error) {
+      console.error(error);
+      toast.error("ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => (prev ? { ...prev, [name]: value } : null));
+  };
+
   const handleSave = async () => {
+    if (!formData) return;
     try {
-      setLoading(true);
-      setMessage(null);
+      setSaving(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) throw new Error("No token");
 
-      // Mock API call - simulate saving
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Update Profile (Name & Email)
+      const profileRes = await fetch(`${API_URL}/users/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+        }),
+      });
 
-      // Update profile with form data
-      setProfile(formData);
+      if (!profileRes.ok) {
+        const errorData = await profileRes.json();
+        throw new Error(errorData.message || "อัปเดตโปรไฟล์ไม่สำเร็จ");
+      }
+
+      // Update or Create Address
+      const addressPayload = {
+        title: "ที่อยู่จัดส่งเริ่มต้น",
+        receiverName: formData.receiverName,
+        phoneNumber: formData.phone,
+        addressLine: formData.addressLine,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        isDefault: true,
+      };
+
+      let addressRes;
+      if (formData.addressId) {
+        // Update existing address
+        addressRes = await fetch(`${API_URL}/users/address/${formData.addressId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(addressPayload),
+        });
+      } else {
+        // Create new address
+        addressRes = await fetch(`${API_URL}/users/address`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(addressPayload),
+        });
+      }
+
+      if (!addressRes.ok) {
+        throw new Error("อัปเดตที่อยู่ไม่สำเร็จ");
+      }
+
+      await fetchProfileData(); // Reload data
       setIsEditing(false);
-      setMessage({ type: "success", text: "บันทึกข้อมูลสำเร็จ" });
-
-      // Clear message after 3 seconds
-      setTimeout(() => setMessage(null), 3000);
-    } catch (error) {
-      setMessage({ type: "error", text: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" });
+      toast.success("บันทึกข้อมูลและตั้งค่าที่อยู่เริ่มต้นสำเร็จ");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -75,203 +148,221 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        กำลังโหลดข้อมูล...
+      </div>
+    );
+  }
+
+  if (!profile || !formData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        ไม่พบข้อมูลผู้ใช้งาน กรุณาเข้าสู่ระบบใหม่
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
+      <div className="max-w-3xl mx-auto px-4">
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">โปรไฟล์ของฉัน</h1>
-          <p className="text-gray-600 mt-2">
-            จัดการข้อมูลส่วนตัวและการตั้งค่าบัญชีของคุณ
-          </p>
+        <div className="mb-8 flex justify-between items-end">
+          <div>
+            <h1 className="text-3xl font-bold text-[#4E0707]">โปรไฟล์ของฉัน</h1>
+            <p className="text-gray-600 mt-2">
+              จัดการข้อมูลส่วนตัวและที่อยู่จัดส่งเริ่มต้นของคุณ
+            </p>
+          </div>
+          {!isEditing && (
+            <Button
+              onClick={() => setIsEditing(true)}
+              className="bg-[#B4915B] text-white hover:bg-[#8e7042] transition-colors"
+            >
+              แก้ไขข้อมูล
+            </Button>
+          )}
         </div>
 
-        {/* Success/Error Message */}
-        {message && (
-          <div
-            className={`mb-6 p-4 rounded-lg ${
-              message.type === "success"
-                ? "bg-green-50 border border-green-200 text-green-800"
-                : "bg-red-50 border border-red-200 text-red-800"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        {/* Profile Card */}
-        <Card className="bg-white p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Left - Avatar Section */}
-            <div className="flex flex-col items-center md:col-span-1">
-              <div className="relative mb-6">
-                <img
-                  src={formData.avatar}
-                  alt="Profile"
-                  className="w-40 h-40 rounded-full object-cover border-4 border-red-200"
-                />
-              </div>
-
-              {isEditing && (
-                <label className="cursor-pointer">
-                  <div className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-center">
-                    เปลี่ยนรูป
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
+        <div className="grid gap-6">
+          {/* Account Info Card */}
+          <Card className="bg-white p-6 border-gray-100 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">
+              ข้อมูลบัญชี
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  ชื่อผู้ใช้งาน
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="fullName"
+                    type="text"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="ชื่อของคุณ"
                   />
-                </label>
-              )}
-            </div>
-
-            {/* Right - Form Section */}
-            <div className="md:col-span-2">
-              <div className="space-y-6">
-                {/* Full Name */}
-                <div>
-                  <Label
-                    htmlFor="fullName"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    ชื่อเต็ม
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="กรุณากรอกชื่อเต็ม"
-                    />
-                  ) : (
-                    <div className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                      {profile.fullName}
-                    </div>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <Label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    อีเมล
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="กรุณากรอกอีเมล"
-                    />
-                  ) : (
-                    <div className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                      {profile.email}
-                    </div>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <Label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    เบอร์โทรศัพท์
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone || ""}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="กรุณากรอกเบอร์โทรศัพท์"
-                    />
-                  ) : (
-                    <div className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                      {profile.phone || "-"}
-                    </div>
-                  )}
-                </div>
-
-                {/* Address */}
-                <div>
-                  <Label
-                    htmlFor="address"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    ที่อยู่
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="address"
-                      name="address"
-                      type="text"
-                      value={formData.address || ""}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                      placeholder="กรุณากรอกที่อยู่"
-                    />
-                  ) : (
-                    <div className="px-4 py-2 bg-gray-50 rounded-lg text-gray-900">
-                      {profile.address || "-"}
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-4 pt-6">
-                  {!isEditing ? (
-                    <Button
-                      onClick={() => {
-                        setFormData(profile);
-                        setIsEditing(true);
-                      }}
-                      className="flex-1 bg-red-600 text-white hover:bg-red-700 py-2 rounded-lg transition-colors"
-                    >
-                      แก้ไขข้อมูล
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="flex-1 bg-green-600 text-white hover:bg-green-700 py-2 rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        {loading ? "กำลังบันทึก..." : "บันทึก"}
-                      </Button>
-                      <Button
-                        onClick={handleCancel}
-                        className="flex-1 bg-gray-400 text-white hover:bg-gray-500 py-2 rounded-lg transition-colors"
-                      >
-                        ยกเลิก
-                      </Button>
-                    </>
-                  )}
-                </div>
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.fullName || "-"}
+                  </div>
+                )}
+              </div>
+              <div>
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  อีเมล
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="อีเมลของคุณ"
+                  />
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.email || "-"}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        {/* Additional Info */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 หมายเหตุ</h3>
-          <p className="text-blue-800 text-sm">
-            นี่คือเวอร์ชัน Mock สำหรับการทดสอบ
-            ข้อมูลจะไม่ถูกบันทึกลงฐานข้อมูลจริง
-          </p>
+          {/* Shipping Address Card */}
+          <Card className="bg-white p-6 border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+              <h2 className="text-lg font-bold text-gray-800">ที่อยู่จัดส่งเริ่มต้น (Default)</h2>
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                ใช้สำหรับสั่งซื้อสินค้า
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  ชื่อผู้รับ
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="receiverName"
+                    type="text"
+                    value={formData.receiverName || ""}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="ชื่อผู้รับสินค้า"
+                  />
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.receiverName || "-"}
+                  </div>
+                )}
+              </div>
+              <div>
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  เบอร์โทรศัพท์
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="phone"
+                    type="tel"
+                    value={formData.phone || ""}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="เบอร์โทรศัพท์"
+                  />
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.phone || "-"}
+                  </div>
+                )}
+              </div>
+
+              <div className="md:col-span-2">
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  ที่อยู่ (บ้านเลขที่, ซอย, ถนน)
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="addressLine"
+                    type="text"
+                    value={formData.addressLine || ""}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="รายละเอียดที่อยู่"
+                  />
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.addressLine || "-"}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  จังหวัด/อำเภอ
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="city"
+                    type="text"
+                    value={formData.city || ""}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="จังหวัด/อำเภอ"
+                  />
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.city || "-"}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium text-gray-600 mb-2">
+                  รหัสไปรษณีย์
+                </Label>
+                {isEditing ? (
+                  <Input
+                    name="postalCode"
+                    type="text"
+                    value={formData.postalCode || ""}
+                    onChange={handleInputChange}
+                    className="w-full focus-visible:ring-[#B4915B]"
+                    placeholder="รหัสไปรษณีย์"
+                  />
+                ) : (
+                  <div className="px-3 py-2 bg-gray-50 border border-transparent rounded-md text-gray-900 font-medium">
+                    {profile.postalCode || "-"}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+
+          {/* Action Buttons */}
+          {isEditing && (
+            <div className="flex gap-4 pt-4 justify-end">
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                className="px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                ยกเลิก
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="px-8 bg-[#4E0707] text-white hover:bg-[#3D0505] transition-colors disabled:opacity-50"
+              >
+                {saving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

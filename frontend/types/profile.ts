@@ -2,7 +2,10 @@ export interface UserProfile {
   id: number;
   fullName: string;
   email: string;
-  avatar: string;
+  addressId?: number;
+  receiverName?: string;
   phone?: string;
-  address?: string;
+  addressLine?: string;
+  city?: string;
+  postalCode?: string;
 }
