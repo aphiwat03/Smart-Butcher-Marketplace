@@ -4,22 +4,51 @@ import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import Swal from "sweetalert2";
 import { useCartStore } from "@/store/useCartStore";
 import { ArrowLeft } from "lucide-react";
+import ShopProductImage from "@/app/(main)/shop/ShopProductImage";
 import {
   MinusIcon,
   PlusIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import { ProductDetailProps } from "@/types/product";
+import { toast } from "react-toastify";
 
-export default function ProductClient({ product }: ProductDetailProps) {
+type Review = {
+  id: number;
+  point: number;
+  description: string | null;
+  createdAt: string;
+  user: { fullName: string };
+};
+
+export default function ProductClient({
+  product,
+  reviews = [],
+}: ProductDetailProps & { reviews?: Review[] }) {
   const router = useRouter();
   const token = localStorage.getItem("accessToken");
   const [quantity, setQuantity] = useState(1);
+  const [filterRating, setFilterRating] = useState<number | null>(null);
   const productId = product.id;
   const fetchCartCount = useCartStore((e) => e.fetchCartCount);
+
+  // Compute review stats from real data
+  const totalReviews = reviews.length;
+  const avgRating =
+    totalReviews > 0
+      ? reviews.reduce((sum, r) => sum + r.point, 0) / totalReviews
+      : 0;
+  const starCounts = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: reviews.filter((r) => r.point === star).length,
+  }));
+
+  const filteredReviews = filterRating === null ? reviews : reviews.filter(r => r.point === filterRating);
+
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -50,18 +79,13 @@ export default function ProductClient({ product }: ProductDetailProps) {
           router.push("/login");
         });
       } else if (response.ok) {
-        console.log("Add to cart: ", data);
+        toast.success("เพิ่มสินค้าลงตระกร้าสำเร็จ");
         fetchCartCount();
       } else if (!response.ok) {
-        console.log("ส่งไม่สำเร็จ");
+        toast.error("เพิ่มสินค้าลงตะกร้าไม่สำเร็จ");
       }
     } catch (error) {
-      Swal.fire({
-        title: "Add to Cart Error",
-        text: "เพิ่มข้อมูลลงตระดร้าไม่ได้",
-        icon: "warning",
-        confirmButtonColor: "#4E0707",
-      });
+      toast.error("เพิ่มข้อมูลลงตะกร้าไม่ได้");
     }
   };
 
@@ -86,27 +110,19 @@ export default function ProductClient({ product }: ProductDetailProps) {
             </Link>
           </div>
           <div className="aspect-[4/3] bg-gray-100 rounded-2xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
+            <ShopProductImage src={product.imageUrl} alt={product.name} />
           </div>
 
           <div className="grid grid-cols-4 gap-4">
-            <div className="aspect-square bg-gray-200 rounded-xl cursor-pointer border-2 border-[#B4915B] flex items-center justify-center overflow-hidden">
-              <img
-                src={product.imageUrl}
-                alt="thumb"
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-square bg-gray-200 rounded-xl cursor-pointer border-2 border-[#B4915B] flex items-center justify-center overflow-hidden relative">
+              <ShopProductImage src={product.imageUrl} alt="thumb" />
             </div>
           </div>
         </div>
 
         <div className="lg:col-span-2 flex flex-col justify-center">
           <Link href={`/store/${product.store.id}`}>
-            <span className="text-xs font-semibold text-[#B4915B] uppercase tracking-wider">
+            <span className="text-base font-semibold text-[#B4915B] uppercase tracking-wider">
               ร้านค้า: {product.store.name}
             </span>
           </Link>
@@ -114,15 +130,20 @@ export default function ProductClient({ product }: ProductDetailProps) {
             {product.name}
           </h1>
           <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
-            <div className="flex text-[#B4915B]">
-              <StarIcon className="size-4" />
-              <StarIcon className="size-4" />
-              <StarIcon className="size-4" />
-              <StarIcon className="size-4" />
-              <StarIcon className="size-4" />
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <StarIcon
+                  key={star}
+                  className={`size-4 ${
+                    star <= Math.round(avgRating)
+                      ? "text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
             </div>
             <span>
-              5.0 (รีวิว 128 รายการ) | หมวดหมู่: {product.category.name}
+              {avgRating > 0 ? avgRating.toFixed(1) : "0"} (รีวิว {totalReviews} รายการ) | หมวดหมู่: {product.category.name}
             </span>
           </div>
           <p className="text-gray-600 mt-6 leading-relaxed">
@@ -209,78 +230,105 @@ export default function ProductClient({ product }: ProductDetailProps) {
         </h2>
 
         <div className="bg-[#F9A6A6] rounded-2xl p-6 flex flex-col md:flex-row items-center gap-8 shadow-sm">
+          {/* Average Score */}
           <div className="flex flex-col items-center justify-center bg-white/60 py-4 px-8 rounded-xl min-w-[150px]">
-            <span className="text-5xl font-bold text-[#4E0707]">5.0</span>
-            <div className="flex text-[#B4915B] mt-2 gap-1">
+            <span className="text-5xl font-bold text-[#4E0707]">
+              {avgRating > 0 ? avgRating.toFixed(1) : "0"}
+            </span>
+            <div className="flex mt-2 gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon key={star} className="size-5" />
+                <StarIcon
+                  key={star}
+                  className={`size-5 ${
+                    star <= Math.round(avgRating)
+                      ? "text-yellow-400"
+                      : "text-gray-300"
+                  }`}
+                />
               ))}
             </div>
           </div>
 
+          {/* Star filter buttons */}
           <div className="flex flex-wrap gap-3 w-full">
-            <button className="px-5 py-2 bg-white text-[#4E0707] font-bold border-2 border-white rounded-lg shadow-sm">
-              ทั้งหมด (128)
+            <button 
+              onClick={() => setFilterRating(null)}
+              className={`px-5 py-2 font-bold rounded-lg shadow-sm transition-colors ${
+                filterRating === null
+                  ? "bg-white text-[#4E0707] border-2 border-white"
+                  : "bg-white/40 hover:bg-white/60 text-[#4E0707] border border-white/50"
+              }`}
+            >
+              ทั้งหมด ({totalReviews})
             </button>
-            <button className="px-5 py-2 bg-white/40 hover:bg-white/60 text-[#4E0707] font-medium border border-white/50 rounded-lg transition-colors">
-              5 ดาว (118)
-            </button>
-            <button className="px-5 py-2 bg-white/40 hover:bg-white/60 text-[#4E0707] font-medium border border-white/50 rounded-lg transition-colors">
-              4 ดาว (5)
-            </button>
-            <button className="px-5 py-2 bg-white/40 hover:bg-white/60 text-[#4E0707] font-medium border border-white/50 rounded-lg transition-colors">
-              3 ดาว (2)
-            </button>
-            <button className="px-5 py-2 bg-white/40 hover:bg-white/60 text-[#4E0707] font-medium border border-white/50 rounded-lg transition-colors">
-              2 ดาว (1)
-            </button>
-            <button className="px-5 py-2 bg-white/40 hover:bg-white/60 text-[#4E0707] font-medium border border-white/50 rounded-lg transition-colors">
-              1 ดาว (1)
-            </button>
+            {starCounts.map(({ star, count }) => (
+              <button
+                key={star}
+                onClick={() => setFilterRating(star)}
+                className={`px-5 py-2 font-medium rounded-lg shadow-sm transition-colors ${
+                  filterRating === star
+                    ? "bg-white text-[#4E0707] border-2 border-white"
+                    : "bg-white/40 hover:bg-white/60 text-[#4E0707] border border-white/50"
+                }`}
+              >
+                {star} ดาว ({count})
+              </button>
+            ))}
           </div>
         </div>
 
+        {/* Review list */}
         <div className="mt-8 space-y-8">
-          <div className="pb-8 border-b border-gray-100">
-            <div className="flex items-start gap-4">
-              <div className="size-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                <img
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=Pat`}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="flex-1">
-                <h4 className="font-bold text-[#4E0707]">Pat T.</h4>
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="flex text-[#B4915B]">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <StarIcon key={star} className="size-4" />
-                    ))}
-                  </div>
-                  <span className="text-xs text-gray-400">
-                    09 มิ.ย. 2026 14:30
-                  </span>
-                </div>
-
-                <p className="mt-4 text-gray-700 leading-relaxed">
-                  เนื้อคุณภาพดีมากครับ แพ็คมาอย่างดี ใส่เจลเย็นมาเต็มกล่อง
-                  เอามาทอดเนยกระเทียมหอมสุดๆ เนื้อนุ่มละลายในปาก
-                  แนะนำร้านนี้เลยครับ!
-                </p>
-
-                <div className="flex gap-3 mt-4">
-                  <div className="size-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-400 cursor-pointer hover:opacity-80 transition-opacity">
-                    รูป 1
-                  </div>
-                  <div className="size-24 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-400 cursor-pointer hover:opacity-80 transition-opacity">
-                    รูป 2
-                  </div>
-                </div>
-              </div>
+          {filteredReviews.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              {filterRating ? `ยังไม่มีรีวิว ${filterRating} ดาว` : "ยังไม่มีรีวิวสำหรับสินค้านี้"}
             </div>
-          </div>
+          ) : (
+            filteredReviews.map((review) => (
+              <div key={review.id} className="pb-8 border-b border-gray-100 last:border-0">
+                <div className="flex items-start gap-4">
+                  <div className="size-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                    <img
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(review.user.fullName)}`}
+                      alt={review.user.fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="flex-1">
+                    <h4 className="font-bold text-[#4E0707]">{review.user.fullName}</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <StarIcon
+                            key={star}
+                            className={`size-4 ${
+                              star <= review.point
+                                ? "text-yellow-400"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {new Date(review.createdAt).toLocaleDateString("th-TH", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+
+                    {review.description && (
+                      <p className="mt-4 text-gray-700 leading-relaxed">
+                        {review.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </main>

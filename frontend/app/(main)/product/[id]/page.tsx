@@ -7,9 +7,13 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const res = await fetch(`${API_URL}/users/products/${id}`);
 
-  if (!res.ok) {
+  const [productRes, reviewsRes] = await Promise.all([
+    fetch(`${API_URL}/users/products/${id}`, { cache: "no-store" }),
+    fetch(`${API_URL}/reviews/product/${id}`, { cache: "no-store" }),
+  ]);
+
+  if (!productRes.ok) {
     return (
       <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">
         ไม่พบข้อมูลสินค้า
@@ -17,7 +21,8 @@ export default async function ProductDetailPage({
     );
   }
 
-  const productData = await res.json();
-  console.log(productData);
-  return <ProductClient product={productData} />;
+  const productData = await productRes.json();
+  const reviewsData = reviewsRes.ok ? await reviewsRes.json() : [];
+
+  return <ProductClient product={productData} reviews={reviewsData} />;
 }
