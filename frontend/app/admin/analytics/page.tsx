@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
             {isLoading ? (
               <div className="h-full animate-pulse rounded-lg bg-muted" />
             ) : monthlySales.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={monthlySales}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="label" tickLine={false} axisLine={false} />

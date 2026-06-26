@@ -76,7 +76,6 @@ export default function ProfilePage() {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("No token");
 
-      // Update Profile (Name & Email)
       const profileRes = await fetch(`${API_URL}/users/profile`, {
         method: "PATCH",
         headers: {
@@ -94,7 +93,6 @@ export default function ProfilePage() {
         throw new Error(errorData.message || "อัปเดตโปรไฟล์ไม่สำเร็จ");
       }
 
-      // Update or Create Address
       const addressPayload = {
         title: "ที่อยู่จัดส่งเริ่มต้น",
         receiverName: formData.receiverName,
@@ -107,7 +105,6 @@ export default function ProfilePage() {
 
       let addressRes;
       if (formData.addressId) {
-        // Update existing address
         addressRes = await fetch(`${API_URL}/users/address/${formData.addressId}`, {
           method: "PATCH",
           headers: {
@@ -117,7 +114,6 @@ export default function ProfilePage() {
           body: JSON.stringify(addressPayload),
         });
       } else {
-        // Create new address
         addressRes = await fetch(`${API_URL}/users/address`, {
           method: "POST",
           headers: {
@@ -132,7 +128,7 @@ export default function ProfilePage() {
         throw new Error("อัปเดตที่อยู่ไม่สำเร็จ");
       }
 
-      await fetchProfileData(); // Reload data
+      await fetchProfileData();
       setIsEditing(false);
       toast.success("บันทึกข้อมูลและตั้งค่าที่อยู่เริ่มต้นสำเร็จ");
     } catch (error: any) {
@@ -241,7 +237,7 @@ export default function ProfilePage() {
                 ใช้สำหรับสั่งซื้อสินค้า
               </span>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label className="block text-sm font-medium text-gray-600 mb-2">

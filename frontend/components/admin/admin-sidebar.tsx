@@ -25,6 +25,10 @@ export function AdminSidebar() {
       icon: <Home size={20} />,
       label: "Dashboard",
       href: "/admin",
+    }, {
+      icon: <Package size={20} />,
+      label: "จัดการสินค้า",
+      href: "/admin/products",
     },
     {
       icon: <Store size={20} />,
@@ -78,11 +82,10 @@ export function AdminSidebar() {
                 <Link
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 lg:px-4 lg:py-3 text-sm lg:text-base transition-colors ${
-                    active
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 lg:px-4 lg:py-3 text-sm lg:text-base transition-colors ${active
                       ? "bg-[#B4915B] font-medium text-white"
                       : "text-gray-200 hover:bg-[#6B0909]"
-                  }`}
+                    }`}
                 >
                   <span className={active ? "text-white" : "text-gray-200"}>
                     {item.icon}
@@ -129,9 +132,8 @@ export function AdminSidebar() {
 
       {/* Mobile Drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-[#4E0707] text-white shadow-lg transition-transform duration-300 lg:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-[#4E0707] text-white shadow-lg transition-transform duration-300 lg:hidden ${mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Close button */}
         <button

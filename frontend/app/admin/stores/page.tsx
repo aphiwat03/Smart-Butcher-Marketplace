@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Ban, Store as StoreIcon, AlertCircle } from "lucide-react";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 interface StoreItem {
   id: number;
@@ -87,10 +89,18 @@ export default function AdminStoresPage() {
   }, []);
 
   const handleSuspend = async (store: StoreItem) => {
-    const confirmed = window.confirm(
-      `ยืนยันการระงับการใช้งานร้าน "${store.name}" ใช่หรือไม่?`,
-    );
-    if (!confirmed) return;
+    const result = await Swal.fire({
+      title: "ยืนยันการระงับ",
+      text: `ยืนยันการระงับการใช้งานร้าน "${store.name}" ใช่หรือไม่?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "ระงับการใช้งาน",
+      cancelButtonText: "ยกเลิก"
+    });
+    
+    if (!result.isConfirmed) return;
 
     try {
       setSuspendingId(store.id);
@@ -114,7 +124,7 @@ export default function AdminStoresPage() {
         ),
       );
     } catch (err) {
-      alert(
+      toast.error(
         err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ",
       );
     } finally {
@@ -199,7 +209,7 @@ export default function AdminStoresPage() {
                     <td className="px-6 py-4 text-sm text-muted-foreground">
                       #{store.id}
                     </td>
-                    <td className="px-6 py-4 font-medium text-foreground">
+                    <td className="px-6 py-4 text-sm text-foreground">
                       {store.name}
                     </td>
                     <td className="px-6 py-4 text-sm text-foreground">

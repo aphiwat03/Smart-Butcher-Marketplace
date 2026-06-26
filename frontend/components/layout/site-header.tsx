@@ -75,14 +75,14 @@ export function SiteHeader() {
   };
 
   const categories = [
-    { name: "เนื้อสำหรับสเต็ก", slug: "เนื้อสำหรับสเต็ก" },
-    { name: "เนื้อวากิวคัดพิเศษ", slug: "เนื้อวากิวคัดพิเศษ" },
     { name: "เนื้อดรายเอจ", slug: "เนื้อดรายเอจ" },
-    { name: "เนื้อแปรรูป", slug: "เนื้อแปรรูป" },
     { name: "เนื้อบด", slug: "เนื้อบด" },
+    { name: "เนื้อแปรรูป", slug: "เนื้อแปรรูป" },
+    { name: "เนื้อวากิวคัดพิเศษ", slug: "เนื้อวากิวคัดพิเศษ" },
+    { name: "เนื้อสำหรับสเต็ก", slug: "เนื้อสำหรับสเต็ก" },
     {
-      name: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
-      slug: "เนื้อสไลซ์ชาบู / ปิ้งย่าง",
+      name: "อุปกรณ์และเครื่องเคียง",
+      slug: "อุปกรณ์และเครื่องเคียง",
     },
   ];
 
@@ -260,7 +260,7 @@ export function SiteHeader() {
                       setToken(null);
                       router.push("/");
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
+                    className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
                   >
                     ออกจากระบบ
                   </button>

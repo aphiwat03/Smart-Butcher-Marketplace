@@ -3,6 +3,7 @@ import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body style={{ margin: 0, padding: 0 }} suppressHydrationWarning>
         {children}
         <Toaster position="top-center" richColors />
+        <ToastContainer autoClose={3000} hideProgressBar={false} />
       </body>
     </html>
   );

@@ -84,6 +84,10 @@ export default function AdminUsersPage() {
       }
 
       const json: UserItem[] = await res.json();
+      
+      const roleOrder: Record<string, number> = { ADMIN: 1, SELLER: 2, BUYER: 3 };
+      json.sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99));
+      
       setUsers(json);
     } catch (err) {
       setError(
@@ -246,7 +250,7 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 text-sm text-foreground">
                       {user.email}
                     </td>
-                    <td className="px-6 py-4 font-medium text-foreground">
+                    <td className="px-6 py-4 text-sm text-foreground">
                       {user.fullName}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">

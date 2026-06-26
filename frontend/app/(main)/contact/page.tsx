@@ -18,7 +18,6 @@ export default function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: connect API
     setSent(true);
   };
 
