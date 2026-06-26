@@ -3,6 +3,8 @@
 import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Eye } from "lucide-react";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -12,6 +14,7 @@ export default function OrdersPage() {
     slipUrl: string;
     status: string;
   } | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -25,7 +28,6 @@ export default function OrdersPage() {
           "Content-Type": "application/json",
         },
       });
-      console.log("order: ", response);
       if (!response.ok) throw new Error("Failed to fetch orders");
       const data = await response.json();
       setOrders(data);
@@ -45,13 +47,22 @@ export default function OrdersPage() {
     status: "VERIFIED" | "REJECTED",
   ) => {
     const actionText = status === "VERIFIED" ? "อนุมัติ" : "ปฏิเสธ";
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการ ${actionText} สลิปนี้?`)) return;
+    const result = await Swal.fire({
+      title: "ยืนยันการดำเนินการ",
+      text: `คุณแน่ใจหรือไม่ว่าต้องการ ${actionText} สลิปนี้?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: status === "VERIFIED" ? "#10b981" : "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "ตกลง",
+      cancelButtonText: "ยกเลิก"
+    });
+    
+    if (!result.isConfirmed) return;
 
     try {
+      setIsVerifying(true);
       const token = localStorage.getItem("accessToken");
-      console.log("Token:", token);
-      console.log("Payment ID:", paymentId);
-      console.log("Status to update:", status);
       const response = await fetch(
         `${API_URL}/admin/payments/${paymentId}/verify`,
         {
@@ -65,17 +76,18 @@ export default function OrdersPage() {
       );
 
       if (response.ok) {
-        alert(`${actionText}สลิปสำเร็จ`);
+        toast.success(`${actionText}สลิปสำเร็จ`);
         setSelectedPayment(null);
-        console.log("ข้อมูลใน selectedPayment คือ:", selectedPayment);
         fetchOrders();
       } else {
         const errorData = await response.json();
-        alert(`เกิดข้อผิดพลาด: ${errorData.message}`);
+        toast.error(`เกิดข้อผิดพลาด: ${errorData.message}`);
       }
     } catch (error) {
       console.error("Error verifying payment:", error);
-      alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+      toast.error("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -98,20 +110,29 @@ export default function OrdersPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
-      VERIFIED: { color: "bg-green-100 text-green-800", label: "เสร็จสิ้น" },
-      PAID: { color: "bg-blue-100 text-blue-800", label: "ชำระเงินแล้ว" },
+      VERIFIED: {
+        color: "bg-green-100 text-green-800",
+        label: "ชำระเงินสำเร็จ",
+      },
+      PAID: {
+        color: "bg-green-100 text-green-800",
+        label: "ชำระเงินสำเร็จ",
+      },
       PENDING: {
         color: "bg-yellow-100 text-yellow-800",
-        label: "รอชำระเงิน/รอตรวจสอบ",
+        label: "รอการอนุมัติ",
       },
       PROCESSING: {
         color: "bg-purple-100 text-purple-800",
         label: "กำลังเตรียมจัดส่ง",
       },
-      CANCELLED: { color: "bg-red-100 text-red-800", label: "ยกเลิก" },
+      CANCELLED: {
+        color: "bg-red-100 text-red-800",
+        label: "ยกเลิกคำสั่งซื้อ",
+      },
       REJECTED: {
-        color: "bg-red-100 text-red-700 border border-red-200",
-        label: "สลิปไม่ผ่าน",
+        color: "bg-red-100 text-red-800",
+        label: "ไม่ผ่านอนุมัติ",
       },
     };
 
@@ -132,9 +153,7 @@ export default function OrdersPage() {
   const stats = {
     total: orders.length,
     pending: orders.filter((o) => o.orderStatus === "PENDING").length,
-    completed: orders.filter(
-      (o) => o.orderStatus === "VERIFIED" || o.orderStatus === "PAID",
-    ).length,
+    completed: orders.filter((o) => o.orderStatus === "PAID").length,
   };
 
   return (
@@ -235,31 +254,36 @@ export default function OrdersPage() {
                         {formatDate(order.createdAt)}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() =>
-                              setSelectedPayment({
-                                id: payment?.id,
-                                slipUrl: payment?.slipImageUrl,
-                                status: payment?.status,
-                              })
-                            }
-                            disabled={!payment?.slipImageUrl}
-                            title="ตรวจสอบสลิป"
-                            className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${
-                              payment?.slipImageUrl
-                                ? "text-blue-600 hover:bg-blue-100 bg-blue-50"
-                                : "text-gray-300 cursor-not-allowed bg-gray-50"
-                            }`}
-                          >
-                            <Eye className="w-5 h-5" />
+                        <div className="flex items-center justify-center">
+                          <div className="relative inline-block">
+                            <button
+                              onClick={() =>
+                                setSelectedPayment({
+                                  id: payment?.id,
+                                  slipUrl: payment?.slipImageUrl,
+                                  status: payment?.status,
+                                })
+                              }
+                              disabled={!payment?.slipImageUrl}
+                              title="ตรวจสอบสลิป"
+                              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium ${
+                                payment?.slipImageUrl
+                                  ? payment?.status === "PENDING"
+                                    ? "bg-[#B4915B] text-white hover:bg-[#9A7A48] shadow-sm"
+                                    : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              }`}
+                            >
+                              <Eye className="w-4 h-4" />
+                              {payment?.status === "PENDING" ? "รอตรวจสลิป" : payment?.slipImageUrl ? "ดูสลิป" : "ไม่มีหลักฐาน"}
+                            </button>
                             {payment?.status === "PENDING" && (
-                              <span className="relative flex h-2 w-2 mb-3 -ml-2">
+                              <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
                               </span>
                             )}
-                          </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -279,23 +303,24 @@ export default function OrdersPage() {
 
       {/* Modal ตรวจสอบสลิป */}
       {selectedPayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden">
-            <div className="p-4 border-b flex justify-between items-center bg-[#4E0707] text-white">
-              <h3 className="font-bold text-lg">ตรวจสอบหลักฐานการชำระเงิน</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white">
+              <h3 className="font-bold text-lg text-[#4E0707]">ตรวจสอบหลักฐานการชำระเงิน</h3>
               <button
-                onClick={() => setSelectedPayment(null)}
-                className="text-gray-300 hover:text-white"
+                onClick={() => !isVerifying && setSelectedPayment(null)}
+                disabled={isVerifying}
+                className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-full transition-colors disabled:opacity-50"
               >
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-4 flex flex-col items-center bg-gray-100">
+            <div className="p-6 flex flex-col items-center bg-slate-50">
               <img
                 src={selectedPayment.slipUrl}
                 alt="Slip"
-                className="max-h-[50vh] object-contain rounded border border-gray-300 shadow-sm"
+                className="max-h-[50vh] object-contain rounded-xl border border-gray-200 shadow-sm bg-white p-1"
                 onError={(e) => {
                   e.currentTarget.src =
                     "https://placehold.co/400x600?text=Image+Not+Found";
@@ -303,14 +328,15 @@ export default function OrdersPage() {
               />
             </div>
 
-            <div className="p-4 border-t flex justify-between items-center bg-gray-50">
+            <div className="p-5 border-t border-gray-100 bg-white">
               {selectedPayment.status === "PENDING" ? (
-                <div className="flex gap-2 w-full justify-between">
+                <div className="flex gap-3 w-full justify-between">
                   <button
                     onClick={() =>
                       handleVerifyPayment(selectedPayment.id, "REJECTED")
                     }
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    disabled={isVerifying}
+                    className="flex-1 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 px-4 py-2.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <XCircle className="w-5 h-5" />
                     ปฏิเสธสลิป
@@ -319,39 +345,30 @@ export default function OrdersPage() {
                     onClick={() =>
                       handleVerifyPayment(selectedPayment.id, "VERIFIED")
                     }
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    disabled={isVerifying}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                   >
                     <CheckCircle className="w-5 h-5" />
-                    อนุมัติสลิป
+                    {isVerifying ? "กำลังประมวลผล..." : "อนุมัติสลิป"}
                   </button>
                 </div>
               ) : (
-                <div className="w-full flex justify-between items-center">
-                  <div
-                    className={`text-sm font-semibold ${selectedPayment.status === "VERIFIED" ? "text-green-600" : "text-red-600"}`}
-                  >
-                    สถานะปัจจุบัน: {selectedPayment.status}
+                <div className="w-full flex flex-col gap-4">
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <span className="text-sm text-gray-500">สถานะปัจจุบัน:</span>
+                    <span className={`text-sm font-bold ${selectedPayment.status === "VERIFIED" ? "text-emerald-600" : "text-rose-600"}`}>
+                      {selectedPayment.status === "VERIFIED" ? "อนุมัติแล้ว (VERIFIED)" : "ปฏิเสธแล้ว (REJECTED)"}
+                    </span>
                   </div>
                   <button
                     onClick={() => setSelectedPayment(null)}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg font-semibold transition-colors"
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2.5 rounded-xl font-semibold transition-colors"
                   >
-                    ปิด
+                    ปิดหน้าต่าง
                   </button>
                 </div>
               )}
             </div>
-
-            {selectedPayment.status === "PENDING" && (
-              <div className="px-4 pb-4 bg-gray-50 text-center">
-                <button
-                  onClick={() => setSelectedPayment(null)}
-                  className="text-gray-500 hover:text-gray-700 text-sm font-medium underline"
-                >
-                  ปิดหน้าต่างโดยยังไม่ดำเนินการ
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
