@@ -10,7 +10,7 @@ import { VerifyPaymentDto } from './dto/verify-payment.dto';
 export class PaymentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async processSlipUpload(userId: number, orderId: number, amount: number) {
+  async processSlipUpload(userId: number, orderId: number, amount: number, slipImageUrl: string) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId: userId },
     });
@@ -25,7 +25,7 @@ export class PaymentService {
         userId: userId,
         amount: amount,
         paymentMethod: 'BANK_TRANSFER',
-        slipImageUrl: 'mock-slip-image-url.jpg',
+        slipImageUrl: slipImageUrl,
         status: 'PENDING',
         paymentDate: new Date(),
       },
