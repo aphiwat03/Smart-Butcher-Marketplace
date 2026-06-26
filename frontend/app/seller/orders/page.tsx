@@ -12,6 +12,14 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { AuthMeResponse } from "@/types/auth";
 import { SellerOrder, SellerOrderItem } from "@/types/seller";
 
@@ -74,7 +82,6 @@ export default function SellerOrders() {
     fetchOrders();
   }, []);
 
-  // ฟังก์ชันแปลงสถานะ PAID ให้กลายเป็น success อัตโนมัติใน UI
   const normalizeStatus = (status: string) => {
     const s = status.toLowerCase();
     if (s === "paid") return "success";
@@ -120,6 +127,59 @@ export default function SellerOrders() {
       reject: "Reject",
     };
     return labels[normStatus] || status;
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      "Order ID",
+      "Customer Name",
+      "Phone",
+      "Address",
+      "Products",
+      "Total Quantity",
+      "Total Amount",
+      "Status",
+      "Order Date",
+    ];
+
+    const rows = filteredOrders.map((order) => {
+      const orderId = `ORD-${String(order.id).padStart(4, "0")}`;
+      const customerName = order.user.fullName || "-";
+      const phone = order.shippingPhone || "-";
+      const address = order.shippingAddressText || "-";
+
+      const productNames = order.orderItems
+        .map((item) => `${item.product.name} (x${item.quantity})`)
+        .join(", ");
+
+      const totalQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      const amount = order.totalAmount;
+      const status = getStatusLabel(order.orderStatus);
+      const date = new Date(order.createdAt).toLocaleDateString("th-TH");
+
+      return [
+        `"${orderId}"`,
+        `"${customerName.replace(/"/g, '""')}"`,
+        `"${phone}"`,
+        `"${address.replace(/"/g, '""')}"`,
+        `"${productNames.replace(/"/g, '""')}"`,
+        totalQuantity,
+        amount,
+        `"${status}"`,
+        `"${date}"`,
+      ].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `orders_export_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const stats = [
@@ -174,7 +234,10 @@ export default function SellerOrders() {
           <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">My Orders</h1>
           <p className="text-sm md:text-base text-gray-600">Manage customer orders and shipments</p>
         </div>
-        <button className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm md:text-base transition-colors self-start sm:self-auto">
+        <button
+          onClick={exportToCSV}
+          className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm md:text-base transition-colors self-start sm:self-auto"
+        >
           <Download className="w-5 h-5" />
           Export
         </button>
@@ -191,29 +254,32 @@ export default function SellerOrders() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-64">
-          <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search by Order ID, Customer, or Product..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#B4915B]"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4915B]/20 focus:border-[#B4915B] transition-all h-[46px]"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-600" />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#B4915B] bg-white"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="success">Success</option>
-            <option value="reject">Reject</option>
-          </select>
+        <div className="sm:w-64">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full h-[46px] bg-gray-50 border-gray-200 hover:bg-gray-100/50 focus:ring-2 focus:ring-[#B4915B]/20 focus:border-[#B4915B] rounded-lg transition-all text-sm sm:text-base">
+              <div className="flex items-center gap-2 text-gray-600">
+                <Filter className="w-4 h-4" />
+                <SelectValue placeholder="Select Status" />
+              </div>
+            </SelectTrigger>
+            <SelectContent position="popper" side="bottom" className="max-h-60">
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="reject">Reject</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -232,89 +298,74 @@ export default function SellerOrders() {
           return (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow-md p-6 border-l-4 border-[#B4915B] hover:shadow-lg transition-shadow"
+              className="bg-white rounded-lg shadow-sm p-4 md:p-5 border-l-4 border-[#B4915B] hover:shadow-md transition-shadow"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4">
-                {/* Order Info */}
+              <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Order ID</p>
-                  <p className="text-lg font-bold text-[#4E0707]">
+                  <p className="text-xs text-gray-500 mb-0.5">
+                    Order Date: {new Date(order.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  <p className="text-lg font-bold text-[#4E0707] leading-none">
                     #ORD-{String(order.id).padStart(4, "0")}
                   </p>
                 </div>
+                <div>
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusBadge(
+                      order.orderStatus,
+                    )}`}
+                  >
+                    {getStatusLabel(order.orderStatus)}
+                  </span>
+                </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-3">
                 {/* Product Info */}
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Product</p>
-                  <p className="font-semibold text-[#4E0707]">{productLabel}</p>
-                  <p className="text-xs text-gray-600">Qty: {totalQuantity}</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Product</p>
+                  <p className="font-semibold text-gray-800 text-sm">{productLabel}</p>
+                  <p className="text-xs text-gray-500">Qty: {totalQuantity}</p>
                 </div>
 
                 {/* Amount */}
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Amount</p>
-                  <p className="text-lg font-bold text-[#B4915B]">
+                  <p className="text-xs text-gray-500 mb-0.5">Amount</p>
+                  <p className="text-base font-bold text-[#B4915B]">
                     {formatCurrency(order.totalAmount)}
                   </p>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Status</p>
-                    <span
-                      className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusBadge(
-                        order.orderStatus,
-                      )}`}
-                    >
-                      {getStatusLabel(order.orderStatus)}
-                    </span>
-                  </div>
                 </div>
               </div>
 
               {/* Customer Details */}
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+              <div className="border-t border-gray-100 pt-3 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Customer</p>
-                    <p className="font-semibold text-[#4E0707]">
+                    <p className="text-xs text-gray-500 mb-0.5">Customer</p>
+                    <p className="font-semibold text-gray-800 text-sm">
                       {order.user.fullName}
                     </p>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-[#B4915B] flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-[#B4915B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Address</p>
-                      <p className="text-sm text-[#4E0707]">
-                        {order.shippingAddressText}
+                      <p className="text-xs text-gray-500 mb-0.5">Phone</p>
+                      <p className="text-sm text-gray-800">
+                        {order.shippingPhone}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 text-[#B4915B] flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#B4915B] flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Phone</p>
-                      <p className="text-sm text-[#4E0707]">
-                        {order.shippingPhone}
+                      <p className="text-xs text-gray-500 mb-0.5">Address</p>
+                      <p className="text-sm text-gray-800 line-clamp-2" title={order.shippingAddressText}>
+                        {order.shippingAddressText}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="mt-4 flex gap-2 justify-end">
-                <button className="px-4 py-2 border border-[#B4915B] text-[#B4915B] rounded-lg hover:bg-[#B4915B]/10 transition-colors font-semibold text-sm">
-                  View Details
-                </button>
-              </div>
-
-              {/* Date */}
-              <p className="text-xs text-gray-500 mt-3">
-                Order Date:{" "}
-                {new Date(order.createdAt).toLocaleDateString("th-TH")}
-              </p>
             </div>
           );
         })}
