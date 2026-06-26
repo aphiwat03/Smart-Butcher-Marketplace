@@ -4,7 +4,6 @@ import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarIcon } from "@heroicons/react/24/solid";
-import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import Swal from "sweetalert2";
 import { useCartStore } from "@/store/useCartStore";
 import { ArrowLeft } from "lucide-react";
@@ -36,7 +35,6 @@ export default function ProductClient({
   const productId = product.id;
   const fetchCartCount = useCartStore((e) => e.fetchCartCount);
 
-  // Compute review stats from real data
   const totalReviews = reviews.length;
   const avgRating =
     totalReviews > 0
@@ -47,7 +45,10 @@ export default function ProductClient({
     count: reviews.filter((r) => r.point === star).length,
   }));
 
-  const filteredReviews = filterRating === null ? reviews : reviews.filter(r => r.point === filterRating);
+  const filteredReviews =
+    filterRating === null
+      ? reviews
+      : reviews.filter((r) => r.point === filterRating);
 
   if (!product) {
     return (
@@ -143,7 +144,8 @@ export default function ProductClient({
               ))}
             </div>
             <span>
-              {avgRating > 0 ? avgRating.toFixed(1) : "0"} (รีวิว {totalReviews} รายการ) | หมวดหมู่: {product.category.name}
+              {avgRating > 0 ? avgRating.toFixed(1) : "0"} (รีวิว {totalReviews}{" "}
+              รายการ) | หมวดหมู่: {product.category.name}
             </span>
           </div>
           <p className="text-gray-600 mt-6 leading-relaxed">
@@ -251,7 +253,7 @@ export default function ProductClient({
 
           {/* Star filter buttons */}
           <div className="flex flex-wrap gap-3 w-full">
-            <button 
+            <button
               onClick={() => setFilterRating(null)}
               className={`px-5 py-2 font-bold rounded-lg shadow-sm transition-colors ${
                 filterRating === null
@@ -281,11 +283,16 @@ export default function ProductClient({
         <div className="mt-8 space-y-8">
           {filteredReviews.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
-              {filterRating ? `ยังไม่มีรีวิว ${filterRating} ดาว` : "ยังไม่มีรีวิวสำหรับสินค้านี้"}
+              {filterRating
+                ? `ยังไม่มีรีวิว ${filterRating} ดาว`
+                : "ยังไม่มีรีวิวสำหรับสินค้านี้"}
             </div>
           ) : (
             filteredReviews.map((review) => (
-              <div key={review.id} className="pb-8 border-b border-gray-100 last:border-0">
+              <div
+                key={review.id}
+                className="pb-8 border-b border-gray-100 last:border-0"
+              >
                 <div className="flex items-start gap-4">
                   <div className="size-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
                     <img
@@ -296,7 +303,9 @@ export default function ProductClient({
                   </div>
 
                   <div className="flex-1">
-                    <h4 className="font-bold text-[#4E0707]">{review.user.fullName}</h4>
+                    <h4 className="font-bold text-[#4E0707]">
+                      {review.user.fullName}
+                    </h4>
                     <div className="flex items-center gap-3 mt-1">
                       <div className="flex">
                         {[1, 2, 3, 4, 5].map((star) => (
@@ -311,11 +320,14 @@ export default function ProductClient({
                         ))}
                       </div>
                       <span className="text-xs text-gray-400">
-                        {new Date(review.createdAt).toLocaleDateString("th-TH", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {new Date(review.createdAt).toLocaleDateString(
+                          "th-TH",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}
                       </span>
                     </div>
 
