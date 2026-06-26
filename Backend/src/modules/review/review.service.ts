@@ -11,7 +11,6 @@ export class ReviewService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: number, dto: CreateReviewDto) {
-    // Validate product exists
     const product = await this.prisma.product.findUnique({
       where: { id: dto.productId },
     });
@@ -19,7 +18,6 @@ export class ReviewService {
       throw new NotFoundException('ไม่พบสินค้านี้');
     }
 
-    // If orderId is provided, verify the user ordered this product
     if (dto.orderId) {
       const orderItem = await this.prisma.orderItem.findFirst({
         where: {
@@ -35,7 +33,6 @@ export class ReviewService {
       }
     }
 
-    // Check if already reviewed this product for this order
     const existingReview = await this.prisma.review.findFirst({
       where: {
         userId,
