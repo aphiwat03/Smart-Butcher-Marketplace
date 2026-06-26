@@ -3,13 +3,17 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { OrderStatus, PaymentStatus, StoreStatus } from '@prisma/client';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { PrismaService } from '../../prisma-db/prisma.service';
 
 @Injectable()
 export class StoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async findAllForAdmin() {
     const stores = await this.prisma.store.findMany({
@@ -90,15 +94,24 @@ export class StoreService {
           data: { role: 'SELLER' },
         });
 
+        const payload = {
+          sub: updatedUser.id,
+          email: updatedUser.email,
+          role: updatedUser.role,
+        };
+        const accessToken = await this.jwtService.signAsync(payload);
+
         return {
           store: newStore,
           user: updatedUser,
+          accessToken,
         };
       });
 
       return {
         message: 'เปิดร้านค้าสำเร็จและอัปเกรดสิทธิ์เป็น SELLER เรียบร้อยแล้ว',
         store: result.store,
+        accessToken: result.accessToken,
       };
     } catch (error) {
       console.error('Error creating store:', error);
@@ -532,5 +545,48 @@ export class StoreService {
         totalSales: item._sum.subtotal ?? 0,
       };
     });
+  }
+
+  async getStorePublicInfo(storeId: number) {
+    const store = await this.prisma.store.findUnique({
+      where: { id: storeId, status: StoreStatus.OPEN },
+      include: {
+        products: {
+          where: { status: 'ACTIVE', deletedAt: null },
+          include: { category: true, reviews: true },
+        },
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    let totalRating = 0;
+    let reviewCount = 0;
+
+    store.products.forEach((product) => {
+      reviewCount += product.reviews.length;
+      product.reviews.forEach((review) => {
+        totalRating += review.point;
+      });
+    });
+
+    const rating = reviewCount > 0 ? totalRating / reviewCount : 0;
+
+    return {
+      id: store.id,
+      name: store.name,
+      description: store.description,
+      createdAt: store.createdAt,
+      imageUrl: null,
+      productCount: store.products.length,
+      rating: rating,
+      reviewCount: reviewCount,
+      products: store.products.map(p => {
+        const { reviews, ...rest } = p;
+        return rest;
+      }),
+    };
   }
 }

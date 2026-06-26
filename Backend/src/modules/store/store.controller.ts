@@ -12,7 +12,7 @@ import { StoreService } from './store.service';
 @Controller('stores')
 @UseGuards(JwtAuthGuard, SellerOrAdminGuard)
 export class StoreController {
-  constructor(private readonly storeService: StoreService) {}
+  constructor(private readonly storeService: StoreService) { }
 
   @Get(':id/dashboard')
   async getDashboard(@Param('id', ParseIntPipe) id: number) {
