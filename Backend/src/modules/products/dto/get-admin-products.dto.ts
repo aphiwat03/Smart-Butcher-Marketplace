@@ -4,10 +4,12 @@ import {
   IsNumber,
   IsInt,
   Min,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ProductStatus } from '@prisma/client';
 
-export class GetProductsFilterDto {
+export class GetAdminProductsDto {
   @IsOptional()
   @IsString()
   q?: string;
@@ -17,16 +19,25 @@ export class GetProductsFilterDto {
   category?: string;
 
   @IsOptional()
+  @IsEnum(ProductStatus)
+  status?: ProductStatus;
+
+  @IsOptional()
   @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  maxPrice?: number;
+  @IsInt()
+  storeId?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   minPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  maxPrice?: number;
 
   @IsOptional()
   @Type(() => Number)
@@ -39,4 +50,12 @@ export class GetProductsFilterDto {
   @IsInt()
   @Min(1)
   limit?: number;
+
+  @IsOptional()
+  @IsString()
+  sortBy?: string; // e.g. 'createdAt' | 'price' | 'name'
+
+  @IsOptional()
+  @IsString()
+  sortOrder?: 'asc' | 'desc';
 }
