@@ -3,41 +3,51 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  unit: string;
-  image: string | null;
-  badge: string | null;
-};
-
-const CATEGORIES = ["ทั้งหมด", "สเต็ก", "วากิว", "ดรายเอจ", "ชาบู"];
+import { StoreProduct } from "@/types/store";
 
 export function StoreProductList({
   products,
   storeName,
 }: {
-  products: Product[];
+  products: StoreProduct[];
   storeName: string;
 }) {
   const [activeCategory, setActiveCategory] = useState("ทั้งหมด");
 
+  const categories = [
+    "ทั้งหมด",
+    ...Array.from(
+      new Set(
+        products
+          .map((p: any) => p.category?.name || p.category)
+          .filter(Boolean),
+      ),
+    ),
+  ];
+
+  const filteredProducts =
+    activeCategory === "ทั้งหมด"
+      ? products
+      : products.filter(
+          (p: any) => (p.category?.name || p.category) === activeCategory,
+        );
+
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#4E0707]">
+      <div className="flex flex-col mb-4">
+        <h2 className="text-xl font-bold text-[#4E0707] mb-3">
           สินค้าทั้งหมด{" "}
           <span className="text-sm font-normal text-gray-400">
-            ({products.length} รายการ)
+            ({filteredProducts.length} รายการ)
           </span>
         </h2>
-        <div className="flex gap-2">
-          {CATEGORIES.map((cat) => (
+
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-sm border transition-colors cursor-pointer ${
+              className={`px-4 py-1.5 rounded-full text-sm border whitespace-nowrap transition-colors cursor-pointer ${
                 activeCategory === cat
                   ? "bg-[#4E0707] text-white border-[#4E0707]"
                   : "border-gray-200 text-gray-500 hover:border-[#B4915B]"
@@ -49,19 +59,21 @@ export function StoreProductList({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map((product) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 min-h-[800px] content-start">
+        {filteredProducts.map((product, index) => (
           <Link
             key={product.id}
             href={`/shop?q=${encodeURIComponent(product.name)}`}
             className="group border border-gray-200 rounded-xl overflow-hidden hover:border-[#B4915B] hover:shadow-md transition-all bg-white"
           >
             <div className="relative aspect-square bg-gray-100">
-              {product.image ? (
+              {(product as any).imageUrl || product.image ? (
                 <Image
-                  src={product.image}
+                  src={(product as any).imageUrl || product.image!}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  priority={index < 8}
                   className="object-cover group-hover:scale-105 transition-transform"
                 />
               ) : (
