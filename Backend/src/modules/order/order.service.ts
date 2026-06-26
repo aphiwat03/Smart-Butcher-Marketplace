@@ -120,6 +120,11 @@ export class OrderService {
         totalAmount: true,
         orderStatus: true,
         createdAt: true,
+        reviews: {
+          select: {
+            productId: true,
+          },
+        },
         orderItems: {
           select: {
             id: true,
