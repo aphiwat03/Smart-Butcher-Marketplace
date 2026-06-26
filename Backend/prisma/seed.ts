@@ -22,219 +22,78 @@ const storeName = 'Smart Butcher Shop';
 
 const categoriesMock = [
   {
-    name: 'เนื้อสำหรับสเต็ก',
-    image: '/mock/category/พรีเมียมสเต็ก.jpg',
+    name: 'อุปกรณ์และเครื่องเคียง',
+    image: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/01_grill_set.jpg',
     products: [
-      {
-        name: 'สันในสเต็ก',
-        description: 'เนื้อสันในนุ่มพิเศษ เหมาะสำหรับย่างสเต็กแบบมีเดียมแรร์',
-        price: 1290,
-      },
-      {
-        name: 'สันนอกสเต็ก',
-        description: 'สันนอกเนื้อแน่น ไขมันกำลังดี เหมาะสำหรับสเต็กประจำบ้าน',
-        price: 990,
-      },
-      {
-        name: 'ริบอายสเต็ก',
-        description: 'ริบอายลายไขมันสวย ให้รสเข้มและความฉ่ำหลังย่าง',
-        price: 1190,
-      },
-      {
-        name: 'ทีโบนสเต็ก',
-        description: 'ทีโบนชิ้นใหญ่ ได้ทั้งสันในและสันนอกในชิ้นเดียว',
-        price: 1450,
-      },
-      {
-        name: 'ใบพายสเต็ก',
-        description: 'ใบพายเนื้อนุ่ม มีเอ็นกลางบาง ๆ เหมาะกับการย่างไฟแรง',
-        price: 690,
-      },
-      {
-        name: 'พิคานย่าสเต็ก',
-        description: 'พิคานย่าพร้อมมันด้านบน หอมมันเมื่อย่างจนผิวกรอบ',
-        price: 890,
-      },
-    ],
-  },
-  {
-    name: 'เนื้อสไลซ์ชาบู / ปิ้งย่าง',
-    image: '/mock/category/เนื้อชาบู.jpg',
-    products: [
-      {
-        name: 'ริบอายสไลซ์',
-        description: 'ริบอายสไลซ์บาง ลวกชาบูหรือย่างบนกระทะได้หอมนุ่ม',
-        price: 520,
-      },
-      {
-        name: 'ใบพายสไลซ์',
-        description: 'ใบพายสไลซ์เนื้อนุ่ม เหมาะสำหรับชาบูและสุกี้',
-        price: 390,
-      },
-      {
-        name: 'เสือร้องไห้ปิ้งย่าง',
-        description: 'เสือร้องไห้มันแทรก หอมฉ่ำเมื่อย่างไฟกลาง',
-        price: 450,
-      },
-      {
-        name: 'น่องลายสไลซ์',
-        description: 'น่องลายสไลซ์กรุบเบา ๆ เหมาะกับชาบูน้ำซุปเข้มข้น',
-        price: 420,
-      },
-      {
-        name: 'สามชั้นเนื้อสไลซ์',
-        description: 'เนื้อสามชั้นสไลซ์มันสวย เหมาะกับปิ้งย่างและหม้อไฟ',
-        price: 480,
-      },
-      {
-        name: 'วากิวสไลซ์ชาบู',
-        description: 'วากิวสไลซ์ลายไขมันละเอียด ลวกเร็วแล้วละลายในปาก',
-        price: 890,
-      },
-    ],
-  },
-  {
-    name: 'เนื้อบด',
-    image: '/mock/category/เนื้อบด.jpg',
-    products: [
-      {
-        name: 'เนื้อบดติดมัน',
-        description: 'เนื้อบดติดมันประมาณ 20% เหมาะสำหรับเบอร์เกอร์และผัดซอส',
-        price: 260,
-      },
-      {
-        name: 'เนื้อบดไม่ติดมัน',
-        description: 'เนื้อบดไขมันต่ำ เหมาะสำหรับเมนูคลีนหรือซอสพาสต้า',
-        price: 290,
-      },
-      {
-        name: 'เนื้อบดสำหรับเบอร์เกอร์',
-        description: 'เนื้อบดสูตรเบอร์เกอร์ ปั้นง่าย ย่างแล้วฉ่ำ',
-        price: 340,
-      },
-      {
-        name: 'เนื้อบดหยาบ',
-        description: 'เนื้อบดหยาบให้สัมผัสชัด เหมาะสำหรับมีทบอลและลาซานญ่า',
-        price: 320,
-      },
-      {
-        name: 'เนื้อบดวากิว',
-        description: 'เนื้อบดวากิวมันหอม เหมาะสำหรับแพตตี้พรีเมียม',
-        price: 590,
-      },
-      {
-        name: 'เนื้อบดหมักพริกไทยดำ',
-        description: 'เนื้อบดปรุงรสพริกไทยดำ พร้อมนำไปทำแพตตี้หรือผัด',
-        price: 360,
-      },
-    ],
-  },
-  {
-    name: 'เนื้อแปรรูป',
-    image: '/mock/category/เนื้อคัดพิเศษ.jpg',
-    products: [
-      {
-        name: 'เบอร์เกอร์แพตตี้เนื้อ',
-        description: 'แพตตี้เนื้อปั้นสำเร็จ พร้อมย่างสำหรับเบอร์เกอร์',
-        price: 390,
-      },
-      {
-        name: 'ไส้กรอกเนื้อรมควัน',
-        description: 'ไส้กรอกเนื้อรมควัน กลิ่นหอม หนังกรอบเด้ง',
-        price: 320,
-      },
-      {
-        name: 'เนื้อหมักซอสบาร์บีคิว',
-        description: 'เนื้อหมักซอสบาร์บีคิว พร้อมย่างหรืออบ',
-        price: 450,
-      },
-      {
-        name: 'เนื้อแดดเดียว',
-        description: 'เนื้อแดดเดียวหมักรสกลมกล่อม เหมาะสำหรับทอดหรือย่าง',
-        price: 380,
-      },
-      {
-        name: 'ลูกชิ้นเนื้อพรีเมียม',
-        description: 'ลูกชิ้นเนื้อเด้ง รสเนื้อชัด เหมาะกับก๋วยเตี๋ยวและปิ้ง',
-        price: 220,
-      },
-      {
-        name: 'เนื้อหมักพริกไทยดำ',
-        description: 'เนื้อหมักพริกไทยดำเข้มข้น พร้อมนำไปผัดหรือย่าง',
-        price: 430,
-      },
+      { name: 'ชุดเตาย่าง 01', description: 'ชุดเตาย่างครบเซ็ต', price: 350, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/01_grill_set.jpg' },
+      { name: 'ชุดเตาย่าง 02', description: 'ชุดเตาย่างขนาดกลาง', price: 450, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/02_grill_set.jpg' },
+      { name: 'ชุดชาบู 03', description: 'ชุดชาบูพร้อมหม้อ', price: 500, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/03_shabu_set.jpg' },
+      { name: 'น้ำจิ้มสุกี้สูตร 1', description: 'น้ำจิ้มสุกี้รสเด็ด', price: 65, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/04_suki_sauce.png' },
+      { name: 'น้ำจิ้มสุกี้สูตร 2', description: 'น้ำจิ้มสุกี้รสจัดจ้าน', price: 65, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/05_suki_sauce.webp' },
+      { name: 'น้ำจิ้มสุกี้สูตร 3', description: 'น้ำจิ้มสุกี้สูตรกวางตุ้ง', price: 65, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/06_suki_sauce.jpg' },
+      { name: 'น้ำจิ้มปิ้งย่าง', description: 'น้ำจิ้มปิ้งย่างสไตล์เกาหลี', price: 75, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/07_grill_sauce.webp' },
+      { name: 'ชุดเตาย่าง 08', description: 'ชุดเตาย่างชุดใหญ่', price: 550, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/bbq-shabu/08_grill_set.jpg' },
     ],
   },
   {
     name: 'เนื้อดรายเอจ',
-    image: '/mock/category/ดรายเอจ.jpg',
+    image: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/01_ribeye.jpg',
     products: [
-      {
-        name: 'ดรายเอจริบอาย 30 วัน',
-        description: 'ริบอายดรายเอจ 30 วัน กลิ่นนัทตี้และรสเข้มขึ้น',
-        price: 1850,
-      },
-      {
-        name: 'ดรายเอจสันนอก 30 วัน',
-        description: 'สันนอกดรายเอจ เนื้อแน่น รสชัด เหมาะกับสเต็ก',
-        price: 1650,
-      },
-      {
-        name: 'ดรายเอจทีโบน 45 วัน',
-        description: 'ทีโบนดรายเอจ 45 วัน ชิ้นใหญ่สำหรับสายสเต็กจริงจัง',
-        price: 2400,
-      },
-      {
-        name: 'ดรายเอจพิคานย่า',
-        description: 'พิคานย่าดรายเอจพร้อมชั้นมัน หอมมากเมื่อย่าง',
-        price: 1550,
-      },
-      {
-        name: 'ดรายเอจโทมาฮอว์ก',
-        description: 'โทมาฮอว์กดรายเอจชิ้นใหญ่ เหมาะสำหรับแชร์หลายคน',
-        price: 3200,
-      },
-      {
-        name: 'ดรายเอจเซ็ตทดลอง',
-        description: 'เซ็ตชิ้นเล็กสำหรับลองรสชาติเนื้อดรายเอจหลายส่วน',
-        price: 1290,
-      },
+      { name: 'ริบอาย (Ribeye)', description: 'เนื้อริบอายดรายเอจ', price: 1200, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/01_ribeye.jpg' },
+      { name: 'สตริปลอยน์ (Striploin)', description: 'เนื้อสตริปลอยน์ดรายเอจ', price: 1100, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/02_striploin.webp' },
+      { name: 'ทีโบน (T-Bone)', description: 'เนื้อทีโบนดรายเอจ', price: 1400, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/03_tbone.jpg' },
+      { name: 'พอร์เตอร์เฮาส์ (Porterhouse)', description: 'เนื้อพอร์เตอร์เฮาส์ดรายเอจ', price: 1600, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/04_porterhouse.webp' },
+      { name: 'โทมาฮอว์ก (Tomahawk)', description: 'เนื้อโทมาฮอว์กดรายเอจ', price: 2500, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/05_tomahawk.jpg' },
+      { name: 'แฮงเกอร์ (Hanger)', description: 'เนื้อแฮงเกอร์ดรายเอจ', price: 850, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/06_hanger.jpg' },
+      { name: 'พิคานย่า (Picanha)', description: 'เนื้อพิคานย่าดรายเอจ', price: 950, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/dry-aged/07_picanha.jpeg' },
+    ],
+  },
+  {
+    name: 'เนื้อบด',
+    image: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/minced-meat/01_wagyu.webp',
+    products: [
+      { name: 'เนื้อวากิวบด', description: 'เนื้อวากิวบดคุณภาพเยี่ยม', price: 350, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/minced-meat/01_wagyu.webp' },
+      { name: 'เนื้อแองกัสบด', description: 'เนื้อแองกัสบดสำหรับทำเบอร์เกอร์', price: 250, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/minced-meat/02_angus.webp' },
+      { name: 'เนื้อออสเตรเลียบด', description: 'เนื้อออสเตรเลียบดสำหรับทำซอส', price: 200, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/minced-meat/03_australia_beef.jpg' },
+      { name: 'เนื้อบดไขมันน้อย', description: 'เนื้อบดสูตรไขมันต่ำ', price: 220, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/minced-meat/04_low_fat_beef.webp' },
+      { name: 'ลูกชิ้นเนื้อ', description: 'ลูกชิ้นเนื้อแท้ 100%', price: 150, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/minced-meat/05_meatball.jpg' },
     ],
   },
   {
     name: 'เนื้อวากิวคัดพิเศษ',
-    image: '/mock/category/วากิวคัดพิเศษ.webp',
+    image: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/01_ribeye_wagyu_a5.webp',
     products: [
-      {
-        name: 'วากิวริบอาย',
-        description: 'วากิวริบอายลายหินอ่อนเด่น รสเข้มและนุ่มละลาย',
-        price: 2590,
-      },
-      {
-        name: 'วากิวสันนอก',
-        description: 'วากิวสันนอกเนื้อแน่น ไขมันแทรกละเอียด เหมาะกับสเต็ก',
-        price: 2290,
-      },
-      {
-        name: 'วากิวสันใน',
-        description: 'วากิวสันในนุ่มมาก เหมาะสำหรับเมนูพิเศษ',
-        price: 2890,
-      },
-      {
-        name: 'วากิวสไลซ์ยากินิกุ',
-        description: 'วากิวสไลซ์สำหรับยากินิกุ ย่างเร็ว หอมมัน',
-        price: 1490,
-      },
-      {
-        name: 'วากิวคารูบิ',
-        description: 'คารูบิวากิวมันแทรกชัด เหมาะกับปิ้งย่างสไตล์ญี่ปุ่น',
-        price: 1690,
-      },
-      {
-        name: 'วากิวเซ็ตพรีเมียม',
-        description: 'เซ็ตวากิวรวมหลายส่วนสำหรับมื้อพิเศษ',
-        price: 3490,
-      },
+      { name: 'ริบอายวากิว A5', description: 'เนื้อริบอายวากิว A5 ลายหินอ่อน', price: 2800, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/01_ribeye_wagyu_a5.webp' },
+      { name: 'สตริปลอยน์วากิว A5', description: 'เนื้อสตริปลอยน์วากิว A5 สุดพรีเมียม', price: 2500, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/02_striploin_a5.webp' },
+      { name: 'คารูบิ (ร่องซี่โครง)', description: 'เนื้อคารูบิสำหรับปิ้งย่าง', price: 850, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/03_karubi.jpg' },
+      { name: 'สันคอ (Chuck)', description: 'เนื้อสันคอวากิว นุ่มละลาย', price: 750, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/04_chuck.png' },
+      { name: 'พิคานย่า (Picanha)', description: 'เนื้อพิคานย่าวากิว', price: 950, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/05_picanha.webp' },
+      { name: 'สันคอพิเศษ (Chuck Eye)', description: 'เนื้อสันคอพิเศษวากิวคัดเกรด', price: 850, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/06_chuck_eye.jpg' },
+      { name: 'สะโพก (Rump)', description: 'เนื้อสะโพกวากิว รสเนื้อเข้มข้น', price: 650, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/wagyu/07_rump.png' },
+    ],
+  },
+  {
+    name: 'เนื้อสำหรับสเต็ก',
+    image: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/01_ribeye_steak.jpg',
+    products: [
+      { name: 'สเต็กริบอาย', description: 'เนื้อสเต็กริบอายชิ้นโต', price: 850, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/01_ribeye_steak.jpg' },
+      { name: 'สเต็กเทนเดอร์ลอยน์ (สันใน)', description: 'เนื้อสเต็กสันในนุ่มพิเศษ', price: 950, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/02_tenderloin_steak.jpg' },
+      { name: 'สเต็กทีโบน', description: 'เนื้อสเต็กทีโบนสุดคุ้ม', price: 1050, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/03_tbone_steak.jpg' },
+      { name: 'สเต็กโทมาฮอว์ก', description: 'เนื้อสเต็กโทมาฮอว์กอลังการ', price: 1800, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/04_tomahawk_steak.jpg' },
+      { name: 'สเต็กแฟลตไอออน', description: 'เนื้อสเต็กแฟลตไอออนนุ่มๆ', price: 750, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/05_flat_iron_steak.jpg' },
+      { name: 'สเต็กแฮงเกอร์', description: 'เนื้อสเต็กแฮงเกอร์รสเข้ม', price: 650, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/steak/06_hanger_steak.jpg' },
+    ],
+  },
+  {
+    name: 'เนื้อแปรรูป',
+    image: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/01_german_sausage.jpg',
+    products: [
+      { name: 'ไส้กรอกเยอรมัน', description: 'ไส้กรอกเยอรมันแท้เนื้อแน่น', price: 180, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/01_german_sausage.jpg' },
+      { name: 'เนื้อรมควันพริกไทยดำ', description: 'เนื้อรมควันคลุกพริกไทยดำ', price: 220, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/02_smoked_black_pepper.jpg' },
+      { name: 'เบคอนรมควัน', description: 'เบคอนรมควันหอมๆ', price: 190, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/03_smoked_bacon.png' },
+      { name: 'โบโลญญ่า', description: 'โบโลญญ่าเนื้อนุ่ม', price: 120, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/04_bologna.jpg' },
+      { name: 'แฮมพริกไทย', description: 'แฮมพริกไทยหอมกรุ่น', price: 160, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/05_pepper_ham.jpg' },
+      { name: 'ซาลามี่', description: 'ซาลามี่รสชาติต้นตำรับ', price: 250, imageUrl: 'https://gfvlzoewacvhlkdiyprp.supabase.co/storage/v1/object/public/products/shop-pic/processed-meat/06_salami.jpg' },
     ],
   },
 ];
@@ -275,6 +134,11 @@ async function main() {
     },
   });
 
+  await prisma.cartItem.deleteMany({});
+  await prisma.orderItem.deleteMany({});
+  await prisma.review.deleteMany({});
+  await prisma.promotion.deleteMany({});
+
   await prisma.product.deleteMany({
     where: {
       storeId: store.id,
@@ -294,14 +158,14 @@ async function main() {
     });
 
     await prisma.product.createMany({
-      data: categoryMock.products.map((product) => ({
-        storeId: store.id,
+      data: categoryMock.products.map((product: any) => ({
+        storeId: store!.id,
         categoryId: category.id,
         name: product.name,
         description: product.description,
         price: product.price,
         stockQuantity: 50,
-        imageUrl: categoryMock.image,
+        imageUrl: product.imageUrl || categoryMock.image,
         status: ProductStatus.ACTIVE,
       })),
     });

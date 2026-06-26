@@ -41,6 +41,7 @@ model User {
   carts     Cart[]
   addresses UserAddress[]
   payments  Payment[]
+  reviews   Review[]
 }
 
 enum StoreStatus {
@@ -118,6 +119,7 @@ model Product {
   orderItems OrderItem[]
   cartItems  CartItem[]
   promotions Promotion[]
+  reviews    Review[]
 
   @@index([storeId])
   @@index([categoryId])
@@ -178,6 +180,7 @@ model Order {
   user       User        @relation(fields: [userId], references: [id])
   orderItems OrderItem[]
   payments   Payment[]
+  reviews    Review[]
 
   @@index([userId])
 }
@@ -263,5 +266,23 @@ model Payment {
   user  User  @relation(fields: [userId], references: [id])
 
   @@index([orderId])
+  @@index([userId])
+}
+
+model Review {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  productId   Int
+  orderId     Int?
+  point       Int
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
   @@index([userId])
 }
