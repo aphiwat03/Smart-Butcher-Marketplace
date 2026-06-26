@@ -8,6 +8,7 @@ import { Trash2, Minus, Plus, ShoppingBag, Home } from "lucide-react";
 import { useCartItems } from "@/hooks/useCartItems";
 import { useCartStore } from "@/store/useCartStore";
 import { CartItem } from "@/types/cart";
+import { toast } from "react-toastify";
 
 const GRID_COLS = "grid-cols-[80px_1fr_140px_120px_120px_48px]";
 
@@ -238,6 +239,7 @@ function CartEmpty() {
 export default function CartPage() {
   const { cartItems, isLoading, setCartItems } = useCartItems();
   const clearCartCount = useCartStore((e) => e.clearCartCount);
+  const fetchCartCount = useCartStore((e) => e.fetchCartCount);
 
   if (isLoading) {
     return (
@@ -298,6 +300,8 @@ export default function CartPage() {
       if (!response.ok) {
         throw new Error("อัปเดตจำนวนสินค้าไม่สำเร็จ");
       }
+      
+      fetchCartCount();
     } catch (error) {
       console.error(error);
       setCartItems(previousItems);
@@ -321,11 +325,12 @@ export default function CartPage() {
         throw new Error("ลบสินค้าไม่สำเร็จ");
       }
 
-      console.log(`ลบสินค้า id ${id} ออกจาก Database สำเร็จเรียบร้อย!`);
+      fetchCartCount();
+      toast.error("ลบสำเร็จ");
     } catch (error) {
       console.error(error);
       setCartItems(previousItems);
-      alert("เกิดข้อผิดพลาด ไม่สามารถลบสินค้าได้");
+      toast.error("เกิดข้อผิดพลาด ไม่สามารถลบสินค้าได้");
     }
   };
 
@@ -345,10 +350,10 @@ export default function CartPage() {
 
       clearCartCount();
       setCartItems([]);
-      console.log("ล้างตะกร้าเรียบร้อย");
+      toast.error("ล้างสินค้าสำเร็จ");
     } catch (error) {
       console.error(error);
-      alert("เกิดข้อผิดพลาดในการล้างตะกร้า");
+      toast.error("เกิดข้อผิดพลาดในการล้างตะกร้า");
     }
   };
 
@@ -428,7 +433,7 @@ export default function CartPage() {
             </Link>
             <Link
               href="/shop"
-              className="text-center text-sm text-gray-400 hover:text-[#4E0707] transition-colors"
+              className="text-center text-sm text-gray-400 hover:text-[#4E0707] transition-colors w-full block"
             >
               ช้อปต่อ
             </Link>
