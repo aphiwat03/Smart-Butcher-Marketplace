@@ -41,7 +41,9 @@ export default function CheckoutFlowPage() {
       <main className="max-w-[1200px] mx-auto w-full px-6 py-10">
         <div className="mb-8 text-center lg:text-left">
           <h1 className="text-3xl font-black text-[#4E0707]">Checkout</h1>
-          <p className="text-gray-500 mt-2">กรุณากรอกข้อมูลเพื่อทำการชำระเงิน</p>
+          <p className="text-gray-500 mt-2">
+            กรุณากรอกข้อมูลเพื่อทำการชำระเงิน
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
@@ -49,7 +51,10 @@ export default function CheckoutFlowPage() {
           <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
             {/* STEP 1: Details */}
             {step === "details" && (
-              <form onSubmit={handleSaveDetails} className="flex flex-col gap-6">
+              <form
+                onSubmit={handleSaveDetails}
+                className="flex flex-col gap-6"
+              >
                 <div className="flex flex-col gap-4">
                   <h3 className="text-lg font-bold text-[#4E0707] border-b border-gray-100 pb-2">
                     ข้อมูลการติดต่อ
@@ -132,7 +137,7 @@ export default function CheckoutFlowPage() {
                       type="button"
                       onClick={() => {
                         const selectedAddr = addresses.find(
-                          (a) => a.id === selectedAddressId
+                          (a) => a.id === selectedAddressId,
                         );
                         if (selectedAddr) {
                           const nameParts = selectedAddr.receiverName
@@ -443,10 +448,10 @@ export default function CheckoutFlowPage() {
                   แอดมินจะทำการตรวจสอบและจัดส่งสินค้าในลำดับต่อไป
                 </p>
                 <Link
-                  href="/"
-                  className="inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-8 rounded-xl text-sm transition-colors text-center"
+                  href="/orders"
+                  className="inline-block bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl text-sm transition-colors text-center shadow-sm"
                 >
-                  กลับไปหน้าแรก
+                  ยืนยัน
                 </Link>
               </div>
             )}

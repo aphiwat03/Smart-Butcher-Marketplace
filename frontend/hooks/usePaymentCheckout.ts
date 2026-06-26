@@ -26,7 +26,7 @@ export function usePaymentCheckout() {
     firstName: string;
     lastName: string;
   } | null>(null);
-  
+
   const fetchCartCount = useCartStore((e) => e.fetchCartCount);
 
   useEffect(() => {
@@ -352,9 +352,9 @@ export function usePaymentCheckout() {
       }
 
       const formData = new FormData();
-      formData.append("file", slipFile);
       formData.append("orderId", orderId.toString());
       formData.append("amount", totalAmount.toString());
+      formData.append("file", slipFile);
 
       const paymentResponse = await fetch(
         `${API_URL}/users/payments/upload-slip`,
@@ -370,10 +370,9 @@ export function usePaymentCheckout() {
       if (!paymentResponse.ok) {
         const errData = await paymentResponse.json().catch(() => ({}));
         throw new Error(
-          `อัปโหลดสลิปขัดข้อง: ${errData.message || "Unknown Error"}`
+          `บันทึกข้อมูลสลิปขัดข้อง: ${errData.message || "Unknown Error"}`
         );
       }
-
       setStep("success");
     } catch (error: any) {
       console.error("Checkout Error Detail:", error);
