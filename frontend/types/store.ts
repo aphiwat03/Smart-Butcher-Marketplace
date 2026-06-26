@@ -2,24 +2,20 @@ export type StoreProduct = {
   id: number;
   name: string;
   price: number;
-  unit: string;
+  unit: string | null;
   image: string | null;
   badge: string | null;
+  category?: string;
 };
 
 export type Store = {
-  id: string;
+  id: number;
   name: string;
-  tagline: string;
+  description: string | null;
   imageUrl: string | null;
   rating: number;
   reviewCount: number;
   productCount: number;
-  joinedAt: string;
-  taxId: string;
-  location: string;
-  responseTime: string;
-  isVerified: boolean;
-  tags: string[];
+  createdAt: string;
   products: StoreProduct[];
 };

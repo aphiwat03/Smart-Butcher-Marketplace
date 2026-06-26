@@ -2,6 +2,8 @@ export type ShopSearchParams = Promise<{
   q?: string;
   category?: string;
   maxPrice?: string;
+  minPrice?: string;
+  page?: string;
 }>;
 
 export type Category = {
@@ -21,4 +23,6 @@ export type ShopProduct = {
     id: number;
     name: string;
   };
+  averageRating?: number;
+  reviewCount?: number;
 };

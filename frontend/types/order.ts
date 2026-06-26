@@ -1,6 +1,7 @@
 export type OrderStatus =
   | "All"
   | "PENDING"
+  | "PAID"
   | "SHIPPED"
   | "DELIVERED"
   | "COMPLETED"
@@ -29,6 +30,7 @@ export interface Order {
   orderStatus: OrderStatus;
   createdAt: string;
   orderItems: OrderItem[];
+  reviews?: { productId: number }[];
 }
 
 export interface OrderApiResponse {
