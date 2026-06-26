@@ -42,6 +42,11 @@ export default function CreateStorePage() {
         throw new Error(errorData.message || "เกิดข้อผิดพลาดในการสร้างร้านค้า");
       }
 
+      const responseData = await response.json();
+      if (responseData.accessToken) {
+        localStorage.setItem("accessToken", responseData.accessToken);
+      }
+
       setIsSuccess(true);
       setTimeout(() => {
         router.push("/seller");
