@@ -1,26 +1,31 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
+import { useCartStore } from "@/store/useCartStore";
 
 export function SiteHeader() {
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<unknown>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<{
+    fullName: string;
+    avatarUrl?: string;
+  } | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const cartCount = useCartStore((e) => e.cartCount);
+  const fetchCartCount = useCartStore((e) => e.fetchCartCount);
   const router = useRouter();
-
-  const mockUser = {
-    name: "Aphiwat Phankham.",
-    avatarUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Mason",
-  };
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem("accessToken");
+      const storedToken = localStorage.getItem("accessToken");
+      setToken(storedToken);
 
-      if (!token) {
+      if (!storedToken) {
         setUser(null);
         setIsLoading(false);
         return;
@@ -30,13 +35,18 @@ export function SiteHeader() {
         const response = await fetch("http://localhost:3001/auth/me", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${storedToken}`,
           },
         });
 
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData);
+          setUser({
+            ...userData,
+            name: userData.fullName,
+            avatarUrl: `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData.email}`,
+          });
+          setRole(userData.role);
         } else {
           localStorage.removeItem("accessToken");
           setUser(null);
@@ -52,13 +62,33 @@ export function SiteHeader() {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount]);
   const isLoggedIn = !!user;
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-  if (isLoading) return null;
+    const keyword = searchTerm.trim();
+    router.push(keyword ? `/shop?q=${encodeURIComponent(keyword)}` : "/shop");
+    setMobileMenuOpen(false);
+  };
+
+  const categories = [
+    { name: "เนื้อดรายเอจ", slug: "เนื้อดรายเอจ" },
+    { name: "เนื้อบด", slug: "เนื้อบด" },
+    { name: "เนื้อแปรรูป", slug: "เนื้อแปรรูป" },
+    { name: "เนื้อวากิวคัดพิเศษ", slug: "เนื้อวากิวคัดพิเศษ" },
+    { name: "เนื้อสำหรับสเต็ก", slug: "เนื้อสำหรับสเต็ก" },
+    {
+      name: "อุปกรณ์และเครื่องเคียง",
+      slug: "อุปกรณ์และเครื่องเคียง",
+    },
+  ];
 
   return (
     <header className="bg-[#4E0707] text-white sticky top-0 z-50 shadow-lg ">
-      <nav className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4 ">
+      <nav className="relative max-w-7xl mx-auto flex justify-between items-center px-4 py-3 md:px-6 md:py-4 ">
         {/* Left: Logo */}
         <div className="flex-shrink-0 ">
           <Image
@@ -70,55 +100,104 @@ export function SiteHeader() {
           />
         </div>
 
-        {/* Center: Navigation Menu */}
-        <div className="flex items-center space-x-8">
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
-            MEAT
+        {/* Center: Navigation Menu — Desktop only */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center space-x-8">
+          <Link
+            href="/"
+            className="hover:text-[#B4915B] transition-colors font-medium"
+          >
+            HOME
           </Link>
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
-            DEAL
-          </Link>
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
-            BUTCHER AI
-          </Link>
-          <Link href="#" className="hover:text-[#B4915B] transition-colors">
+
+          {/* SHOP Menu with Categories Dropdown */}
+          <div className="relative group/shop py-2">
+            <button className="flex items-center space-x-1 hover:text-[#B4915B] transition-colors font-medium cursor-pointer">
+              <span>SHOP</span>
+              <svg
+                className="w-4 h-4 transition-transform group-hover/shop:rotate-180 duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown Items */}
+            <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover/shop:visible opacity-0 group-hover/shop:opacity-100 transition-all duration-200 border border-gray-100">
+              {categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/shop?category=${category.slug}`}
+                  className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors font-medium"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <Link
+            href="/contact"
+            className="hover:text-[#B4915B] transition-colors font-medium"
+          >
             CONTACT US
           </Link>
         </div>
 
-        {/* Right: Search, Profile, Cart */}
-        <div className="flex items-center space-x-4">
-          {/* Search Bar เดิมของคุณ */}
-          <div className="relative hidden sm:block group">
+        {/* Right: Search, Profile, Cart + Mobile hamburger */}
+        <div className="flex items-center justify-end space-x-3 md:space-x-4 sm:min-w-[18rem]">
+          <form
+            onSubmit={handleSearch}
+            className="relative hidden sm:block w-full max-w-[15rem]"
+          >
+            {" "}
+            {/* ใช้ max-w เพื่อคุมความยาว */}
             <input
-              type="text"
-              placeholder="Search..."
-              className="w-10 h-10 px-4 py-2 bg-transparent text-transparent placeholder-transparent cursor-pointer rounded-lg transition-all duration-300 ease-out focus:w-64 focus:bg-white/10 focus:text-white focus:placeholder-gray-300 focus:cursor-text focus:outline-none focus:ring-2 focus:ring-[#B4915B] pr-10"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="ค้นหาสินค้า..."
+              className="h-10 w-full rounded-lg bg-white/10 px-4 py-2 pr-10 text-white placeholder-gray-300 outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#B4915B] [&::-webkit-search-cancel-button]:appearance-none transition-all"
             />
-            <Search
-              size={18}
-              className="absolute right-3 top-2.5 text-white transition-colors duration-200 group-hover:text-[#B4915B] group-focus-within:text-[#B4915B] pointer-events-none"
-            />
-          </div>
+            <button
+              type="submit"
+              aria-label="Search products"
+              className="absolute right-3 top-2.5 text-white hover:text-[#B4915B]"
+            >
+              <Search size={18} />
+            </button>
+          </form>
 
-          {/* Shopping Cart เดิมของคุณ */}
-          <button className="hover:text-[#B4915B] transition-colors p-2 relative">
+          <Link
+            href="/cart"
+            className="hover:text-[#B4915B] transition-colors p-2 relative"
+          >
             <ShoppingCart size={20} />
-            <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-              0
-            </span>
-          </button>
+            {token && (
+              <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {cartCount}
+              </span>
+            )}
+          </Link>
 
-          {/* ส่วน User Dropdown ใหม่ */}
-          <div className="relative group">
+          {/* User dropdown — Desktop */}
+          <div className="relative group hidden md:block">
             <button className="hover:text-[#B4915B] transition-colors p-2 flex items-center">
               <User size={20} />
             </button>
 
-            {/* เมนู Dropdown: จะปรากฏเมื่อ Hover ที่ group */}
             <div className="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 border border-gray-100">
-              {!isLoggedIn ? (
-                // case: ยังไม่ได้เข้าสู่ระบบ
+              {isLoading ? (
+                <div className="px-4 py-2 text-sm text-[#4E0707]/70">
+                  Checking account...
+                </div>
+              ) : !isLoggedIn ? (
                 <Link
                   href="/login"
                   className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors font-medium"
@@ -126,19 +205,18 @@ export function SiteHeader() {
                   เข้าสู่ระบบ / สมัครสมาชิก
                 </Link>
               ) : (
-                // case: เข้าสู่ระบบแล้ว
                 <>
                   <div className="px-4 py-3 border-b border-gray-100 mb-1 flex justify-between items-center">
                     <div className="flex flex-col">
                       <p className="text-xs text-[#4E0707]/70">สวัสดีคุณ</p>
                       <p className="text-sm font-bold text-[#4E0707] truncate max-w-[100px]">
-                        {mockUser.name}
+                        {user?.fullName}
                       </p>
                     </div>
 
                     <div className="w-10 h-10 rounded-full bg-[#B4915B]/20 flex items-center justify-center border border-[#B4915B]/30 overflow-hidden">
                       <img
-                        src={mockUser.avatarUrl}
+                        src={user?.avatarUrl}
                         alt="User Profile Avatar"
                         className="w-full h-full object-cover"
                       />
@@ -159,9 +237,30 @@ export function SiteHeader() {
                     รายการคำสั่งซื้อ
                   </Link>
 
+                  {role === "SELLER" || role === "ADMIN" ? (
+                    <Link
+                      href="/seller"
+                      className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
+                    >
+                      Seller Center
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/create-store"
+                      className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
+                    >
+                      เปิดร้านค้าฟรี
+                    </Link>
+                  )}
+
                   <button
-                    onClick={() => router.push("/login")}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
+                    onClick={() => {
+                      localStorage.removeItem("accessToken");
+                      setUser(null);
+                      setToken(null);
+                      router.push("/");
+                    }}
+                    className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
                   >
                     ออกจากระบบ
                   </button>
@@ -169,8 +268,151 @@ export function SiteHeader() {
               )}
             </div>
           </div>
+
+          {/* Mobile Hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 hover:text-[#B4915B] transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-white/10 bg-[#4E0707] px-4 pb-4 space-y-3">
+          {/* Mobile Search */}
+          <form onSubmit={handleSearch} className="relative sm:hidden">
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="ค้นหาสินค้า..."
+              className="h-10 w-full rounded-lg bg-white/10 px-4 py-2 pr-10 text-sm text-white placeholder-gray-300 outline-none ring-1 ring-white/15 focus:ring-2 focus:ring-[#B4915B] [&::-webkit-search-cancel-button]:appearance-none"
+            />
+            <button
+              type="submit"
+              aria-label="Search products"
+              className="absolute right-3 top-2.5 text-white hover:text-[#B4915B]"
+            >
+              <Search size={18} />
+            </button>
+          </form>
+
+          {/* Navigation Links */}
+          <div className="flex flex-col space-y-1">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              HOME
+            </Link>
+            <Link
+              href="/shop"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              SHOP
+            </Link>
+            {/* Category sub-links */}
+            <div className="pl-4 space-y-1">
+              {categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/shop?category=${category.slug}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-1.5 rounded-lg text-xs text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+            >
+              CONTACT US
+            </Link>
+          </div>
+
+          {/* Mobile User Section */}
+          <div className="border-t border-white/10 pt-3 space-y-1">
+            {isLoading ? (
+              <p className="px-3 py-2 text-sm text-gray-300">กำลังตรวจสอบ...</p>
+            ) : !isLoggedIn ? (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                เข้าสู่ระบบ / สมัครสมาชิก
+              </Link>
+            ) : (
+              <>
+                <div className="px-3 py-2 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#B4915B]/20 flex items-center justify-center border border-[#B4915B]/30 overflow-hidden">
+                    <img
+                      src={user?.avatarUrl}
+                      alt="avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm font-medium truncate">
+                    {user?.fullName}
+                  </span>
+                </div>
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                >
+                  โปรไฟล์ของคุณ
+                </Link>
+                <Link
+                  href="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                >
+                  รายการคำสั่งซื้อ
+                </Link>
+                {role === "SELLER" || role === "ADMIN" ? (
+                  <Link
+                    href="/seller"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                  >
+                    Seller Center
+                  </Link>
+                ) : (
+                  <Link
+                    href="/create-store"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm hover:bg-white/10 transition-colors"
+                  >
+                    เปิดร้านค้าฟรี
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("accessToken");
+                    setUser(null);
+                    setToken(null);
+                    setMobileMenuOpen(false);
+                    router.push("/");
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-300 hover:bg-red-900/30 transition-colors"
+                >
+                  ออกจากระบบ
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

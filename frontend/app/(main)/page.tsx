@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 import { Star, ChevronLeft, ChevronRight, Beef } from "lucide-react";
 
 export default function Home() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const testimonials = [
+
+  const fallbackTestimonials = [
     {
       id: 1,
       name: "สมชาย สุดหล่อ",
@@ -49,88 +51,71 @@ export default function Home() {
       alt: "avatar",
     },
   ];
-  const categories = [
-    {
-      id: 1,
-      name: "พรีเมียมสเต็ก",
-      image: "mock/category/พรีเมียมสเต็ก.jpg",
-    },
-    {
-      id: 2,
-      name: "เนื้อชาบู",
-      image: "mock/category/เนื้อชาบู.jpg",
-    },
-    {
-      id: 3,
-      name: "เนื้อบด",
-      image: "mock/category/เนื้อบด.jpg",
-    },
-    {
-      id: 4,
-      name: "เนื้อคัดพิเศษ",
-      image: "mock/category/เนื้อคัดพิเศษ.jpg",
-    },
-    {
-      id: 5,
-      name: "เนื้อดรายเอจ",
-      image: "mock/category/ดรายเอจ.jpg",
-    },
-    {
-      id: 6,
-      name: "เนื้อวากิวคัดพิเศษ",
-      image: "mock/category/วากิวคัดพิเศษ.webp",
-    },
+
+  const categoryFallbackImages = [
+    "mock/category/พรีเมียมสเต็ก.jpg",
+    "mock/category/วากิวคัดพิเศษ.webp",
+    "mock/category/ดรายเอจ.jpg",
+    "mock/category/เนื้อคัดพิเศษ.jpg",
+    "mock/category/เนื้อบด.jpg",
+    "mock/category/ชุดอุปกรณ์.jpeg",
   ];
-  const products = [
-    {
-      id: 1,
-      name: "เนื้อวากิว",
-      price: "฿899",
-      image: "mock/beef/วากิว.jpg",
-    },
-    {
-      id: 2,
-      name: "เนื้อท้องสันนอก",
-      price: "฿599",
-      image: "mock/beef/ท้องสันนอก.png",
-    },
-    {
-      id: 3,
-      name: "เนื้อสันนอก",
-      price: "฿699",
-      image: "mock/beef/เนื้อสันนอก.webp",
-    },
-    {
-      id: 4,
-      name: "เนื้อสันใน",
-      price: "฿799",
-      image: "mock/beef/สันใน.jpeg",
-    },
-    {
-      id: 5,
-      name: "เนื้อบด",
-      price: "฿399",
-      image: "mock/beef/เนื้อบด.webp",
-    },
-    {
-      id: 6,
-      name: "เนื้อนวล",
-      price: "฿449",
-      image: "mock/beef/เนื้อนวล.jpg",
-    },
-    {
-      id: 7,
-      name: "เนื้อสันหนัง",
-      price: "฿349",
-      image: "mock/beef/เนื้อสันหนัง.png",
-    },
-    {
-      id: 8,
-      name: "เนื้อโครงหลัง",
-      price: "฿299",
-      image: "mock/beef/โครงหลัง.webp",
-    },
-  ];
+
+  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>(fallbackTestimonials);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.classList.add("snap-y", "snap-mandatory");
+    return () => {
+      document.documentElement.classList.remove("snap-y", "snap-mandatory");
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catRes, prodRes, revRes] = await Promise.all([
+          fetch(`${API_URL}/users/products/categories`),
+          fetch(`${API_URL}/users/products`),
+          fetch(`${API_URL}/reviews`),
+        ]);
+
+        if (catRes.ok) {
+          const cats = await catRes.json();
+          setCategories(cats);
+        }
+
+        if (prodRes.ok) {
+          const prods = await prodRes.json();
+          setProducts(Array.isArray(prods) ? prods : (prods.data || []));
+        }
+
+        if (revRes.ok) {
+          const revs = await revRes.json();
+          const mappedRevs = revs.map((r: any) => ({
+            id: r.id,
+            name: r.user.fullName,
+            rating: r.point,
+            comment: r.description,
+            image: `https://api.dicebear.com/9.x/adventurer/svg?seed=${r.user.fullName}`,
+            alt: "avatar",
+          }));
+          if (mappedRevs.length > 0) {
+            setTestimonials(mappedRevs);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch landing page data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
   };
@@ -143,43 +128,62 @@ export default function Home() {
 
   return (
     <main>
-      {/* 2. HERO SECTION */}
+      {/* 1. HERO SECTION */}
       <section
-        className="relative h-150 flex items-center justify-center text-center text-white bg-cover bg-center"
+        className="snap-start relative min-h-screen w-full flex items-center justify-center pt-20 text-center text-white bg-cover bg-center bg-fixed overflow-hidden"
         style={{
           backgroundImage: 'url("/picture/hero-bg.jpg")',
         }}
       >
-        <div className="max-w-2xl mx-auto px-20 bg-white/10 backdrop-blur-md p-20">
-          <div className="flex items-center justify-center space-x-4 mb-4">
-            <Beef className="w-12 h-12 text-[#4E0707]" strokeWidth={2} />
-            <h2 className="text-5xl font-extrabold">Meat Excellence</h2>
-          </div>
-          <p className="text-lg mb-8 text-gray-100">
-            คัดสรรเฉพาะเนื้อเกรดดีที่สุดเพื่อมื้อพิเศษของคุณ
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a0a0a]/80 via-black/50 to-[#1a0a0a]/90 z-0"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 py-10 md:px-12 flex flex-col items-center">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6 drop-shadow-2xl">
+            ยกระดับมื้อพิเศษของคุณด้วย <br className="hidden md:block" />
+            <span className="text-[#B4915B]">เนื้อคุณภาพพรีเมียม</span>
+          </h1>
+
+          <p className="text-base md:text-xl lg:text-2xl mb-10 text-gray-200 max-w-2xl font-light drop-shadow-md">
+            แหล่งรวมร้านเนื้อชั้นนำ การันตีคุณภาพและความสดใหม่
+            ส่งตรงจากฟาร์มถึงหน้าบ้านคุณ
           </p>
-          <button className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-10 py-1 rounded-sm font-bold text-lg transition-colors">
-            Shop Now
-          </button>
+
+          <Link
+            href="/shop"
+            className="group relative overflow-hidden bg-[#B4915B] hover:bg-[#9A7A48] text-white px-8 py-4 md:px-10 md:py-4 rounded-full font-bold text-lg md:text-xl transition-all duration-300 transform hover:scale-105 shadow-[0_0_20px_rgba(180,145,91,0.4)] hover:shadow-[0_0_30px_rgba(180,145,91,0.6)] cursor-pointer flex items-center gap-2"
+          >
+            <span>เริ่มต้นช้อปเลย</span>
+            <ChevronRight
+              className="w-6 h-6 group-hover:translate-x-1 transition-transform"
+              strokeWidth={3}
+            />
+          </Link>
         </div>
       </section>
 
-      {/* 3. OUR Category SECTION */}
-      <section className="py-16 px-6 bg-white">
+      {/* 2. OUR Category SECTION */}
+      <section
+        id="categories"
+        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white"
+      >
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
-            Shop by Category
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
+            Category
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-            {categories.slice(0, 6).map((category) => (
+            {categories.slice(0, 6).map((category, index) => (
               <Link
                 key={category.id}
-                href={`/category/${category.id}`}
-                className="block relative w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
+                href={`/shop?category=${encodeURIComponent(category.name)}`}
+                className="block relative w-full sm:w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
               >
                 <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
                   <img
-                    src={category.image}
+                    src={
+                      categoryFallbackImages[
+                      index % categoryFallbackImages.length
+                      ]
+                    }
                     alt={category.name}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
@@ -196,14 +200,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. PROMOTION SECTION */}
-      <section id="Promotion" className="py-16 px-6 bg-gray-50">
+      {/* 3. TEXT SECTION */}
+      <section
+        id="Promotion"
+        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-gray-50"
+      >
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Column */}
             <div>
-              <h2 className="text-4xl font-bold text-[#4E0707] mb-8">
-                The Finest Cuts for You
+              <h2 className="text-2xl md:text-4xl font-bold text-[#4E0707] mb-4 md:mb-8">
+                ศูนย์รวมร้านเนื้อคุณภาพชั้นนำ
               </h2>
               <ul className="space-y-6 text-gray-700">
                 <li className="flex items-start space-x-4">
@@ -212,11 +219,11 @@ export default function Home() {
                   </span>
                   <div>
                     <h3 className="font-bold text-[#4E0707] mb-1">
-                      Hand-Selected Quality
+                      การันตีสินค้าดีทุกชิ้น
                     </h3>
                     <p>
-                      Carefully selected piece by piece from the best grades by
-                      experts to ensure quality before it reaches your hands.
+                      เราคัดกรองร้านค้าและตรวจสอบคุณภาพสินค้าอย่างเข้มงวด
+                      เพื่อให้คุณมั่นใจว่าได้รับเนื้อเกรดพรีเมียมที่ตรงปกและดีที่สุดเสมอ
                     </p>
                   </div>
                 </li>
@@ -226,11 +233,11 @@ export default function Home() {
                   </span>
                   <div>
                     <h3 className="font-bold text-[#4E0707] mb-1">
-                      Master Butcher Cuts
+                      หลากหลายร้านค้าในที่เดียว
                     </h3>
                     <p>
-                      Meticulously trimmed according to international standards
-                      to maintain the best texture and flavor in every part.
+                      รวบรวมเนื้อวากิวและเนื้อคุณภาพเยี่ยมจากฟาร์มและร้านเนื้อชั้นนำทั่วประเทศ
+                      ให้คุณเลือกเปรียบเทียบและสั่งซื้อได้ครบจบในแพลตฟอร์มเดียว
                     </p>
                   </div>
                 </li>
@@ -249,10 +256,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. TESTIMONIALS SECTION */}
-      <section id="Testimonials" className="py-16 px-6 bg-[#E1E1E1]">
+      {/* 4. Comment SECTION */}
+      <section
+        id="Testimonials"
+        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-[#E1E1E1]"
+      >
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
             What Our Customers Say
           </h2>
 
@@ -265,8 +275,7 @@ export default function Home() {
               <ChevronLeft size={32} className="text-[#4E0707]" />
             </button>
 
-            {/* Testimonial Card */}
-            <div className="flex-1 mx-6 bg-white rounded-lg shadow-lg p-8 max-w-2xl">
+            <div className="flex-1 mx-2 md:mx-6 bg-white rounded-lg shadow-lg p-4 md:p-8 max-w-2xl">
               <div className="flex items-center space-x-4 mb-4">
                 <img
                   src={testimonials[currentTestimonial].image}
@@ -274,7 +283,7 @@ export default function Home() {
                   className="w-16 h-16 rounded-full object-cover"
                 />
                 <div>
-                  <h3 className="font-bold text-lg text-[#4E0707]">
+                  <h3 className="font-bold text-sm md:text-lg text-[#4E0707]">
                     {testimonials[currentTestimonial].name}
                   </h3>
                   <div className="flex items-center space-x-1">
@@ -290,7 +299,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <p className="text-gray-700 text-lg italic">
+              <p className="text-gray-700 text-sm md:text-lg italic">
                 &quot;{testimonials[currentTestimonial].comment}&quot;
               </p>
             </div>
@@ -309,45 +318,49 @@ export default function Home() {
               <button
                 key={index}
                 onClick={() => setCurrentTestimonial(index)}
-                className={`h-3 rounded-full transition-all ${
-                  index === currentTestimonial
+                className={`h-3 rounded-full transition-all ${index === currentTestimonial
                     ? "w-8 bg-[#4E0707]"
                     : "w-3 bg-gray-400"
-                }`}
+                  }`}
               />
             ))}
           </div>
         </div>
       </section>
 
-      {/* 6. POPULAR PRODUCTS SECTION */}
-      <section id="products" className="py-16 px-6 bg-white">
+      {/* 5. POPULAR PRODUCTS SECTION */}
+      <section id="products" className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-[#4E0707]">
+          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
             Popular Products
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {products.slice(0, 4).map((product) => (
-              <div
+              <Link
                 key={product.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden"
+                href={`/product/${product.id}`}
+                className="block relative w-full sm:w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
               >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-48 object-cover hover:scale-105 transition-transform"
-                />
-                <div className="p-4">
-                  <h3 className="font-bold text-lg text-[#4E0707] mb-2">
-                    {product.name}
-                  </h3>
+                <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+                  <img
+                    src={product.imageUrl || "mock/beef/วากิว.jpg"}
+                    alt={product.name}
+                    className="w-full h-48 object-cover hover:scale-105 transition-transform"
+                  />
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg text-[#4E0707] mb-2 truncate">
+                      {product.name}
+                    </h3>
+                    <p className="text-[#B4915B] font-semibold">
+                      ฿{product.price}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
-
     </main>
   );
 }
