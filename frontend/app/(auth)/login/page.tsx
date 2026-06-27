@@ -143,28 +143,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end text-sm">
-          {/* <label className="flex items-center">
-            <Checkbox
-              id="terms-checkbox-basic"
-              name="terms-checkbox-basic"
-              className="border-[#4E0707] data-[state=checked]:bg-[#4E0707] data-[state=checked]:text-white"
-            />
-            <FieldLabel
-              htmlFor="terms-checkbox-basic"
-              className="ml-2 text-gray-600 cursor-pointer"
-            >
-              จดจำฉันไว้
-            </FieldLabel>
-          </label> */}
-          <Link
-            href="/forgot-password"
-            className="font-medium text-[#4E0707] hover:underline"
-          >
-            ลืมรหัสผ่าน?
-          </Link>
-        </div>
-
         <Button
           type="submit"
           disabled={isLoading}
