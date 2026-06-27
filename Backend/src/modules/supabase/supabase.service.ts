@@ -1,22 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class SupabaseService {
-  private supabase: SupabaseClient;
+  private supabase!: SupabaseClient;
+  private readonly logger = new Logger(SupabaseService.name);
 
-  constructor() {
-    const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseKey = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  constructor(private configService: ConfigService) {
+    const supabaseUrl =
+      this.configService.get<string>('SUPABASE_URL') ||
+      this.configService.get<string>('NEXT_PUBLIC_SUPABASE_URL') ||
+      '';
+    const supabaseKey =
+      this.configService.get<string>('SUPABASE_KEY') ||
+      this.configService.get<string>('NEXT_PUBLIC_SUPABASE_ANON_KEY') ||
+      '';
 
-    if (supabaseUrl && supabaseKey) {
+    if (supabaseUrl && supabaseUrl.startsWith('http') && supabaseKey) {
       this.supabase = createClient(supabaseUrl, supabaseKey);
+    } else {
+      this.logger.warn(
+        'Supabase URL is invalid or missing. Skipping Supabase initialization.',
+      );
     }
   }
 
-  async uploadImage(file: any, bucket: string = 'products', folder: string = 'shop-pic'): Promise<string | null> {
+  async uploadImage(
+    file: any,
+    bucket: string = 'products',
+    folder: string = 'shop-pic',
+  ): Promise<string | null> {
     if (!this.supabase) {
-      console.warn('Supabase is not configured (missing URL or KEY). Skipping upload.');
+      console.warn(
+        'Supabase is not configured (missing URL or KEY). Skipping upload.',
+      );
       return null;
     }
 
