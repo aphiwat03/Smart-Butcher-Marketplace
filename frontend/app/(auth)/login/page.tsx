@@ -31,6 +31,18 @@ export default function LoginPage() {
       if (response.ok) {
         localStorage.setItem("accessToken", data.accessToken);
 
+        const userRole = data.user.role;
+
+        let targetPath = "/";
+
+        if (userRole === "BUYER") {
+          targetPath = "/";
+        } else if (userRole === "SELLER") {
+          targetPath = "/seller";
+        } else if (userRole === "ADMIN") {
+          targetPath = "/admin";
+        }
+
         Swal.fire({
           title: "Login Success!",
           text: "ยินดีต้อนรับเข้าสู่ระบบ Smart Butcher",
@@ -38,11 +50,9 @@ export default function LoginPage() {
           confirmButtonColor: "#4E0707",
           confirmButtonText: "OK",
           customClass: { container: "backdrop-blur-sm" },
-        }).then((result) => {
-          router.push("/");
+        }).then(() => {
+          router.push(targetPath);
         });
-
-        router.push("/");
       } else {
         Swal.fire({
           title: "Login Failed",
@@ -131,28 +141,6 @@ export default function LoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center">
-            <Checkbox
-              id="terms-checkbox-basic"
-              name="terms-checkbox-basic"
-              className="border-[#4E0707] data-[state=checked]:bg-[#4E0707] data-[state=checked]:text-white"
-            />
-            <FieldLabel
-              htmlFor="terms-checkbox-basic"
-              className="ml-2 text-gray-600 cursor-pointer"
-            >
-              จดจำฉันไว้
-            </FieldLabel>
-          </label>
-          <Link
-            href="/forgot-password"
-            className="font-medium text-[#4E0707] hover:underline"
-          >
-            ลืมรหัสผ่าน?
-          </Link>
         </div>
 
         <Button

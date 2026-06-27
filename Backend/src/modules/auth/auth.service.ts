@@ -91,6 +91,12 @@ export class AuthService {
         fullName: true,
         role: true,
         createdAt: true,
+        store: {
+          select: {
+            id: true,
+            ownerUserId: true,
+          },
+        },
       },
     });
 
