@@ -23,7 +23,7 @@ export const useCartItems = () => {
           return;
         }
 
-        const response = await fetch("http://localhost:3001/cart", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/cart`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
