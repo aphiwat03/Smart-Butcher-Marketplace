@@ -194,7 +194,7 @@ export default function OrdersPage() {
               กำลังโหลดข้อมูล...
             </div>
           ) : (
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[900px] whitespace-nowrap">
               <thead className="bg-[#4E0707] text-white">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold">
