@@ -321,58 +321,29 @@ export function usePaymentCheckout() {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const orderPayload = {
-        shippingName: `${saved.firstName} ${saved.lastName}`,
-        shippingPhone: saved.phoneNumber,
-        shippingAddressText: `${saved.address} ${saved.city} ${saved.postalCode}`,
-      };
-
-      const orderResponse = await fetch(`${API_URL}/users/orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(orderPayload),
-      });
-
-      if (!orderResponse.ok) {
-        const errData = await orderResponse.json().catch(() => ({}));
-        throw new Error(
-          `สร้างออเดอร์ขัดข้อง: ${errData.message || "Unknown Error"}`
-        );
-      }
-      fetchCartCount();
-      const orderData = await orderResponse.json();
-      const orderId = orderData?.order?.id || orderData?.id;
-      if (!orderId) {
-        throw new Error(
-          "สร้างออเดอร์สำเร็จ แต่ไม่สามารถอ่านค่า Order ID จาก Backend ได้"
-        );
-      }
-
       const formData = new FormData();
-      formData.append("orderId", orderId.toString());
+      formData.append("shippingName", `${saved.firstName} ${saved.lastName}`);
+      formData.append("shippingPhone", saved.phoneNumber);
+      formData.append("shippingAddressText", `${saved.address} ${saved.city} ${saved.postalCode}`);
       formData.append("amount", totalAmount.toString());
       formData.append("file", slipFile);
 
-      const paymentResponse = await fetch(
-        `${API_URL}/users/payments/upload-slip`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const checkoutResponse = await fetch(`${API_URL}/users/checkout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-      if (!paymentResponse.ok) {
-        const errData = await paymentResponse.json().catch(() => ({}));
+      if (!checkoutResponse.ok) {
+        const errData = await checkoutResponse.json().catch(() => ({}));
         throw new Error(
-          `บันทึกข้อมูลสลิปขัดข้อง: ${errData.message || "Unknown Error"}`
+          `การสั่งซื้อล้มเหลว: ${errData.message || "Unknown Error"}`
         );
       }
+      
+      fetchCartCount();
       setStep("success");
     } catch (error: any) {
       console.error("Checkout Error Detail:", error);

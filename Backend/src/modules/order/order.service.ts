@@ -114,6 +114,131 @@ export class OrderService {
     };
   }
 
+  async checkoutWithSlip(
+    userId: number,
+    dto: CreateOrderDto,
+    amount: number,
+    slipImageUrl: string,
+  ) {
+    const cart = await this.prisma.cart.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+      },
+      include: {
+        cartItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                stockQuantity: true,
+                status: true,
+                deletedAt: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!cart || cart.cartItems.length === 0) {
+      throw new BadRequestException('ไม่มีสินค้าในตะกร้า');
+    }
+
+    for (const item of cart.cartItems) {
+      const product = item.product;
+
+      if (product.status !== 'ACTIVE' || product.deletedAt !== null) {
+        throw new BadRequestException(
+          `สินค้า "${product.name}" ไม่พร้อมจำหน่ายในขณะนี้`,
+        );
+      }
+    }
+
+    const totalAmount = cart.cartItems.reduce((sum, item) => {
+      return sum + item.quantity * item.unitPrice;
+    }, 0);
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // 1. Create Order
+      const newOrder = await tx.order.create({
+        data: {
+          userId,
+          totalAmount,
+          orderStatus: 'PENDING',
+          shippingName: dto.shippingName,
+          shippingPhone: dto.shippingPhone,
+          shippingAddressText: dto.shippingAddressText,
+          orderItems: {
+            create: cart.cartItems.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              subtotal: item.quantity * item.unitPrice,
+            })),
+          },
+        },
+        include: {
+          orderItems: {
+            include: {
+              product: {
+                select: { id: true, name: true, imageUrl: true },
+              },
+            },
+          },
+        },
+      });
+
+      // 2. Decrement Stock
+      for (const item of cart.cartItems) {
+        const updated = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            stockQuantity: { gte: item.quantity },
+          },
+          data: {
+            stockQuantity: { decrement: item.quantity },
+          },
+        });
+
+        if (updated.count === 0) {
+          throw new BadRequestException(
+            `ไม่สามารถสร้างคำสั่งซื้อได้ เนื่องจากสินค้าบางรายการมีการเปลี่ยนแปลงสต็อกกระทันหันและมีจำนวนไม่พอ`,
+          );
+        }
+      }
+
+      // 3. Complete Cart
+      await tx.cart.update({
+        where: { id: cart.id },
+        data: { status: 'COMPLETED' },
+      });
+
+      // 4. Create Payment Record
+      const payment = await tx.payment.create({
+        data: {
+          orderId: newOrder.id,
+          userId: userId,
+          amount: amount,
+          paymentMethod: 'BANK_TRANSFER',
+          slipImageUrl: slipImageUrl,
+          status: 'PENDING',
+          paymentDate: new Date(),
+        },
+      });
+
+      return { newOrder, payment };
+    });
+
+    return {
+      message: 'อัปโหลดสลิปและสร้างคำสั่งซื้อสำเร็จ กรุณารอผู้ดูแลระบบตรวจสอบ',
+      order: result.newOrder,
+      payment: result.payment,
+    };
+  }
+
   async getMyOrders(userId: number) {
     const orders = await this.prisma.order.findMany({
       where: { userId },

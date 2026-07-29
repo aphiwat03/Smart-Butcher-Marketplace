@@ -6,10 +6,11 @@ import { SellerOrAdminGuard } from './guards/seller-or-admin.guard';
 import { OrderService } from './order.service';
 import { StoreController } from './store.controller';
 import { UserController } from './user.controller';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Module({
   imports: [PrismaModule],
   controllers: [UserController, AdminController, StoreController],
-  providers: [OrderService, AdminGuard, SellerOrAdminGuard],
+  providers: [OrderService, AdminGuard, SellerOrAdminGuard, SupabaseService],
 })
 export class OrderModule {}
