@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -26,10 +27,8 @@ export function AdminSidebar() {
   useEffect(() => {
     const fetchPendingOrders = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-        const response = await fetch(`${API_URL}/admin/orders`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await fetchApi(`/admin/orders`, {
+          
         });
         if (response.ok) {
           const data = await response.json();
@@ -84,8 +83,15 @@ export function AdminSidebar() {
     if (href === "/admin") return pathname === "/admin";
     return pathname === href || pathname.startsWith(href + "/");
   };
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_URL || "http://localhost:3001"}/auth/logout`, {
+        method: "POST",
+        
+      });
+    } catch (e) {
+      console.error(e);
+    }
     window.location.href = "/login";
   };
 

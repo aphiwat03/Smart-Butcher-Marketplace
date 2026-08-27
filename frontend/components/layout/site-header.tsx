@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,7 +15,6 @@ export function SiteHeader() {
     fullName: string;
     avatarUrl?: string;
   } | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const cartCount = useCartStore((e) => e.cartCount);
   const fetchCartCount = useCartStore((e) => e.fetchCartCount);
@@ -22,25 +22,10 @@ export function SiteHeader() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const storedToken = localStorage.getItem("accessToken");
-      setToken(storedToken);
-
-      if (!storedToken) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/auth/me`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          },
-        );
+        const response = await fetchApi(`/auth/me`, {
+          method: "GET",
+        });
 
         if (response.ok) {
           const userData = await response.json();
@@ -51,7 +36,6 @@ export function SiteHeader() {
           });
           setRole(userData.role);
         } else {
-          localStorage.removeItem("accessToken");
           setUser(null);
         }
       } catch (error) {
@@ -68,13 +52,26 @@ export function SiteHeader() {
   useEffect(() => {
     fetchCartCount();
   }, [fetchCartCount]);
+
   const isLoggedIn = !!user;
+
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const keyword = searchTerm.trim();
     router.push(keyword ? `/shop?q=${encodeURIComponent(keyword)}` : "/shop");
     setMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetchApi(`/auth/logout`, {
+        method: "POST",
+      });
+    } catch (e) {}
+    setUser(null);
+    setMobileMenuOpen(false);
+    router.push("/");
   };
 
   const categories = [
@@ -97,9 +94,9 @@ export function SiteHeader() {
           <Image
             src="/svg/logo.svg"
             alt="Smart Butcher Logo"
-            width={33.61}
-            height={33.61}
-            className="rounded-md"
+            width={80}
+            height={80}
+            className="rounded-md "
           />
         </div>
 
@@ -179,7 +176,7 @@ export function SiteHeader() {
             className="hover:text-[#B4915B] transition-colors p-2 relative"
           >
             <ShoppingCart size={20} />
-            {token && (
+            {isLoggedIn && cartCount > 0 && (
               <span className="absolute top-0 right-0 bg-[#B4915B] text-[#4E0707] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                 {cartCount}
               </span>
@@ -254,12 +251,7 @@ export function SiteHeader() {
                   )}
 
                   <button
-                    onClick={() => {
-                      localStorage.removeItem("accessToken");
-                      setUser(null);
-                      setToken(null);
-                      router.push("/");
-                    }}
+                    onClick={handleLogout}
                     className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors mt-1 border-t border-gray-100"
                   >
                     ออกจากระบบ
@@ -397,13 +389,7 @@ export function SiteHeader() {
                   </Link>
                 )}
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("accessToken");
-                    setUser(null);
-                    setToken(null);
-                    setMobileMenuOpen(false);
-                    router.push("/");
-                  }}
+                  onClick={handleLogout}
                   className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-300 hover:bg-red-900/30 transition-colors"
                 >
                   ออกจากระบบ

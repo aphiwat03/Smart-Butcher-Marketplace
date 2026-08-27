@@ -13,8 +13,8 @@ export function SiteFooter() {
           <Image
             src="/svg/logo.svg"
             alt="Smart Butcher Logo"
-            width={100}
-            height={100}
+            width={180}
+            height={180}
             className="rounded-md"
           />
         </div>
@@ -23,7 +23,7 @@ export function SiteFooter() {
         <div className="space-y-4">
           <div className="flex items-center space-x-3">
             <Phone size={20} className="text-[#B4915B]" />
-            <span>+66 (0) 2-XXX-XXXX</span>
+            <span>02-987-6543</span>
           </div>
           <div className="flex items-center space-x-3">
             <Mail size={20} className="text-[#B4915B]" />

@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
@@ -47,15 +48,12 @@ export function ChatWidget() {
       const history = messages
         .filter((m) => m.id !== 1)
         .map((m) => ({ role: m.role, text: m.text }));
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/ai/chat`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, history }),
-        },
-      );
+      console.log(history);
+      const response = await fetchApi(`/ai/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history }),
+      });
 
       if (!response.ok) {
         setMessages((prev) => [
@@ -92,8 +90,8 @@ export function ChatWidget() {
   };
 
   const renderMessageContent = (text: string) => {
-    // Match [PRODUCT:id=...,name=...,price=...,img=...] allowing optional spaces
-    const productRegex = /\[PRODUCT:\s*id=(.*?),\s*name=(.*?),\s*price=(.*?),\s*img=(.*?)\]/g;
+    const productRegex =
+      /\[PRODUCT:\s*id=(.*?),\s*name=(.*?),\s*price=(.*?),\s*img=(.*?)\]/g;
     const parts = [];
     let lastIndex = 0;
     let match;
@@ -125,7 +123,7 @@ export function ChatWidget() {
                   sizes="(max-width: 768px) 100vw, 300px"
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    e.currentTarget.parentElement!.style.display = 'none';
+                    e.currentTarget.parentElement!.style.display = "none";
                   }}
                 />
               </div>
