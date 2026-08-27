@@ -1,3 +1,4 @@
+import { fetchApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 
 export type CartItem = {
@@ -17,14 +18,8 @@ export const useCartItems = () => {
   useEffect(() => {
     const fetchAndTransformCart = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          setIsLoading(false);
-          return;
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/cart`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await fetchApi(`/cart`, {
+          method: "GET",
         });
 
         if (response.ok) {

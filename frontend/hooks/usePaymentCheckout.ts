@@ -1,3 +1,4 @@
+import { fetchApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { API_URL } from "@/lib/api";
 import { useCartStore } from "@/store/useCartStore";
@@ -18,9 +19,13 @@ export function usePaymentCheckout() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartLoading, setIsCartLoading] = useState(true);
   const [addresses, setAddresses] = useState<UserAddressData[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null,
+  );
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
-  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFormData, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof CheckoutFormData, string>>
+  >({});
   const [userProfile, setUserProfile] = useState<{
     email: string;
     firstName: string;
@@ -32,12 +37,8 @@ export function usePaymentCheckout() {
   useEffect(() => {
     const fetchInitialCheckoutData = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-
-        const cartResponse = await fetch(`${API_URL}/cart`, {
+        const cartResponse = await fetchApi(`/cart`, {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (cartResponse.ok) {
@@ -46,9 +47,8 @@ export function usePaymentCheckout() {
         }
 
         let userEmail = "";
-        const profileResponse = await fetch(`${API_URL}/auth/me`, {
+        const profileResponse = await fetchApi(`/auth/me`, {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (profileResponse.ok) {
@@ -74,9 +74,8 @@ export function usePaymentCheckout() {
           }));
         }
 
-        const addressResponse = await fetch(`${API_URL}/users/address`, {
+        const addressResponse = await fetchApi(`/users/address`, {
           method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (addressResponse.ok) {
@@ -115,7 +114,7 @@ export function usePaymentCheckout() {
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
-    0
+    0,
   );
   const shippingFee = 0;
   const totalAmount = subtotal + shippingFee;
@@ -172,7 +171,7 @@ export function usePaymentCheckout() {
       case "city":
         formattedValue = value.replace(
           /[0-9๐-๙!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/g,
-          ""
+          "",
         );
         break;
 
@@ -227,8 +226,6 @@ export function usePaymentCheckout() {
     }
 
     try {
-      const token = localStorage.getItem("accessToken");
-
       const addressPayload = {
         receiverName: `${form.firstName} ${form.lastName}`,
         phoneNumber: form.phoneNumber,
@@ -246,7 +243,6 @@ export function usePaymentCheckout() {
         method: method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(addressPayload),
       });
@@ -254,9 +250,7 @@ export function usePaymentCheckout() {
       if (!res.ok) {
         throw new Error("เกิดข้อผิดพลาดในการบันทึกที่อยู่");
       }
-      const fetchNewAddresses = await fetch(`${API_URL}/users/address`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const fetchNewAddresses = await fetchApi(`/users/address`, {});
 
       if (fetchNewAddresses.ok) {
         const newData = await fetchNewAddresses.json();
@@ -288,16 +282,14 @@ export function usePaymentCheckout() {
     if (!confirm("คุณต้องการลบที่อยู่นี้ใช่หรือไม่?")) return;
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${API_URL}/users/address/${addressId}`, {
+      const res = await fetchApi(`/users/address/${addressId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error("ไม่สามารถลบที่อยู่ได้");
 
       const updatedAddresses = addresses.filter(
-        (addr) => addr.id !== addressId
+        (addr) => addr.id !== addressId,
       );
       setAddresses(updatedAddresses);
 
@@ -319,30 +311,29 @@ export function usePaymentCheckout() {
     if (!saved || !slipFile) return;
 
     try {
-      const token = localStorage.getItem("accessToken");
-
       const formData = new FormData();
       formData.append("shippingName", `${saved.firstName} ${saved.lastName}`);
       formData.append("shippingPhone", saved.phoneNumber);
-      formData.append("shippingAddressText", `${saved.address} ${saved.city} ${saved.postalCode}`);
+      formData.append(
+        "shippingAddressText",
+        `${saved.address} ${saved.city} ${saved.postalCode}`,
+      );
       formData.append("amount", totalAmount.toString());
       formData.append("file", slipFile);
 
-      const checkoutResponse = await fetch(`${API_URL}/users/checkout`, {
+      const checkoutResponse = await fetchApi(`/users/checkout`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+
         body: formData,
       });
 
       if (!checkoutResponse.ok) {
         const errData = await checkoutResponse.json().catch(() => ({}));
         throw new Error(
-          `การสั่งซื้อล้มเหลว: ${errData.message || "Unknown Error"}`
+          `การสั่งซื้อล้มเหลว: ${errData.message || "Unknown Error"}`,
         );
       }
-      
+
       fetchCartCount();
       setStep("success");
     } catch (error: any) {
