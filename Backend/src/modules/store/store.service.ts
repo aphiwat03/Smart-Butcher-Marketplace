@@ -472,7 +472,7 @@ export class StoreService {
       await this.mapBestSellingProducts(topProductItems);
 
     return {
-      totalOrders,
+      totalOrders: paidOrdersSummary._count.id ?? 0,
       grossRevenue,
       storePayoutAmount,
       netRevenue,

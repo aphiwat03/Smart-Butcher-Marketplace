@@ -304,3 +304,12 @@ model PlatformTransaction {
   @@index([createdAt])
 }
 
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  createdAt DateTime @default(now())
+}
+
