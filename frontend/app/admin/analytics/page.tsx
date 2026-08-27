@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -73,11 +74,9 @@ export default function AnalyticsPage() {
         setIsLoading(true);
         setError(null);
 
-        const accessToken = localStorage.getItem("accessToken");
-        const response = await fetch(`${API_URL}/admin/dashboard`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+        const response = await fetchApi(`/admin/dashboard`, {
+      
+          
         });
 
         if (!response.ok) {

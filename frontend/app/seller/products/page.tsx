@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { Plus, Edit2, Trash2, Eye, Search } from "lucide-react";
@@ -47,14 +48,15 @@ export default function SellerProducts() {
   const fetchMyProducts = async (page = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_URL}/stores/products/my-store?page=${page}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetchApi(
+        `/stores/products/my-store?page=${page}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -74,7 +76,7 @@ export default function SellerProducts() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${API_URL}/users/products/categories`);
+        const response = await fetchApi(`/users/products/categories`);
         const data = await response.json();
         setCategories(data);
       } catch (error) {
@@ -118,7 +120,7 @@ export default function SellerProducts() {
   const handleDelete = async () => {
     if (!deleteProductId) return;
     try {
-      const response = await fetch(`${API_URL}/stores/products/${deleteProductId}`, {
+      const response = await fetchApi(`/stores/products/${deleteProductId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
@@ -142,7 +144,13 @@ export default function SellerProducts() {
   const handleSaveProduct = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    if (!productData.name || !categoryId || productData.price === "" || productData.stockQuantity === "" || !productData.description) {
+    if (
+      !productData.name ||
+      !categoryId ||
+      productData.price === "" ||
+      productData.stockQuantity === "" ||
+      !productData.description
+    ) {
       toast.warning("กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง");
       return;
     }
@@ -167,16 +175,14 @@ export default function SellerProducts() {
     }
 
     try {
-      const url = editingProductId 
+      const url = editingProductId
         ? `${API_URL}/stores/products/${editingProductId}`
         : `${API_URL}/stores/products`;
       const method = editingProductId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
+        credentials: "include",
         body: formData,
       });
 
@@ -269,9 +275,7 @@ export default function SellerProducts() {
               </div>
 
               <div>
-                <Label className="text-[#4E0707] mb-2 block">
-                  Category
-                </Label>
+                <Label className="text-[#4E0707] mb-2 block">Category</Label>
                 <Select
                   value={categoryId?.toString() ?? ""}
                   onValueChange={(val) => setCategoryId(Number(val))}
@@ -280,7 +284,11 @@ export default function SellerProducts() {
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="เลือกหมวดหมู่" />
                   </SelectTrigger>
-                  <SelectContent position="popper" side="bottom" className="max-h-60">
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    className="max-h-60"
+                  >
                     {categories.map((cat: any) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>
                         {cat.name}
@@ -291,9 +299,7 @@ export default function SellerProducts() {
               </div>
 
               <div>
-                <Label className="text-[#4E0707] mb-2 block">
-                  Price (฿)
-                </Label>
+                <Label className="text-[#4E0707] mb-2 block">Price (฿)</Label>
                 <Input
                   type="number"
                   min="0"
@@ -301,7 +307,8 @@ export default function SellerProducts() {
                   onChange={(e) =>
                     setProductData({
                       ...productData,
-                      price: e.target.value === "" ? "" : Number(e.target.value),
+                      price:
+                        e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
                   required
@@ -309,9 +316,7 @@ export default function SellerProducts() {
               </div>
 
               <div>
-                <Label className="text-[#4E0707] mb-2 block">
-                  Stock
-                </Label>
+                <Label className="text-[#4E0707] mb-2 block">Stock</Label>
                 <Input
                   type="number"
                   min="0"
@@ -319,7 +324,8 @@ export default function SellerProducts() {
                   onChange={(e) =>
                     setProductData({
                       ...productData,
-                      stockQuantity: e.target.value === "" ? "" : Number(e.target.value),
+                      stockQuantity:
+                        e.target.value === "" ? "" : Number(e.target.value),
                     })
                   }
                   required
@@ -327,24 +333,27 @@ export default function SellerProducts() {
               </div>
 
               <div>
-                  <Label className="text-[#4E0707] mb-2 block">
-                    Image {editingProductId && <span className="text-xs text-gray-500 font-normal">(Leave blank to keep existing)</span>}
-                  </Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    required={!editingProductId}
-                    onChange={(e) =>
-                      e.target.files && setImageFile(e.target.files[0])
-                    }
-                    className="cursor-pointer"
-                  />
+                <Label className="text-[#4E0707] mb-2 block">
+                  Image{" "}
+                  {editingProductId && (
+                    <span className="text-xs text-gray-500 font-normal">
+                      (Leave blank to keep existing)
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  required={!editingProductId}
+                  onChange={(e) =>
+                    e.target.files && setImageFile(e.target.files[0])
+                  }
+                  className="cursor-pointer"
+                />
               </div>
 
               <div className="md:col-span-2">
-                <Label className="text-[#4E0707] mb-2 block">
-                  Description
-                </Label>
+                <Label className="text-[#4E0707] mb-2 block">Description</Label>
                 <Textarea
                   value={productData.description}
                   onChange={(e) =>
@@ -364,10 +373,17 @@ export default function SellerProducts() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`text-white px-6 py-2 rounded-lg font-semibold transition-colors ${isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-[#B4915B] hover:bg-[#9A7A48] cursor-pointer"
-                  }`}
+                className={`text-white px-6 py-2 rounded-lg font-semibold transition-colors ${
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#B4915B] hover:bg-[#9A7A48] cursor-pointer"
+                }`}
               >
-                {isSubmitting ? "Saving..." : (editingProductId ? "Update Product" : "Save Product")}
+                {isSubmitting
+                  ? "Saving..."
+                  : editingProductId
+                    ? "Update Product"
+                    : "Save Product"}
               </button>
             </div>
           </form>
@@ -418,8 +434,9 @@ export default function SellerProducts() {
                 {filteredProducts.map((product, index) => (
                   <tr
                     key={product.id}
-                    className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      }`}
+                    className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -460,13 +477,22 @@ export default function SellerProducts() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => setViewProduct(product)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
+                        <button
+                          onClick={() => setViewProduct(product)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button onClick={() => openEditForm(product)} className="p-2 text-[#B4915B] hover:bg-[#B4915B]/10 rounded-lg transition-colors">
+                        <button
+                          onClick={() => openEditForm(product)}
+                          className="p-2 text-[#B4915B] hover:bg-[#B4915B]/10 rounded-lg transition-colors"
+                        >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => setDeleteProductId(product.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors">
+                        <button
+                          onClick={() => setDeleteProductId(product.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -496,7 +522,9 @@ export default function SellerProducts() {
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -506,14 +534,20 @@ export default function SellerProducts() {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700">
-                  Showing page <span className="font-medium">{currentPage}</span> of{" "}
+                  Showing page{" "}
+                  <span className="font-medium">{currentPage}</span> of{" "}
                   <span className="font-medium">{totalPages}</span>
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -524,16 +558,19 @@ export default function SellerProducts() {
                     <button
                       key={i + 1}
                       onClick={() => setCurrentPage(i + 1)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === i + 1
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === i + 1
                           ? "z-10 bg-[#B4915B] border-[#B4915B] text-white"
                           : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
+                      }`}
                     >
                       {i + 1}
                     </button>
                   ))}
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -577,7 +614,10 @@ export default function SellerProducts() {
       </div>
 
       {/* View Product Modal */}
-      <Dialog open={!!viewProduct} onOpenChange={(open) => !open && setViewProduct(null)}>
+      <Dialog
+        open={!!viewProduct}
+        onOpenChange={(open) => !open && setViewProduct(null)}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-[#4E0707] mb-4">
@@ -587,23 +627,38 @@ export default function SellerProducts() {
           {viewProduct && (
             <div className="space-y-4">
               <img
-                src={viewProduct.imageUrl || "https://placehold.co/300x200?text=No+Image"}
+                src={
+                  viewProduct.imageUrl ||
+                  "https://placehold.co/300x200?text=No+Image"
+                }
                 alt={viewProduct.name}
                 className="w-full h-48 object-contain rounded-lg bg-gray-50 border border-gray-100"
               />
               <div>
-                <h3 className="text-lg font-bold text-[#4E0707]">{viewProduct.name}</h3>
-                <p className="text-sm text-[#B4915B] font-semibold">{viewProduct.category?.name || "No Category"}</p>
+                <h3 className="text-lg font-bold text-[#4E0707]">
+                  {viewProduct.name}
+                </h3>
+                <p className="text-sm text-[#B4915B] font-semibold">
+                  {viewProduct.category?.name || "No Category"}
+                </p>
               </div>
-              <p className="text-gray-700 whitespace-pre-wrap">{viewProduct.description || "No description provided."}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {viewProduct.description || "No description provided."}
+              </p>
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
                 <div>
                   <p className="text-sm text-gray-500">Price</p>
-                  <p className="text-lg font-bold text-[#B4915B]">฿{viewProduct.price}</p>
+                  <p className="text-lg font-bold text-[#B4915B]">
+                    ฿{viewProduct.price}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Stock Quantity</p>
-                  <p className={`text-lg ${getStockStatus(viewProduct.stockQuantity)}`}>{viewProduct.stockQuantity}</p>
+                  <p
+                    className={`text-lg ${getStockStatus(viewProduct.stockQuantity)}`}
+                  >
+                    {viewProduct.stockQuantity}
+                  </p>
                 </div>
               </div>
             </div>
@@ -612,7 +667,10 @@ export default function SellerProducts() {
       </Dialog>
 
       {/* Delete Confirmation Modal */}
-      <Dialog open={!!deleteProductId} onOpenChange={(open) => !open && setDeleteProductId(null)}>
+      <Dialog
+        open={!!deleteProductId}
+        onOpenChange={(open) => !open && setDeleteProductId(null)}
+      >
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-red-600 mb-2">
@@ -620,7 +678,10 @@ export default function SellerProducts() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-gray-700">Are you sure you want to delete this product? This action cannot be undone.</p>
+            <p className="text-gray-700">
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </p>
           </div>
           <div className="flex justify-end gap-3 mt-4">
             <button

@@ -1,5 +1,5 @@
 "use client";
-
+import { fetchApi } from "@/lib/api";
 import { useEffect, useState } from "react";
 import {
   BarChart,
@@ -20,8 +20,6 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
-
 import { AuthMeResponse } from "@/types/auth";
 import { DashboardData } from "@/types/seller";
 
@@ -44,14 +42,11 @@ export default function SellerDashboard() {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem("accessToken");
         const authHeaders: HeadersInit = {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
 
-        // 1. Resolve the seller's storeId from /auth/me
-        const meRes = await fetch(`${API_URL}/auth/me`, {
+        const meRes = await fetchApi(`/auth/me`, {
           headers: authHeaders,
         });
 
@@ -66,7 +61,7 @@ export default function SellerDashboard() {
           throw new Error("ไม่พบร้านค้าของผู้ใช้นี้");
         }
 
-        const res = await fetch(`${API_URL}/stores/${storeId}/dashboard`, {
+        const res = await fetchApi(`/stores/${storeId}/dashboard`, {
           headers: authHeaders,
         });
 
@@ -198,7 +193,9 @@ export default function SellerDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Chart */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-base md:text-lg font-bold text-[#4E0707] mb-3 md:mb-4">Sales Trend</h2>
+          <h2 className="text-base md:text-lg font-bold text-[#4E0707] mb-3 md:mb-4">
+            Sales Trend
+          </h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data.charts}>
               <CartesianGrid strokeDasharray="3 3" />

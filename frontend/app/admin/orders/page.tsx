@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
@@ -19,12 +20,12 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("accessToken");
 
-      const response = await fetch(`${API_URL}/admin/orders`, {
+      const response = await fetchApi(`/admin/orders`, {
+      
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
+          
           "Content-Type": "application/json",
         },
       });
@@ -62,13 +63,12 @@ export default function OrdersPage() {
 
     try {
       setIsVerifying(true);
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${API_URL}/admin/payments/${paymentId}/verify`,
+      const response = await fetchApi(`/admin/payments/${paymentId}/verify`,
         {
+      
           method: "PATCH",
           headers: {
-            Authorization: `Bearer ${token}`,
+            
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ status }),

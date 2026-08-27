@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -58,9 +59,9 @@ export default function AdminProductsPage() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    fetch(`${API_URL}/admin/products/categories`, {
-      headers: { Authorization: `Bearer ${token}` },
+    fetchApi(`/admin/products/categories`, {
+      
+      
     })
       .then((r) => r.json())
       .then(setCategories)
@@ -71,10 +72,10 @@ export default function AdminProductsPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const token = localStorage.getItem("accessToken");
       const qs = buildQuery(filters, page);
-      const res = await fetch(`${API_URL}/admin/products?${qs}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await fetchApi(`/admin/products?${qs}`, {
+      
+        
       });
       if (!res.ok) throw new Error(`โหลดข้อมูลไม่สำเร็จ (${res.status})`);
       const json = await res.json();
@@ -114,10 +115,10 @@ export default function AdminProductsPage() {
   const handleDelete = async (id: number) => {
     try {
       setIsDeleting(true);
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${API_URL}/admin/products/${id}`, {
+      const res = await fetchApi(`/admin/products/${id}`, {
+      
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        
       });
       if (!res.ok) throw new Error("ลบสินค้าไม่สำเร็จ");
       await fetchProducts();

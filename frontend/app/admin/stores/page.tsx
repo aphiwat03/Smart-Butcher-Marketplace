@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { Ban, Store as StoreIcon, AlertCircle } from "lucide-react";
@@ -61,12 +62,10 @@ export default function AdminStoresPage() {
       setIsLoading(true);
       setError(null);
 
-      const accessToken = localStorage.getItem("accessToken");
 
-      const res = await fetch(`${API_URL}/admin/stores`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+      const res = await fetchApi(`/admin/stores`, {
+      
+        
       });
 
       if (!res.ok) {
@@ -105,13 +104,11 @@ export default function AdminStoresPage() {
     try {
       setSuspendingId(store.id);
 
-      const accessToken = localStorage.getItem("accessToken");
 
-      const res = await fetch(`${API_URL}/admin/stores/${store.id}/suspend`, {
+      const res = await fetchApi(`/admin/stores/${store.id}/suspend`, {
+      
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        
       });
 
       if (!res.ok) {

@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import {
@@ -73,12 +74,10 @@ export default function AdminUsersPage() {
       setIsLoading(true);
       setError(null);
 
-      const accessToken = localStorage.getItem("accessToken");
 
-      const res = await fetch(`${API_URL}/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+      const res = await fetchApi(`/admin/users`, {
+      
+        
       });
 
       if (!res.ok) {
@@ -135,15 +134,14 @@ export default function AdminUsersPage() {
       setIsSubmitting(true);
       setFormError(null);
 
-      const accessToken = localStorage.getItem("accessToken");
 
-      const res = await fetch(
-        `${API_URL}/admin/users/${selectedUser.id}/change-password`,
+      const res = await fetchApi(`/admin/users/${selectedUser.id}/change-password`,
         {
+      
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            
           },
           body: JSON.stringify({ newPassword }),
         },

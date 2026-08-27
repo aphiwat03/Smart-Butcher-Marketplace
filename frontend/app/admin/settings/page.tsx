@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,9 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${API_URL}/settings/gp`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetchApi(`/settings/gp`, {
+      
+        
       });
       if (res.ok) {
         const data = await res.json();
@@ -47,12 +46,12 @@ export default function SettingsPage() {
 
     try {
       setSaving(true);
-      const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${API_URL}/settings/gp`, {
+      const res = await fetchApi(`/settings/gp`, {
+      
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          
         },
         body: JSON.stringify({ percentage: val }),
       });

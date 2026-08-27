@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { BarChart3, Package, TrendingUp, Users } from "lucide-react";
@@ -47,12 +48,10 @@ export default function AdminDashboard() {
         setIsLoading(true);
         setError(null);
 
-        const accessToken = localStorage.getItem("accessToken");
 
-        const res = await fetch(`${API_URL}/admin/dashboard`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+        const res = await fetchApi(`/admin/dashboard`, {
+      
+          
         });
 
         if (!res.ok) {

@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useEffect, useMemo, useState } from "react";
 import { API_URL } from "@/lib/api";
@@ -40,13 +41,11 @@ export default function SellerOrders() {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem("accessToken");
         const authHeaders: HeadersInit = {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
 
-        const meRes = await fetch(`${API_URL}/auth/me`, {
+        const meRes = await fetchApi(`/auth/me`, {
           headers: authHeaders,
         });
 
@@ -61,7 +60,7 @@ export default function SellerOrders() {
           throw new Error("ไม่พบร้านค้าของผู้ใช้นี้");
         }
 
-        const res = await fetch(`${API_URL}/stores/${storeId}/orders`, {
+        const res = await fetchApi(`/stores/${storeId}/orders`, {
           headers: authHeaders,
         });
 
@@ -153,7 +152,10 @@ export default function SellerOrders() {
         .map((item) => `${item.product.name} (x${item.quantity})`)
         .join(", ");
 
-      const totalQuantity = order.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+      const totalQuantity = order.orderItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
       const amount = order.totalAmount;
       const status = getStatusLabel(order.orderStatus);
       const date = new Date(order.createdAt).toLocaleDateString("th-TH");
@@ -172,7 +174,9 @@ export default function SellerOrders() {
     });
 
     const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
@@ -232,8 +236,12 @@ export default function SellerOrders() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">My Orders</h1>
-          <p className="text-sm md:text-base text-gray-600">Manage customer orders and shipments</p>
+          <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">
+            My Orders
+          </h1>
+          <p className="text-sm md:text-base text-gray-600">
+            Manage customer orders and shipments
+          </p>
         </div>
         <button
           onClick={exportToCSV}
@@ -304,7 +312,14 @@ export default function SellerOrders() {
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="text-xs text-gray-500 mb-0.5">
-                    Order Date: {new Date(order.createdAt).toLocaleDateString("th-TH", { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    Order Date:{" "}
+                    {new Date(order.createdAt).toLocaleDateString("th-TH", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                   <p className="text-lg font-bold text-[#4E0707] leading-none">
                     #ORD-{String(order.id).padStart(4, "0")}
@@ -325,7 +340,9 @@ export default function SellerOrders() {
                 {/* Product Info */}
                 <div>
                   <p className="text-xs text-gray-500 mb-0.5">Product</p>
-                  <p className="font-semibold text-gray-800 text-sm">{productLabel}</p>
+                  <p className="font-semibold text-gray-800 text-sm">
+                    {productLabel}
+                  </p>
                   <p className="text-xs text-gray-500">Qty: {totalQuantity}</p>
                 </div>
 
@@ -360,7 +377,10 @@ export default function SellerOrders() {
                     <MapPin className="w-3.5 h-3.5 text-[#B4915B] flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs text-gray-500 mb-0.5">Address</p>
-                      <p className="text-sm text-gray-800 line-clamp-2" title={order.shippingAddressText}>
+                      <p
+                        className="text-sm text-gray-800 line-clamp-2"
+                        title={order.shippingAddressText}
+                      >
                         {order.shippingAddressText}
                       </p>
                     </div>
