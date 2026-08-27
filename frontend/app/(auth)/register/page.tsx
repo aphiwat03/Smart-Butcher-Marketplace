@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,8 @@ export default function RegisterPage() {
       return;
     }
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/auth/register`, {
+      const response = await fetchApi(`/auth/register`, {
+      
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

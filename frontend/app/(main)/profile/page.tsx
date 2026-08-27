@@ -1,12 +1,12 @@
 "use client";
 
+import { fetchApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { UserProfile } from "@/types/profile";
-import { API_URL } from "@/lib/api";
 import { toast } from "react-toastify";
 
 export default function ProfilePage() {
@@ -22,23 +22,13 @@ export default function ProfilePage() {
 
   const fetchProfileData = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       // Fetch User Info
-      const userRes = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const userRes = await fetchApi(`/auth/me`, { method: "GET" });
       if (!userRes.ok) throw new Error("Failed to fetch user");
       const userData = await userRes.json();
 
       // Fetch Default Address
-      const addressRes = await fetch(`${API_URL}/users/address`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const addressRes = await fetchApi(`/users/address`, { method: "GET" });
       const addresses = addressRes.ok ? await addressRes.json() : [];
       const defaultAddress = addresses.length > 0 ? addresses[0] : null;
 
@@ -73,15 +63,9 @@ export default function ProfilePage() {
     if (!formData) return;
     try {
       setSaving(true);
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("No token");
 
-      const profileRes = await fetch(`${API_URL}/users/profile`, {
+      const profileRes = await fetchApi(`/users/profile`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           fullName: formData.fullName,
           email: formData.email,
@@ -105,21 +89,13 @@ export default function ProfilePage() {
 
       let addressRes;
       if (formData.addressId) {
-        addressRes = await fetch(`${API_URL}/users/address/${formData.addressId}`, {
+        addressRes = await fetchApi(`/users/address/${formData.addressId}`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(addressPayload),
         });
       } else {
-        addressRes = await fetch(`${API_URL}/users/address`, {
+        addressRes = await fetchApi(`/users/address`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify(addressPayload),
         });
       }

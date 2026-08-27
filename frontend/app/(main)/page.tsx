@@ -1,8 +1,7 @@
 "use client";
-
+import { fetchApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { API_URL } from "@/lib/api";
 import { Star, ChevronLeft, ChevronRight, Beef } from "lucide-react";
 
 export default function Home() {
@@ -74,7 +73,7 @@ export default function Home() {
         document.documentElement.classList.remove("snap-y", "snap-mandatory");
       }
     };
-    
+
     applySnap();
     window.addEventListener("resize", applySnap);
 
@@ -86,13 +85,13 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     const fetchData = async () => {
       try {
         const [catRes, prodRes, revRes] = await Promise.all([
-          fetch(`${API_URL}/users/products/categories`),
-          fetch(`${API_URL}/users/products?sortBy=popular&limit=4`),
-          fetch(`${API_URL}/reviews`),
+          fetchApi(`/users/products/categories`),
+          fetchApi(`/users/products?sortBy=popular&limit=4`),
+          fetchApi(`/reviews`),
         ]);
 
         if (catRes.ok && prodRes.ok) {
@@ -100,12 +99,14 @@ export default function Home() {
           if (isMounted) setCategories(cats);
 
           const prods = await prodRes.json();
-          if (isMounted) setProducts(Array.isArray(prods) ? prods : (prods.data || []));
+          if (isMounted)
+            setProducts(Array.isArray(prods) ? prods : prods.data || []);
 
           if (revRes.ok) {
             const revs = await revRes.json();
             const filteredRevs = revs.filter(
-              (r: any) => r.point === 5 && r.description && r.description.trim() !== ""
+              (r: any) =>
+                r.point === 5 && r.description && r.description.trim() !== "",
             );
             const mappedRevs = filteredRevs.map((r: any) => ({
               id: r.id,
@@ -116,7 +117,10 @@ export default function Home() {
               alt: "avatar",
             }));
             if (isMounted) {
-              const combinedRevs = [...mappedRevs, ...fallbackTestimonials].slice(0, 5);
+              const combinedRevs = [
+                ...mappedRevs,
+                ...fallbackTestimonials,
+              ].slice(0, 5);
               setTestimonials(combinedRevs);
             }
           }
@@ -133,7 +137,7 @@ export default function Home() {
     };
 
     fetchData();
-    
+
     return () => {
       isMounted = false;
     };

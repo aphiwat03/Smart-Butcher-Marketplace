@@ -1,3 +1,4 @@
+import { fetchApi } from "@/lib/api";
 import ProductClient from "./ProductClient";
 import { API_URL } from "@/lib/api";
 
@@ -9,8 +10,10 @@ export default async function ProductDetailPage({
   const { id } = await params;
 
   const [productRes, reviewsRes] = await Promise.all([
-    fetch(`${API_URL}/users/products/${id}`, { cache: "no-store" }),
-    fetch(`${API_URL}/reviews/product/${id}`, { cache: "no-store" }),
+    fetchApi(`/users/products/${id}`, {
+       cache: "no-store" }),
+    fetchApi(`/reviews/product/${id}`, {
+       cache: "no-store" }),
   ]);
 
   if (!productRes.ok) {

@@ -1,5 +1,5 @@
 "use client";
-
+import { fetchApi } from "@/lib/api";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,6 @@ const statusOptions: { label: string; value: OrderStatus }[] = [
   { label: "All", value: "All" },
   { label: "รอตรวจสอบ", value: "PENDING" },
   { label: "ชำระเงินสำเร็จ", value: "PAID" },
-  { label: "ที่ต้องได้รับ", value: "DELIVERED" },
   { label: "ยกเลิก", value: "CANCELLED" },
 ];
 
@@ -22,7 +21,6 @@ const statusColors: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-800",
   PAID: "bg-green-100 text-green-800",
   SHIPPED: "bg-blue-100 text-blue-800",
-  DELIVERED: "bg-purple-100 text-purple-800",
   COMPLETED: "bg-green-100 text-green-800",
   CANCELLED: "bg-red-100 text-red-800",
 };
@@ -32,7 +30,6 @@ const getStatusLabel = (status: string): string => {
     PENDING: "รอตรวจสอบ",
     PAID: "ชำระเงินสำเร็จ",
     SHIPPED: "ที่ต้องจัดส่ง",
-    DELIVERED: "ที่ต้องได้รับ",
     COMPLETED: "สำเร็จ",
     CANCELLED: "ยกเลิก",
   };
@@ -78,15 +75,13 @@ export default function OrderPage() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const token = localStorage.getItem("accessToken");
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_URL}/users/orders`, {
+      const response = await fetchApi(`/users/orders`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -147,14 +142,13 @@ export default function OrderPage() {
     if (!reviewItem) return;
     try {
       setSubmittingReview(true);
-      const token = localStorage.getItem("accessToken");
-      if (!token) throw new Error("Please log in to review.");
+      if (!document.cookie.includes("accessToken"))
+        throw new Error("Please log in to review.");
 
-      const response = await fetch(`${API_URL}/reviews`, {
+      const response = await fetchApi(`/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           orderId: reviewItem.orderId,

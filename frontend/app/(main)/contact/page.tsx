@@ -5,6 +5,8 @@ import { Phone, Mail, MapPin, Clock, CircleCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { fetchApi } from "@/lib/api";
+import { toast } from "react-toastify";
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -15,13 +17,37 @@ export default function ContactPage() {
     message: "",
   });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const set = (key: string, val: string) =>
     setForm((prev) => ({ ...prev, [key]: val }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setLoading(true);
+    
+    try {
+      const response = await fetchApi('/contact', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          email: form.email,
+          phone: form.mobile,
+          message: form.message,
+        })
+      });
+
+      if (response.ok) {
+        setSent(true);
+        toast.success("ส่งข้อความสำเร็จ");
+      } else {
+        toast.error("ไม่สามารถส่งข้อความได้ กรุณาลองใหม่อีกครั้ง");
+      }
+    } catch (error) {
+      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,7 +120,7 @@ export default function ContactPage() {
                 <Field label="เบอร์มือถือ" required>
                   <Input
                     type="tel"
-                    placeholder="08X-XXX-XXXX"
+                    placeholder="081-234-5678"
                     value={form.mobile}
                     onChange={(e) =>
                       set(
@@ -110,12 +136,13 @@ export default function ContactPage() {
                   />
                 </Field>
 
-                <Field label="อีเมล">
+                <Field label="อีเมล" required>
                   <Input
                     type="email"
                     placeholder="email@example.com"
                     value={form.email}
                     onChange={(e) => set("email", e.target.value)}
+                    required
                   />
                 </Field>
 
@@ -132,9 +159,10 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#4E0707] hover:bg-[#3D0505] text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+                  disabled={loading}
+                  className="w-full bg-[#4E0707] hover:bg-[#3D0505] text-white font-bold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ส่งข้อความ
+                  {loading ? "กำลังส่งข้อความ..." : "ส่งข้อความ"}
                 </button>
               </form>
             )}
@@ -152,17 +180,17 @@ export default function ContactPage() {
                   {
                     icon: <Phone size={15} />,
                     label: "โทรศัพท์",
-                    value: "+66 (0) 2-XXX-XXXX",
+                    value: "02-987-6543",
                   },
                   {
                     icon: <Mail size={15} />,
                     label: "อีเมล",
-                    value: "info@smartbutcher.com",
+                    value: "contact@smartbutcher.co.th",
                   },
                   {
                     icon: <Phone size={15} />,
                     label: "Line Official",
-                    value: "@smartbutcher",
+                    value: "@smartbutcher.th",
                   },
                 ].map(({ icon, label, value }, i) => (
                   <div key={label}>
@@ -221,7 +249,7 @@ export default function ContactPage() {
                   className="text-[#B4915B] mt-0.5 flex-shrink-0"
                 />
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  123 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพฯ 10110
+                  อาคารสมาร์ทวิชั่น ชั้น 12, 123 ถนนสุขุมวิท แขวงคลองเตยเหนือ เขตวัฒนา กรุงเทพมหานคร 10110
                 </p>
               </div>
             </div>

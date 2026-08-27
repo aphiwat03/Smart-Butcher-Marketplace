@@ -1,19 +1,11 @@
+import { fetchApi } from "@/lib/api";
 import Image from "next/image";
-import {
-  BadgeCheck,
-  Calendar,
-  Star,
-  MapPin,
-  Clock,
-  IdCard,
-} from "lucide-react";
+import { Calendar, Star } from "lucide-react";
 import { StoreProductList } from "@/components/store/store-product-list";
 import { StoreProduct, Store } from "@/types/store";
 
-import { API_URL } from "@/lib/api";
-
 async function getStoreData(storeId: string): Promise<Store> {
-  const res = await fetch(`${API_URL}/users/stores/${storeId}`, {
+  const res = await fetchApi(`/users/stores/${storeId}`, {
     cache: "no-store",
   });
   if (!res.ok) {

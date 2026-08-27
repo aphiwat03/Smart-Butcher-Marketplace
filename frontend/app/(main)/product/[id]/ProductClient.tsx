@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { API_URL } from "@/lib/api";
+import { fetchApi } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StarIcon } from "@heroicons/react/24/solid";
@@ -29,7 +29,6 @@ export default function ProductClient({
   reviews = [],
 }: ProductDetailProps & { reviews?: Review[] }) {
   const router = useRouter();
-  const token = localStorage.getItem("accessToken");
   const [quantity, setQuantity] = useState(1);
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const productId = product.id;
@@ -61,16 +60,12 @@ export default function ProductClient({
     e.preventDefault();
 
     try {
-      const response = await fetch(`${API_URL}/cart`, {
+      const response = await fetchApi(`/cart`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ productId, quantity }),
       });
-      const data = await response.json();
-      if (!token) {
+      
+      if (response.status === 401) {
         Swal.fire({
           title: "Unauthorization",
           text: "กรุณาเข้าสู่ระบบก่อน",
@@ -79,10 +74,13 @@ export default function ProductClient({
         }).then(() => {
           router.push("/login");
         });
-      } else if (response.ok) {
+        return;
+      }
+
+      if (response.ok) {
         toast.success("เพิ่มสินค้าลงตระกร้าสำเร็จ");
         fetchCartCount();
-      } else if (!response.ok) {
+      } else {
         toast.error("เพิ่มสินค้าลงตะกร้าไม่สำเร็จ");
       }
     } catch (error) {

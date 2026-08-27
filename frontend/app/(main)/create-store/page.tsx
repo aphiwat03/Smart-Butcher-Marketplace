@@ -1,8 +1,7 @@
 "use client";
-
+import { fetchApi } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/lib/api";
 import { Store, Info, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
@@ -23,16 +22,11 @@ export default function CreateStorePage() {
     setError(null);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("กรุณาล็อกอินก่อนทำการเปิดร้านค้า");
-      }
 
-      const response = await fetch(`${API_URL}/users/stores`, {
+      const response = await fetchApi(`/users/stores`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: name.trim(),
@@ -47,7 +41,6 @@ export default function CreateStorePage() {
 
       const responseData = await response.json();
       if (responseData.accessToken) {
-        localStorage.setItem("accessToken", responseData.accessToken);
       }
 
       setIsSuccess(true);

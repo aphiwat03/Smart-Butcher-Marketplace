@@ -1,4 +1,5 @@
 "use client";
+import { fetchApi } from "@/lib/api";
 
 import { useState, useEffect } from "react";
 import { API_URL } from "@/lib/api";
@@ -288,12 +289,12 @@ export default function CartPage() {
     );
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_URL}/cart/${id}`, {
+      const response = await fetchApi(`/cart/${id}`, {
+      
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          
         },
         body: JSON.stringify({ quantity: newQty }),
       });
@@ -314,12 +315,10 @@ export default function CartPage() {
     setCartItems(cartItems.filter((item) => item.id !== id));
 
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_URL}/cart/${id}`, {
+      const response = await fetchApi(`/cart/${id}`, {
+      
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        
       });
 
       if (!response.ok) {
@@ -337,12 +336,10 @@ export default function CartPage() {
 
   const handleClearCart = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_URL}/cart`, {
+      const response = await fetchApi(`/cart`, {
+      
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        
       });
 
       if (!response.ok) {
