@@ -13,6 +13,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SettingsModule } from './modules/settings/settings.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     ReviewModule,
     AiModule,
     SettingsModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [AppService],
