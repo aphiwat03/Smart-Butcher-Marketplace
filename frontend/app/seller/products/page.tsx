@@ -1,10 +1,26 @@
 "use client";
-import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, Eye, Search } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  Search,
+  MoreVertical,
+  CheckCircle2,
+  AlertTriangle,
+  AlertOctagon,
+  UploadCloud,
+  RefreshCw,
+  Loader2,
+} from "lucide-react";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { toast } from "react-toastify";
-import { API_URL } from "@/lib/api";
+import { API_URL, fetchApi } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -18,9 +34,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+const productSchema = z.object({
+  name: z.string().min(1, "กรุณากรอกชื่อสินค้า"),
+  categoryId: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
+  price: z.number().min(0, "ราคาต้องไม่ต่ำกว่า 0 บาท"),
+  stockQuantity: z
+    .number()
+    .int("สต็อกต้องเป็นจำนวนเต็ม")
+    .min(0, "สต็อกต้องไม่ต่ำกว่า 0"),
+  description: z.string().min(1, "กรุณากรอกรายละเอียดสินค้า"),
+});
+
+type ProductFormValues = z.infer<typeof productSchema>;
 
 export default function SellerProducts() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,20 +67,24 @@ export default function SellerProducts() {
   const [viewProduct, setViewProduct] = useState<any>(null);
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null);
 
-  const [categories, setCategories] = useState([]);
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [productData, setProductData] = useState({
-    name: "",
-    description: "",
-    price: "" as number | string,
-    stockQuantity: "" as number | string,
+
+  const form = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: "",
+      categoryId: "",
+      price: 0,
+      stockQuantity: 0,
+      description: "",
+    },
   });
-  const itemsPerPage = 8;
 
   const fetchMyProducts = async (page = 1) => {
     try {
@@ -93,28 +134,44 @@ export default function SellerProducts() {
 
   const openAddForm = () => {
     setEditingProductId(null);
-    setProductData({
+    form.reset({
       name: "",
+      categoryId: "",
+      price: 0,
+      stockQuantity: 0,
       description: "",
-      price: "",
-      stockQuantity: "",
     });
-    setCategoryId(null);
     setImageFile(null);
+    setImagePreview(null);
     setShowForm(true);
   };
 
   const openEditForm = (product: any) => {
     setEditingProductId(product.id);
-    setProductData({
+    form.reset({
       name: product.name,
-      description: product.description,
+      categoryId: product.category?.id ? String(product.category.id) : "",
       price: product.price,
       stockQuantity: product.stockQuantity,
+      description: product.description || "",
     });
-    setCategoryId(product.category?.id || null);
     setImageFile(null);
+    setImagePreview(product.imageUrl || null);
     setShowForm(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const url = URL.createObjectURL(file);
+      setImagePreview(url);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const handleDelete = async () => {
@@ -141,20 +198,7 @@ export default function SellerProducts() {
     }
   };
 
-  const handleSaveProduct = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-
-    if (
-      !productData.name ||
-      !categoryId ||
-      productData.price === "" ||
-      productData.stockQuantity === "" ||
-      !productData.description
-    ) {
-      toast.warning("กรุณากรอกข้อมูลให้ครบถ้วนทุกช่อง");
-      return;
-    }
-
+  const handleSaveProduct = async (values: ProductFormValues) => {
     if (!editingProductId && !imageFile) {
       toast.warning("กรุณาอัปโหลดรูปภาพสินค้า");
       return;
@@ -164,11 +208,11 @@ export default function SellerProducts() {
     setIsSubmitting(true);
 
     const formData = new FormData();
-    formData.append("name", productData.name);
-    formData.append("price", productData.price.toString());
-    formData.append("stockQuantity", productData.stockQuantity.toString());
-    formData.append("categoryId", categoryId.toString());
-    formData.append("description", productData.description);
+    formData.append("name", values.name);
+    formData.append("price", values.price.toString());
+    formData.append("stockQuantity", values.stockQuantity.toString());
+    formData.append("categoryId", values.categoryId);
+    formData.append("description", values.description);
 
     if (imageFile) {
       formData.append("file", imageFile);
@@ -187,18 +231,12 @@ export default function SellerProducts() {
       });
 
       if (response.ok) {
-        toast.success("บันทึกสินค้าสำเร็จ!");
-        setProductData({
-          name: "",
-          description: "",
-          price: "",
-          stockQuantity: "",
-        });
-        setCategoryId(null);
-        setImageFile(null);
-        setEditingProductId(null);
+        toast.success(
+          editingProductId
+            ? "อัปเดตข้อมูลสินค้าเรียบร้อยแล้ว!"
+            : "เพิ่มสินค้าใหม่เรียบร้อยแล้ว!",
+        );
         setShowForm(false);
-
         fetchMyProducts(currentPage);
       } else {
         const errorData = await response.json();
@@ -218,8 +256,8 @@ export default function SellerProducts() {
 
   const getStatusBadge = (status: string) => {
     if (status?.toLowerCase() === "active")
-      return "bg-green-100 text-green-800";
-    return "bg-red-100 text-red-800";
+      return "bg-emerald-50 text-emerald-700 border border-emerald-300";
+    return "bg-rose-50 text-rose-700 border border-rose-300";
   };
 
   const getStockStatus = (stock: number) => {
@@ -231,201 +269,364 @@ export default function SellerProducts() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">
-            My Products
-          </h1>
-          <p className="text-sm md:text-base text-gray-600">
-            Manage your product listings
-          </p>
+      {/* Summary Status Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+        {/* Active Products */}
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-200 flex items-center justify-between group">
+          <div className="space-y-1">
+            <p className="text-xs sm:text-base font-medium text-gray-500">
+              Active Products
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-500">
+              {
+                products.filter((p) => p.status?.toLowerCase() === "active")
+                  .length
+              }
+            </p>
+            <p className="text-xs text-emerald-600 font-medium flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+              พร้อมจำหน่ายในร้าน
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
         </div>
-        <button
-          onClick={openAddForm}
-          className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm md:text-base transition-colors self-start sm:self-auto cursor-pointer"
-        >
-          <Plus className="w-5 h-5" />
-          Add Product
-        </button>
+
+        {/* Low Stock Items */}
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-200 flex items-center justify-between group">
+          <div className="space-y-1">
+            <p className="text-xs sm:text-base font-medium text-gray-500">
+              Low Stock Items
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600">
+              {
+                products.filter(
+                  (p) => p.stockQuantity > 0 && p.stockQuantity <= 10,
+                ).length
+              }
+            </p>
+            <p className="text-xs text-amber-600 font-medium flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+              สินค้าใกล้หมด (≤ 10 ชิ้น)
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Out of Stock */}
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs hover:shadow-md transition-all duration-200 flex items-center justify-between group">
+          <div className="space-y-1">
+            <p className="text-xs sm:text-base font-medium text-gray-500">
+              Out of Stock
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-rose-600">
+              {products.filter((p) => p.stockQuantity === 0).length}
+            </p>
+            <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+              สินค้าหมดสต็อก
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <AlertOctagon className="w-6 h-6" />
+          </div>
+        </div>
       </div>
 
-      {/* Add Product Modal */}
+      {/* Add / Edit Product Modal with react-hook-form */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto rounded-xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-[#4E0707] mb-4">
-              {editingProductId ? "Edit Product" : "Add New Product"}
+            <DialogTitle className="text-xl font-bold text-[#4E0707]">
+              {editingProductId
+                ? "แก้ไขข้อมูลสินค้า (Edit Product)"
+                : "เพิ่มสินค้าใหม่ (Add New Product)"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveProduct}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-[#4E0707] mb-2 block">
-                  Product Name
-                </Label>
-                <Input
-                  type="text"
-                  value={productData.name}
-                  onChange={(e) =>
-                    setProductData({ ...productData, name: e.target.value })
-                  }
-                  required
-                />
-              </div>
 
-              <div>
-                <Label className="text-[#4E0707] mb-2 block">Category</Label>
-                <Select
-                  value={categoryId?.toString() ?? ""}
-                  onValueChange={(val) => setCategoryId(Number(val))}
-                  required
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="เลือกหมวดหมู่" />
-                  </SelectTrigger>
-                  <SelectContent
-                    position="popper"
-                    side="bottom"
-                    className="max-h-60"
-                  >
-                    {categories.map((cat: any) => (
-                      <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-[#4E0707] mb-2 block">Price (฿)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={productData.price}
-                  onChange={(e) =>
-                    setProductData({
-                      ...productData,
-                      price:
-                        e.target.value === "" ? "" : Number(e.target.value),
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              <div>
-                <Label className="text-[#4E0707] mb-2 block">Stock</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={productData.stockQuantity}
-                  onChange={(e) =>
-                    setProductData({
-                      ...productData,
-                      stockQuantity:
-                        e.target.value === "" ? "" : Number(e.target.value),
-                    })
-                  }
-                  required
-                />
-              </div>
-
-              <div>
-                <Label className="text-[#4E0707] mb-2 block">
-                  Image{" "}
-                  {editingProductId && (
-                    <span className="text-xs text-gray-500 font-normal">
-                      (Leave blank to keep existing)
-                    </span>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSaveProduct)}
+              className="space-y-4 pt-2"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Product Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-[#4E0707]">
+                        ชื่อสินค้า
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="เช่น เนื้อริบอายวากิว A5"
+                          className="rounded-lg"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  required={!editingProductId}
-                  onChange={(e) =>
-                    e.target.files && setImageFile(e.target.files[0])
-                  }
-                  className="cursor-pointer"
+                />
+
+                {/* Category */}
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4E0707]">หมวดหมู่</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full rounded-lg">
+                            <SelectValue placeholder="เลือกหมวดหมู่..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent
+                          position="popper"
+                          side="bottom"
+                          className="max-h-60"
+                        >
+                          {categories.map((cat: any) => (
+                            <SelectItem key={cat.id} value={cat.id.toString()}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Price */}
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4E0707]">
+                        ราคา (บาท)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0.00"
+                          className="rounded-lg"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? 0
+                                : Number(e.target.value),
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Stock Quantity */}
+                <FormField
+                  control={form.control}
+                  name="stockQuantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#4E0707]">
+                        จำนวนสต็อก (ชิ้น/แพ็ค)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          className="rounded-lg"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? 0
+                                : Number(e.target.value),
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Modern Image Upload Area with Preview */}
+                <div className="md:col-span-2">
+                  <FormLabel className="text-[#4E0707] mb-2 block">
+                    รูปภาพสินค้า{" "}
+                    {!editingProductId && (
+                      <span className="text-red-500">*</span>
+                    )}
+                  </FormLabel>
+
+                  {imagePreview ? (
+                    <div className="relative group rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center p-3 max-h-64">
+                      <img
+                        src={imagePreview}
+                        alt="Product Preview"
+                        className="max-h-56 w-auto object-contain rounded-md"
+                      />
+                      <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <label
+                          htmlFor="product-image-upload"
+                          className="cursor-pointer bg-white text-gray-800 hover:text-[#4E0707] px-3.5 py-2 rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" /> เปลี่ยนรูปภาพ
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="cursor-pointer bg-red-600 text-white hover:bg-red-700 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> ลบรูปภาพ
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="product-image-upload"
+                      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-[#B4915B] rounded-lg p-6 bg-gray-50/70 hover:bg-[#B4915B]/5 transition-all cursor-pointer group"
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                        <UploadCloud className="w-6 h-6 text-[#B4915B]" />
+                      </div>
+                      <p className="text-sm font-semibold text-[#4E0707] group-hover:text-[#B4915B]">
+                        คลิกเพื่ออัปโหลดรูปภาพสินค้า
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        รองรับไฟล์ PNG, JPG, JPEG หรือ WEBP (สูงสุด 5MB)
+                      </p>
+                    </label>
+                  )}
+
+                  <input
+                    id="product-image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Description */}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-[#4E0707]">
+                        รายละเอียดสินค้า
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="ระบุรายละเอียด เช่น ชิ้นส่วน คุณภาพ แหล่งกำเนิด หรือวิธีเก็บรักษา..."
+                          rows={3}
+                          className="rounded-lg resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <Label className="text-[#4E0707] mb-2 block">Description</Label>
-                <Textarea
-                  value={productData.description}
-                  onChange={(e) =>
-                    setProductData({
-                      ...productData,
-                      description: e.target.value,
-                    })
-                  }
-                  required
-                  placeholder="Describe your product..."
-                  rows={3}
-                />
+              {/* Form Action Buttons (สี่เหลี่ยมทรงมาตรฐาน สไตล์ shadcn) */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowForm(false)}
+                  className="rounded-lg px-5 py-2 border-gray-300 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                >
+                  ยกเลิก
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-[#B4915B] hover:bg-[#9A7A48] text-white rounded-lg px-6 py-2 font-semibold shadow-xs cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      กำลังบันทึก...
+                    </>
+                  ) : editingProductId ? (
+                    "อัปเดตสินค้า"
+                  ) : (
+                    "บันทึกสินค้า"
+                  )}
+                </Button>
               </div>
-            </div>
-
-            <div className="flex gap-2 mt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`text-white px-6 py-2 rounded-lg font-semibold transition-colors ${
-                  isSubmitting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#B4915B] hover:bg-[#9A7A48] cursor-pointer"
-                }`}
-              >
-                {isSubmitting
-                  ? "Saving..."
-                  : editingProductId
-                    ? "Update Product"
-                    : "Save Product"}
-              </button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search by product name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 h-[42px]"
-        />
+      {/* Search + Add Product Button (อยู่แถวเดียวกัน) */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="ค้นหาชื่อสินค้า..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-[42px] rounded-none border-gray-300"
+          />
+        </div>
+        <Button
+          onClick={openAddForm}
+          className="bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 h-[42px] rounded-none font-semibold text-sm transition-colors cursor-pointer shadow-xs shrink-0"
+        >
+          <Plus className="w-5 h-5 mr-1.5" />
+          เพิ่มสินค้า
+        </Button>
       </div>
 
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Products Table (สี่เหลี่ยมไม่มีมุมมน rounded-none) */}
+      <div className="bg-white rounded-none border border-gray-200 shadow-xs">
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-10 text-gray-500">
               Loading products...
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-[#4E0707] text-white">
-                  <th className="px-6 py-3 text-left text-sm font-semibold">
+                  <th className="px-6 py-3.5 text-left text-sm font-semibold">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
+                  <th className="px-6 py-3.5 text-center text-sm font-semibold">
                     Price
                   </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
+                  <th className="px-6 py-3.5 text-center text-sm font-semibold">
                     Stock
                   </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
+                  <th className="px-6 py-3.5 text-center text-sm font-semibold">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
+                  <th className="px-6 py-3.5 text-center text-sm font-semibold">
                     Actions
                   </th>
                 </tr>
@@ -435,7 +636,7 @@ export default function SellerProducts() {
                   <tr
                     key={product.id}
                     className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/70"
                     }`}
                   >
                     <td className="px-6 py-4">
@@ -446,7 +647,7 @@ export default function SellerProducts() {
                             "https://placehold.co/150?text=No+Image"
                           }
                           alt={product.name}
-                          className="w-12 h-12 rounded object-contain bg-gray-50 border border-gray-100"
+                          className="w-12 h-12 rounded-none object-contain bg-gray-50 border border-gray-200"
                         />
                         <div>
                           <p className="font-semibold text-[#4E0707]">
@@ -468,7 +669,7 @@ export default function SellerProducts() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
-                        className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusBadge(
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-none inline-block ${getStatusBadge(
                           product.status,
                         )}`}
                       >
@@ -476,26 +677,54 @@ export default function SellerProducts() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => setViewProduct(product)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                      <Menu as="div" className="inline-block text-left">
+                        <MenuButton
+                          type="button"
+                          className="p-1.5 text-gray-500 hover:text-[#4E0707] hover:bg-gray-100 rounded-none transition-colors focus:outline-hidden cursor-pointer"
+                          title="ตัวเลือกการจัดการ"
                         >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openEditForm(product)}
-                          className="p-2 text-[#B4915B] hover:bg-[#B4915B]/10 rounded-lg transition-colors"
+                          <MoreVertical className="w-5 h-5" />
+                        </MenuButton>
+
+                        {/* ใช้ anchor="bottom end" เพื่อให้เมนูลอยทะลุหลุดพ้น overflow ของ table */}
+                        <MenuItems
+                          anchor={{ to: "bottom end", gap: 4 }}
+                          transition
+                          className="z-50 w-44 rounded-none bg-white p-1 shadow-xl ring-1 ring-black/10 focus:outline-hidden transition data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
                         >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteProductId(product.id)}
-                          className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                          <MenuItem>
+                            <button
+                              type="button"
+                              onClick={() => setViewProduct(product)}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 rounded-none transition-colors cursor-pointer data-focus:bg-gray-100 data-focus:text-[#4E0707]"
+                            >
+                              <Eye className="w-4 h-4 text-blue-600 shrink-0" />
+                              <span>ดูรายละเอียด</span>
+                            </button>
+                          </MenuItem>
+                          <MenuItem>
+                            <button
+                              type="button"
+                              onClick={() => openEditForm(product)}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 rounded-none transition-colors cursor-pointer data-focus:bg-gray-100 data-focus:text-[#4E0707]"
+                            >
+                              <Edit2 className="w-4 h-4 text-[#B4915B] shrink-0" />
+                              <span>แก้ไขสินค้า</span>
+                            </button>
+                          </MenuItem>
+                          <div className="my-1 border-t border-gray-100" />
+                          <MenuItem>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteProductId(product.id)}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-none transition-colors cursor-pointer data-focus:bg-red-50 data-focus:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600 shrink-0" />
+                              <span>ลบสินค้า</span>
+                            </button>
+                          </MenuItem>
+                        </MenuItems>
+                      </Menu>
                     </td>
                   </tr>
                 ))}
@@ -510,14 +739,14 @@ export default function SellerProducts() {
           </div>
         )}
 
-        {/* Pagination Controls */}
+        {/* Pagination Controls (เหลี่ยม rounded-none) */}
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
             <div className="flex justify-between flex-1 sm:hidden">
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-none hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
@@ -526,7 +755,7 @@ export default function SellerProducts() {
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-none hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -541,7 +770,7 @@ export default function SellerProducts() {
               </div>
               <div>
                 <nav
-                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  className="relative z-0 inline-flex rounded-none shadow-xs -space-x-px"
                   aria-label="Pagination"
                 >
                   <button
@@ -549,7 +778,7 @@ export default function SellerProducts() {
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="relative inline-flex items-center px-2 py-2 rounded-none border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <span className="sr-only">Previous</span>
                     &laquo;
@@ -558,10 +787,10 @@ export default function SellerProducts() {
                     <button
                       key={i + 1}
                       onClick={() => setCurrentPage(i + 1)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-none cursor-pointer ${
                         currentPage === i + 1
-                          ? "z-10 bg-[#B4915B] border-[#B4915B] text-white"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          ? "z-10 bg-[#B4915B] border-[#B4915B] text-white font-semibold"
+                          : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
                       {i + 1}
@@ -572,7 +801,7 @@ export default function SellerProducts() {
                       setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="relative inline-flex items-center px-2 py-2 rounded-none border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <span className="sr-only">Next</span>
                     &raquo;
@@ -582,35 +811,6 @@ export default function SellerProducts() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500">
-          <p className="text-gray-600 text-sm">Active Products</p>
-          <p className="text-2xl font-bold text-green-600">
-            {
-              products.filter((p) => p.status?.toLowerCase() === "active")
-                .length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-yellow-500">
-          <p className="text-gray-600 text-sm">Low Stock Items</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {
-              products.filter(
-                (p) => p.stockQuantity > 0 && p.stockQuantity <= 10,
-              ).length
-            }
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500">
-          <p className="text-gray-600 text-sm">Out of Stock</p>
-          <p className="text-2xl font-bold text-red-600">
-            {products.filter((p) => p.stockQuantity === 0).length}
-          </p>
-        </div>
       </div>
 
       {/* View Product Modal */}
@@ -684,18 +884,21 @@ export default function SellerProducts() {
             </p>
           </div>
           <div className="flex justify-end gap-3 mt-4">
-            <button
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setDeleteProductId(null)}
-              className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-semibold"
+              className="rounded-lg px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-100 cursor-pointer"
             >
-              Cancel
-            </button>
-            <button
+              ยกเลิก
+            </Button>
+            <Button
+              type="button"
               onClick={handleDelete}
-              className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors font-semibold"
+              className="rounded-lg px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold cursor-pointer shadow-xs"
             >
-              Delete
-            </button>
+              ยืนยันการลบ
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
