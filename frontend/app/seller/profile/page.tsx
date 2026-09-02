@@ -52,15 +52,6 @@ export default function SellerProfile() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-[#4E0707] mb-1">
-          Seller Profile
-        </h1>
-        <p className="text-gray-600">
-          Manage your seller information and settings
-        </p>
-      </div>
 
       {/* Store Info Card */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">

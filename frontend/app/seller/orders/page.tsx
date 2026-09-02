@@ -23,7 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { AuthMeResponse } from "@/types/auth";
-import { SellerOrder, SellerOrderItem } from "@/types/seller";
+import { SellerOrder } from "@/types/seller";
 
 const formatCurrency = (value: number) => `฿${value.toLocaleString()}`;
 
@@ -233,37 +233,7 @@ export default function SellerOrders() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1">
-            My Orders
-          </h1>
-          <p className="text-sm md:text-base text-gray-600">
-            Manage customer orders and shipments
-          </p>
-        </div>
-        <button
-          onClick={exportToCSV}
-          className="flex items-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm md:text-base transition-colors self-start sm:self-auto"
-        >
-          <Download className="w-5 h-5" />
-          Export
-        </button>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md p-4">
-            <p className="text-gray-600 text-sm mb-1">{stat.label}</p>
-            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <Input
@@ -274,7 +244,7 @@ export default function SellerOrders() {
             className="w-full pl-10 pr-4 bg-background"
           />
         </div>
-        <div className="sm:w-64">
+        <div className="sm:w-52">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-full bg-background text-sm sm:text-base">
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -290,6 +260,13 @@ export default function SellerOrders() {
             </SelectContent>
           </Select>
         </div>
+        <button
+          onClick={exportToCSV}
+          className="flex items-center justify-center gap-2 bg-[#B4915B] hover:bg-[#9A7A48] text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shrink-0 cursor-pointer"
+        >
+          <Download className="w-4 h-4" />
+          Export
+        </button>
       </div>
 
       {/* Orders List */}
