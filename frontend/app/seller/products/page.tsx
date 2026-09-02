@@ -550,7 +550,6 @@ export default function SellerProducts() {
                 />
               </div>
 
-              {/* Form Action Buttons (สี่เหลี่ยมทรงมาตรฐาน สไตล์ shadcn) */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <Button
                   type="button"
@@ -582,7 +581,6 @@ export default function SellerProducts() {
         </DialogContent>
       </Dialog>
 
-      {/* Search + Add Product Button (อยู่แถวเดียวกัน) */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -603,7 +601,6 @@ export default function SellerProducts() {
         </Button>
       </div>
 
-      {/* Products Table (สี่เหลี่ยมไม่มีมุมมน rounded-none) */}
       <div className="bg-white rounded-none border border-gray-200 shadow-xs">
         <div className="overflow-x-auto">
           {loading ? (
@@ -739,7 +736,6 @@ export default function SellerProducts() {
           </div>
         )}
 
-        {/* Pagination Controls (เหลี่ยม rounded-none) */}
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
             <div className="flex justify-between flex-1 sm:hidden">

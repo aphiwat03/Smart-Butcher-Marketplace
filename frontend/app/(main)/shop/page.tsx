@@ -6,8 +6,43 @@ import PriceSlider from "@/components/ui/PriceSlider";
 import { ShopSearchParams, Category, ShopProduct } from "@/types/shop";
 import ShopScrollHandler from "./ShopScrollHandler";
 import ShopProductImage from "./ShopProductImage";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<ShopSearchParams>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+  let title = "ตลาดเนื้อพรีเมียม เลือกซื้อเนื้อวัว วากิว สเต็ก ดรายเอจ";
+  let description =
+    "เลือกซื้อเนื้อวัวพรีเมียม วากิว ดรายเอจ และชิ้นส่วนเนื้อคุณภาพสูงจากฟาร์มและร้านค้าชั้นนำทั่วไทย จัดส่งควบคุมอุณหภูมิ";
+
+  if (params.category) {
+    title = `${params.category} - เนื้อพรีเมียมคุณภาพสูง`;
+    description = `เลือกซื้อสินค้าในหมวดหมู่ ${params.category} สด สะอาด คุณภาพพรีเมียม ที่ Smart Butcher Marketplace`;
+  } else if (params.q) {
+    title = `ค้นหา "${params.q}" - ผลการค้นหาเนื้อสัตว์พรีเมียม`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${siteUrl}/shop`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/shop`,
+    },
+  };
+}
 
 const PAGE_SIZE = 12;
+
 
 async function fetchWithRetry(url: string, options: RequestInit = {}) {
   for (let i = 0; i < 60; i++) {

@@ -2,7 +2,8 @@ import { fetchApi } from "@/lib/api";
 import Image from "next/image";
 import { Calendar, Star } from "lucide-react";
 import { StoreProductList } from "@/components/store/store-product-list";
-import { StoreProduct, Store } from "@/types/store";
+import { Store } from "@/types/store";
+import type { Metadata } from "next";
 
 async function getStoreData(storeId: string): Promise<Store> {
   const res = await fetchApi(`/users/stores/${storeId}`, {
@@ -14,6 +15,56 @@ async function getStoreData(storeId: string): Promise<Store> {
   return res.json();
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ storeId: string }>;
+}): Promise<Metadata> {
+  const { storeId } = await params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+  try {
+    const store = await getStoreData(storeId);
+    const title = `${store.name} - ร้านขายเนื้อคุณภาพสูง`;
+    const description =
+      store.description ||
+      `เลือกซื้อเนื้อวัวพรีเมียม สด สะอาด และผลิตภัณฑ์เนื้อคุณภาพจากร้าน ${store.name} ที่ Smart Butcher Marketplace`;
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: `${siteUrl}/store/${storeId}`,
+      },
+      openGraph: {
+        title,
+        description,
+        url: `${siteUrl}/store/${storeId}`,
+        type: "profile",
+        images: store.imageUrl
+          ? [
+              {
+                url: store.imageUrl,
+                alt: store.name,
+              },
+            ]
+          : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: store.imageUrl ? [store.imageUrl] : [],
+      },
+    };
+  } catch {
+    return {
+      title: "ร้านค้า",
+      description: "ข้อมูลร้านค้าบน Smart Butcher Marketplace",
+    };
+  }
+}
+
 export default async function StorePage({
   params,
 }: {
@@ -21,6 +72,17 @@ export default async function StorePage({
 }) {
   const resolvedParams = await params;
   const store = await getStoreData(resolvedParams.storeId);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+  const storeSchema = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: store.name,
+    image: store.imageUrl || undefined,
+    description:
+      store.description || `ร้าน ${store.name} บน Smart Butcher Marketplace`,
+    url: `${siteUrl}/store/${resolvedParams.storeId}`,
+  };
 
   const joinedDate = new Date(store.createdAt).toLocaleDateString("th-TH", {
     month: "long",
@@ -29,6 +91,10 @@ export default async function StorePage({
 
   return (
     <main className="mx-auto w-full max-w-7xl px-6 py-10 flex-1 flex flex-col gap-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(storeSchema) }}
+      />
       <section className="flex flex-col md:grid md:grid-cols-[1fr_3fr] border border-gray-200 rounded-xl overflow-hidden">
         {/* Left */}
         <div className="bg-[#1a0202] flex flex-col items-center justify-center gap-4 px-5 py-8">
