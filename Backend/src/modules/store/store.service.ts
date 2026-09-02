@@ -119,7 +119,12 @@ export class StoreService {
     }
   }
 
-  async getDashboard(storeId: number) {
+  async getDashboard(
+    storeId: number,
+    range?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const store = await this.prisma.store.findUnique({
       where: { id: storeId },
       select: {
@@ -168,7 +173,7 @@ export class StoreService {
       this.getRecentOrders(storeId),
       this.getTopProducts(storeId),
       this.getGrowthRates(storeId),
-      this.getChartsData(storeId),
+      this.getChartsData(storeId, range, startDate, endDate),
     ]);
 
     return {
@@ -248,52 +253,188 @@ export class StoreService {
     };
   }
 
-  async getChartsData(storeId: number) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30); // เซ็ตเวลาย้อนหลังไป 30 วัน
+  async getChartsData(
+    storeId: number,
+    range: string = '30d',
+    customStart?: string,
+    customEnd?: string,
+  ) {
+    const TZ_OFFSET_MS = 7 * 60 * 60 * 1000; // ICT = UTC+7
+    const toICT = (date: Date) => new Date(date.getTime() + TZ_OFFSET_MS);
+    const nowICT = toICT(new Date());
+    const nowUTC = new Date();
 
-    const transactions = await this.prisma.storeTransaction.findMany({
-      where: { storeId, createdAt: { gte: thirtyDaysAgo } },
-      select: { createdAt: true, amount: true },
-    });
+    let startDate: Date;
+    let endDate: Date = nowUTC;
+    let isMonthly = false;
+    let isHourly = false;
 
-    const orders = await this.prisma.order.findMany({
-      where: {
-        orderItems: { some: { product: { storeId } } },
-        orderStatus: 'PAID',
-        createdAt: { gte: thirtyDaysAgo },
-      },
-      select: { createdAt: true, id: true },
-    });
+    if (range === 'today') {
+      startDate = new Date(
+        Date.UTC(
+          nowICT.getUTCFullYear(),
+          nowICT.getUTCMonth(),
+          nowICT.getUTCDate(),
+        ) - TZ_OFFSET_MS,
+      );
+      isHourly = true;
+    } else if (range === 'yesterday') {
+      const yesterday = new Date(nowICT);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      startDate = new Date(
+        Date.UTC(
+          yesterday.getUTCFullYear(),
+          yesterday.getUTCMonth(),
+          yesterday.getUTCDate(),
+        ) - TZ_OFFSET_MS,
+      );
+      endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+      isHourly = true;
+    } else if (range === 'this_week') {
+      const day = nowICT.getUTCDay();
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const monday = new Date(nowICT);
+      monday.setUTCDate(monday.getUTCDate() + diffToMonday);
+      startDate = new Date(
+        Date.UTC(
+          monday.getUTCFullYear(),
+          monday.getUTCMonth(),
+          monday.getUTCDate(),
+        ) - TZ_OFFSET_MS,
+      );
+    } else if (range === 'this_month') {
+      startDate = new Date(
+        Date.UTC(nowICT.getUTCFullYear(), nowICT.getUTCMonth(), 1) -
+          TZ_OFFSET_MS,
+      );
+    } else if (range === '7d') {
+      startDate = new Date(nowUTC);
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (range === '30d') {
+      startDate = new Date(nowUTC);
+      startDate.setDate(startDate.getDate() - 30);
+    } else if (range === '3m') {
+      startDate = new Date(nowUTC);
+      startDate.setMonth(startDate.getMonth() - 3);
+      isMonthly = true;
+    } else if (range === '1y') {
+      startDate = new Date(nowUTC);
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      isMonthly = true;
+    } else if (range === 'custom' && customStart && customEnd) {
+      startDate = new Date(customStart + 'T00:00:00+07:00');
+      endDate = new Date(customEnd + 'T23:59:59+07:00');
+    } else {
+      startDate = new Date(nowUTC);
+      startDate.setDate(startDate.getDate() - 30);
+    }
+
+    const [transactions, orders] = await Promise.all([
+      this.prisma.storeTransaction.findMany({
+        where: { storeId, createdAt: { gte: startDate, lte: endDate } },
+        select: { createdAt: true, amount: true },
+      }),
+      this.prisma.order.findMany({
+        where: {
+          orderItems: { some: { product: { storeId } } },
+          orderStatus: 'PAID',
+          createdAt: { gte: startDate, lte: endDate },
+        },
+        select: { createdAt: true, id: true },
+      }),
+    ]);
 
     const chartMap = new Map<
       string,
       { date: string; revenue: number; orders: number }
     >();
 
-    transactions.forEach((tx) => {
-      const dateString = tx.createdAt.toISOString().split('T')[0];
+    const getDateKey = (date: Date): string => {
+      const local = toICT(date);
+      const y = local.getUTCFullYear();
+      const m = String(local.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(local.getUTCDate()).padStart(2, '0');
+      const h = String(local.getUTCHours()).padStart(2, '0');
 
-      if (!chartMap.has(dateString)) {
-        chartMap.set(dateString, { date: dateString, revenue: 0, orders: 0 });
+      if (isHourly) return `${y}-${m}-${d}T${h}:00`;
+      if (isMonthly) return `${y}-${m}`;
+      return `${y}-${m}-${d}`;
+    };
+
+    if (isHourly) {
+      const startICT = toICT(startDate);
+      for (let h = 0; h < 24; h++) {
+        const key = `${String(startICT.getUTCFullYear())}-${String(startICT.getUTCMonth() + 1).padStart(2, '0')}-${String(startICT.getUTCDate()).padStart(2, '0')}T${String(h).padStart(2, '0')}:00`;
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
       }
-      chartMap.get(dateString)!.revenue += tx.amount;
+    } else if (range === 'this_week') {
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startDate.getTime() + i * 86400000);
+        const key = getDateKey(d);
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+    } else if (range === 'this_month') {
+      const daysInMonth = new Date(
+        nowICT.getUTCFullYear(),
+        nowICT.getUTCMonth() + 1,
+        0,
+      ).getUTCDate();
+      for (let i = 0; i < daysInMonth; i++) {
+        const d = new Date(startDate.getTime() + i * 86400000);
+        const key = getDateKey(d);
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+    } else if (range === '7d') {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(
+          nowUTC.getFullYear(),
+          nowUTC.getMonth(),
+          nowUTC.getDate() - i,
+        );
+        const key = getDateKey(d);
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+    } else if (range === '30d') {
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(
+          nowUTC.getFullYear(),
+          nowUTC.getMonth(),
+          nowUTC.getDate() - i,
+        );
+        const key = getDateKey(d);
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+    } else if (range === '3m') {
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date(nowUTC.getFullYear(), nowUTC.getMonth() - i, 1);
+        const key = getDateKey(d);
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+    } else if (range === '1y') {
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(nowUTC.getFullYear(), nowUTC.getMonth() - i, 1);
+        const key = getDateKey(d);
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      }
+    }
+
+    transactions.forEach((tx) => {
+      const key = getDateKey(tx.createdAt);
+      if (!chartMap.has(key))
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      chartMap.get(key)!.revenue += tx.amount;
     });
 
     orders.forEach((order) => {
-      const dateString = order.createdAt.toISOString().split('T')[0];
-
-      if (!chartMap.has(dateString)) {
-        chartMap.set(dateString, { date: dateString, revenue: 0, orders: 0 });
-      }
-      chartMap.get(dateString)!.orders += 1;
+      const key = getDateKey(order.createdAt);
+      if (!chartMap.has(key))
+        chartMap.set(key, { date: key, revenue: 0, orders: 0 });
+      chartMap.get(key)!.orders += 1;
     });
 
-    const sortedChartData = Array.from(chartMap.values()).sort(
+    return Array.from(chartMap.values()).sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
-
-    return sortedChartData;
   }
 
   async getActiveProductsCount(storeId: number) {
@@ -589,7 +730,7 @@ export class StoreService {
       productCount: store.products.length,
       rating: rating,
       reviewCount: reviewCount,
-      products: store.products.map(p => {
+      products: store.products.map((p) => {
         const { reviews, ...rest } = p;
         return rest;
       }),
