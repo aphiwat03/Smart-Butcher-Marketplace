@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 
-export default function ShopProductImage({ src, alt }: { src?: string | null; alt: string }) {
+export default function ShopProductImage({
+  src,
+  alt,
+}: {
+  src?: string | null;
+  alt: string;
+}) {
   const [loaded, setLoaded] = useState(false);
 
   if (!src) {
