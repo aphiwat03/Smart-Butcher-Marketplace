@@ -1,6 +1,6 @@
 "use client";
 import { fetchApi } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -18,28 +18,100 @@ import {
   ShoppingCart,
   DollarSign,
   AlertCircle,
-  Loader2,
 } from "lucide-react";
 import { AuthMeResponse } from "@/types/auth";
-import { DashboardData } from "@/types/seller";
+import { DashboardData, DashboardChartPoint } from "@/types/seller";
+import { TailwindDropdown } from "@/components/ui/tailwind-dropdown";
+import { Spinner, FullPageLoader } from "@/components/ui/spinner";
+
+const CHART_TYPE_OPTIONS = [
+  { value: "sales", label: "Sales Trend (รายได้)" },
+  { value: "orders", label: "Orders Chart (คำสั่งซื้อ)" },
+];
+
+const TIME_RANGE_OPTIONS = [
+  { value: "7d", label: "7 วันล่าสุด (รายวัน)" },
+  { value: "30d", label: "30 วันล่าสุด (รายวัน)" },
+  { value: "3m", label: "3 เดือนล่าสุด (รายเดือน)" },
+  { value: "1y", label: "1 ปีล่าสุด (รายเดือน)" },
+];
 
 const formatCurrency = (value: number) => `฿${value.toLocaleString()}`;
 
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("th-TH", {
-    day: "numeric",
-    month: "short",
-  });
+const formatCompactCurrency = (value: number) => {
+  if (value >= 1_000_000) {
+    const formatted = (value / 1_000_000).toFixed(1).replace(/\.0$/, "");
+    return `฿${formatted}M`;
+  }
+  if (value >= 1_000) {
+    const formatted = (value / 1_000).toFixed(1).replace(/\.0$/, "");
+    return `฿${formatted}k`;
+  }
+  return `฿${value}`;
+};
+
+const formatCompactNumber = (value: number) => {
+  if (value >= 1_000_000) {
+    const formatted = (value / 1_000_000).toFixed(1).replace(/\.0$/, "");
+    return `${formatted}M`;
+  }
+  if (value >= 1_000) {
+    const formatted = (value / 1_000).toFixed(1).replace(/\.0$/, "");
+    return `${formatted}k`;
+  }
+  return `${value}`;
+};
 
 export default function SellerDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [isFetchingChart, setIsFetchingChart] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState("30d"); // Default 30 days
+  const [chartType, setChartType] = useState<"sales" | "orders">("sales");
+
+  const [dashboardCache, setDashboardCache] = useState<
+    Record<string, DashboardData>
+  >({});
+
+  const formatChartDate = useCallback(
+    (value: string) => {
+      const date = new Date(value);
+      if (timeRange === "3m" || timeRange === "1y") {
+        return date.toLocaleDateString("th-TH", {
+          month: "short",
+        });
+      }
+      if (timeRange === "30d" || timeRange === "7d") {
+        return date.getDate().toString();
+      }
+
+      return date.toLocaleDateString("th-TH", {
+        day: "numeric",
+        month: "short",
+      });
+    },
+    [timeRange],
+  );
+
+  const formatTooltipDate = useCallback((value: string) => {
+    const date = new Date(value);
+    return date.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }, []);
 
   useEffect(() => {
+    if (dashboardCache[timeRange]) {
+      setData(dashboardCache[timeRange]);
+      return;
+    }
+
     const fetchDashboard = async () => {
       try {
-        setLoading(true);
+        setIsFetchingChart(true);
         setError(null);
 
         const authHeaders: HeadersInit = {
@@ -61,27 +133,32 @@ export default function SellerDashboard() {
           throw new Error("ไม่พบร้านค้าของผู้ใช้นี้");
         }
 
-        const res = await fetchApi(`/stores/${storeId}/dashboard`, {
-          headers: authHeaders,
-        });
+        const res = await fetchApi(
+          `/stores/${storeId}/dashboard?range=${timeRange}`,
+          {
+            headers: authHeaders,
+          },
+        );
 
         if (!res.ok) {
           throw new Error(`Failed to load dashboard (${res.status})`);
         }
 
         const json: DashboardData = await res.json();
+        setDashboardCache((prev) => ({ ...prev, [timeRange]: json }));
         setData(json);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล",
         );
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
+        setIsFetchingChart(false);
       }
     };
 
     fetchDashboard();
-  }, []);
+  }, [timeRange, dashboardCache]);
 
   const getStatusBadge = (status: string) => {
     const styles: { [key: string]: string } = {
@@ -94,12 +171,44 @@ export default function SellerDashboard() {
     return styles[status.toLowerCase()] || "bg-gray-100 text-gray-800";
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 text-[#B4915B] animate-spin" />
-      </div>
-    );
+  const emptyPlaceholderData: DashboardChartPoint[] = useMemo(() => {
+    const result: DashboardChartPoint[] = [];
+    const now = new Date();
+
+    if (timeRange === "7d") {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - i,
+        );
+        result.push({ date: d.toISOString(), revenue: 0, orders: 0 });
+      }
+    } else if (timeRange === "30d") {
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - i,
+        );
+        result.push({ date: d.toISOString(), revenue: 0, orders: 0 });
+      }
+    } else if (timeRange === "3m") {
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        result.push({ date: d.toISOString(), revenue: 0, orders: 0 });
+      }
+    } else {
+      for (let i = 11; i >= 0; i -= 2) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        result.push({ date: d.toISOString(), revenue: 0, orders: 0 });
+      }
+    }
+    return result;
+  }, [timeRange]);
+
+  if (initialLoading && !data) {
+    return <FullPageLoader />;
   }
 
   if (error || !data) {
@@ -147,20 +256,13 @@ export default function SellerDashboard() {
     },
   ];
 
+  const hasSalesData = data.charts.some((c) => (c.revenue ?? 0) > 0);
+  const hasOrdersData = data.charts.some((c) => (c.orders ?? 0) > 0);
+  const chartDataToRender =
+    data.charts.length > 0 ? data.charts : emptyPlaceholderData;
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl md:text-3xl font-bold text-[#4E0707] mb-1 md:mb-2">
-          ยินดีต้อนรับ {data.storeName}
-        </h1>
-        <p className="text-sm md:text-base text-gray-600">
-          จัดการร้านค้าและติดตามยอดขายของคุณ · ยอดคงเหลือ{" "}
-          <span className="font-semibold text-[#B4915B]">
-            {formatCurrency(data.balance)}
-          </span>
-        </p>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
@@ -189,47 +291,188 @@ export default function SellerDashboard() {
         })}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Chart */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-base md:text-lg font-bold text-[#4E0707] mb-3 md:mb-4">
-            Sales Trend
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data.charts}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tickFormatter={formatDate} />
-              <YAxis />
-              <Tooltip
-                labelFormatter={(label) => formatDate(label as string)}
-              />
-              <Line
-                type="monotone"
-                dataKey="revenue"
-                stroke="#B4915B"
-                strokeWidth={2}
-                dot={{ fill: "#B4915B" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      <div className="bg-white rounded-xl shadow-md p-6 relative col-span-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-[#4E0707]">
+              {chartType === "sales"
+                ? "Sales Trend (แนวโน้มรายได้)"
+                : "Orders Chart (แนวโน้มคำสั่งซื้อ)"}
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {chartType === "sales"
+                ? "แสดงยอดรายได้รวมตามช่วงเวลาที่เลือก"
+                : "แสดงจำนวนคำสั่งซื้อรวมตามช่วงเวลาที่เลือก"}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Select Chart Type */}
+            <TailwindDropdown
+              value={chartType}
+              onChange={(val) => setChartType(val as "sales" | "orders")}
+              options={CHART_TYPE_OPTIONS}
+              className="w-full sm:w-[200px]"
+            />
+
+            {/* Select Time Range */}
+            <TailwindDropdown
+              value={timeRange}
+              onChange={(val) => setTimeRange(val)}
+              options={TIME_RANGE_OPTIONS}
+              className="w-full sm:w-[190px]"
+            />
+          </div>
         </div>
 
-        {/* Orders Chart */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-bold text-[#4E0707] mb-4">
-            Orders Chart
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.charts}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tickFormatter={formatDate} />
-              <YAxis />
-              <Tooltip
-                labelFormatter={(label) => formatDate(label as string)}
-              />
-              <Bar dataKey="orders" fill="#4E0707" />
-            </BarChart>
+        <div
+          className={`relative transition-opacity duration-200 ${
+            isFetchingChart ? "opacity-40" : "opacity-100"
+          }`}
+        >
+          {isFetchingChart && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center">
+              <Spinner size="md" />
+            </div>
+          )}
+
+          {/* Empty State Overlay */}
+          {!isFetchingChart &&
+            ((chartType === "sales" && !hasSalesData) ||
+              (chartType === "orders" && !hasOrdersData)) && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none mt-16">
+                <div className="bg-white/90 px-4 py-2 rounded-md shadow text-sm text-gray-500 font-medium border border-gray-200">
+                  {chartType === "sales"
+                    ? "ยังไม่มีข้อมูลยอดขาย"
+                    : "ยังไม่มีข้อมูลคำสั่งซื้อ"}
+                </div>
+              </div>
+            )}
+
+          {/* Unified Line Chart */}
+          <ResponsiveContainer width="100%" height={370}>
+            {chartType === "sales" ? (
+              <LineChart
+                data={chartDataToRender}
+                margin={{ top: 15, right: 30, left: 20, bottom: 20 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  opacity={hasSalesData ? 1 : 0.4}
+                />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatChartDate}
+                  opacity={hasSalesData ? 1 : 0.5}
+                  label={{
+                    value:
+                      timeRange === "3m" || timeRange === "1y"
+                        ? "เดือน"
+                        : "วันที่",
+                    position: "insideBottom",
+                    offset: -12,
+                    fill: "#6B7280",
+                    fontSize: 12,
+                  }}
+                />
+                <YAxis
+                  domain={[
+                    0,
+                    (dataMax: number) =>
+                      dataMax <= 0 ? 10000 : Math.ceil(dataMax * 1.2),
+                  ]}
+                  opacity={hasSalesData ? 1 : 0.5}
+                  tickFormatter={formatCompactCurrency}
+                  width={75}
+                  label={{
+                    value: "รายได้ (บาท)",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: -5,
+                    fill: "#6B7280",
+                    fontSize: 12,
+                    style: { textAnchor: "middle" },
+                  }}
+                />
+                <Tooltip
+                  labelFormatter={(label) => formatTooltipDate(label as string)}
+                  formatter={(value) => [
+                    `฿${Number(value).toLocaleString()}`,
+                    "รายได้",
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#B4915B"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#B4915B", r: 4 }}
+                  activeDot={{ r: 6 }}
+                  connectNulls={false}
+                />
+              </LineChart>
+            ) : (
+              <LineChart
+                data={chartDataToRender}
+                margin={{ top: 15, right: 30, left: 20, bottom: 20 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  opacity={hasOrdersData ? 1 : 0.4}
+                />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatChartDate}
+                  opacity={hasOrdersData ? 1 : 0.5}
+                  label={{
+                    value:
+                      timeRange === "3m" || timeRange === "1y"
+                        ? "เดือน"
+                        : "วันที่",
+                    position: "insideBottom",
+                    offset: -12,
+                    fill: "#6B7280",
+                    fontSize: 12,
+                  }}
+                />
+                <YAxis
+                  domain={[
+                    0,
+                    (dataMax: number) =>
+                      dataMax <= 0 ? 10 : Math.ceil(dataMax * 1.2),
+                  ]}
+                  opacity={hasOrdersData ? 1 : 0.5}
+                  allowDecimals={false}
+                  tickFormatter={formatCompactNumber}
+                  width={70}
+                  label={{
+                    value: "คำสั่งซื้อ (รายการ)",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: -5,
+                    fill: "#6B7280",
+                    fontSize: 12,
+                    style: { textAnchor: "middle" },
+                  }}
+                />
+                <Tooltip
+                  labelFormatter={(label) => formatTooltipDate(label as string)}
+                  formatter={(value) => [
+                    `${Number(value).toLocaleString()} รายการ`,
+                    "คำสั่งซื้อ",
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="orders"
+                  stroke="#B4915B"
+                  strokeWidth={2.5}
+                  dot={{ fill: "#B4915B", r: 4 }}
+                  activeDot={{ r: 6 }}
+                  connectNulls={false}
+                />
+              </LineChart>
+            )}
           </ResponsiveContainer>
         </div>
       </div>
@@ -341,20 +584,6 @@ export default function SellerDashboard() {
           </div>
         </div>
       )}
-
-      {/* Alert Section */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg flex gap-3">
-        <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 className="font-semibold text-blue-900 mb-1">
-            📢 Important Notice
-          </h3>
-          <p className="text-sm text-blue-800">
-            Keep your product listings up-to-date and respond to customer
-            messages within 24 hours to maintain high seller rating.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
