@@ -40,7 +40,11 @@ export function OrderSummary({
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden relative">
                   <img
-                    src={item.product.imageUrl}
+                    src={
+                      (Array.isArray(item.product.imageUrl)
+                        ? item.product.imageUrl[0]
+                        : item.product.imageUrl) || "/mock/default.png"
+                    }
                     alt={item.product.name}
                     className="w-full h-full object-cover"
                   />

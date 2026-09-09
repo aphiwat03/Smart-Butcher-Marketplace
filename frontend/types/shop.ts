@@ -17,7 +17,7 @@ export type ShopProduct = {
   description: string | null;
   price: number;
   stockQuantity: number;
-  imageUrl: string | null;
+  imageUrl: string | string[] | null;
   category: Category;
   store: {
     id: number;

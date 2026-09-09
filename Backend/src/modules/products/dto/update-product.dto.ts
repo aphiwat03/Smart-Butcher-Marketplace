@@ -36,8 +36,7 @@ export class UpdateProductDto {
   categoryId?: number;
 
   @IsOptional()
-  @IsString()
-  imageUrl?: string;
+  imageUrl?: string | string[];
 
   @IsOptional()
   @IsEnum(ProductStatus)

@@ -68,8 +68,8 @@ export default function SellerProducts() {
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null);
 
   const [categories, setCategories] = useState<any[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File[] | []>([]);
+  const [imagePreview, setImagePreview] = useState<string[] | []>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,8 +141,8 @@ export default function SellerProducts() {
       stockQuantity: 0,
       description: "",
     });
-    setImageFile(null);
-    setImagePreview(null);
+    setImageFile([]);
+    setImagePreview([]);
     setShowForm(true);
   };
 
@@ -155,23 +155,42 @@ export default function SellerProducts() {
       stockQuantity: product.stockQuantity,
       description: product.description || "",
     });
-    setImageFile(null);
-    setImagePreview(product.imageUrl || null);
+    setImageFile([]);
+    const existingImages = Array.isArray(product.imageUrl)
+      ? product.imageUrl
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
+    setImagePreview(existingImages);
     setShowForm(true);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
+    const totalFiles = [...imageFile, ...selectedFiles];
+    if (totalFiles.length > 4) {
+      toast.warning("สามารถอัปโหลดรูปภาพได้สูงสุด 4 รูปเท่านั้น");
     }
+    const finalFiles = totalFiles.slice(0, 4);
+    setImageFile(finalFiles);
+    const previews = finalFiles.map((file) => URL.createObjectURL(file));
+    setImagePreview(previews);
+    e.target.value = "";
   };
 
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
+  const handleRemoveImage = (indexToRemove?: number) => {
+    if (typeof indexToRemove === "number") {
+      setImageFile((prev) =>
+        prev.filter((_, index) => index !== indexToRemove),
+      );
+      setImagePreview((prev) =>
+        prev.filter((_, index) => index !== indexToRemove),
+      );
+    } else {
+      setImageFile([]);
+      setImagePreview([]);
+    }
   };
 
   const handleDelete = async () => {
@@ -199,8 +218,10 @@ export default function SellerProducts() {
   };
 
   const handleSaveProduct = async (values: ProductFormValues) => {
-    if (!editingProductId && !imageFile) {
-      toast.warning("กรุณาอัปโหลดรูปภาพสินค้า");
+    if (!editingProductId && imageFile.length !== 4) {
+      toast.warning(
+        `กรุณาอัปโหลดรูปภาพสินค้าให้ครบ 4 รูป (ปัจจุบัน ${imageFile.length}/4 รูป)`,
+      );
       return;
     }
 
@@ -214,9 +235,9 @@ export default function SellerProducts() {
     formData.append("categoryId", values.categoryId);
     formData.append("description", values.description);
 
-    if (imageFile) {
-      formData.append("file", imageFile);
-    }
+    imageFile.forEach((file) => {
+      formData.append("files", file);
+    });
 
     try {
       const url = editingProductId
@@ -471,52 +492,64 @@ export default function SellerProducts() {
 
                 {/* Modern Image Upload Area with Preview */}
                 <div className="md:col-span-2">
-                  <FormLabel className="text-[#4E0707] mb-2 block">
-                    รูปภาพสินค้า{" "}
-                    {!editingProductId && (
-                      <span className="text-red-500">*</span>
-                    )}
-                  </FormLabel>
+                  <div className="flex justify-between items-center mb-2">
+                    <FormLabel className="text-[#4E0707] mb-2 block">
+                      รูปภาพสินค้า{" "}
+                      {!editingProductId && (
+                        <span className="text-red-500">*</span>
+                      )}
+                    </FormLabel>
+                    <span className="text-xs text-gray-500 font-medium">
+                      เลือกแล้ว {imagePreview.length}/4 รูป
+                    </span>
+                  </div>
 
-                  {imagePreview ? (
-                    <div className="relative group rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center p-3 max-h-64">
-                      <img
-                        src={imagePreview}
-                        alt="Product Preview"
-                        className="max-h-56 w-auto object-contain rounded-md"
-                      />
-                      <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                        <label
-                          htmlFor="product-image-upload"
-                          className="cursor-pointer bg-white text-gray-800 hover:text-[#4E0707] px-3.5 py-2 rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" /> เปลี่ยนรูปภาพ
-                        </label>
+                  {/* Grid 4 Hide Preview */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {imagePreview.map((url, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-50 group"
+                      >
+                        <img
+                          src={url}
+                          alt={`Product Preview ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+                          {index === 0 ? "รูปหน้าปก" : `รูปที่ ${index + 1}`}
+                        </span>
+
+                        {/* Delete Button */}
                         <button
                           type="button"
-                          onClick={handleRemoveImage}
-                          className="cursor-pointer bg-red-600 text-white hover:bg-red-700 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-1.5 right-1.5 bg-red-600 text-white p-1 rounded-full shadow-md opacity-90 hover:opacity-100 hover:bg-red-700 transition-all cursor-pointer"
+                          title="ลบรูปภาพนี้"
                         >
-                          <Trash2 className="w-3.5 h-3.5" /> ลบรูปภาพ
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                    </div>
-                  ) : (
-                    <label
-                      htmlFor="product-image-upload"
-                      className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-[#B4915B] rounded-lg p-6 bg-gray-50/70 hover:bg-[#B4915B]/5 transition-all cursor-pointer group"
-                    >
-                      <div className="w-12 h-12 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                        <UploadCloud className="w-6 h-6 text-[#B4915B]" />
-                      </div>
-                      <p className="text-sm font-semibold text-[#4E0707] group-hover:text-[#B4915B]">
-                        คลิกเพื่ออัปโหลดรูปภาพสินค้า
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        รองรับไฟล์ PNG, JPG, JPEG หรือ WEBP (สูงสุด 5MB)
-                      </p>
-                    </label>
-                  )}
+                    ))}
+
+                    {/* Add Image Button */}
+                    {imagePreview.length < 4 && (
+                      <label
+                        htmlFor="product-image-upload"
+                        className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 hover:border-[#B4915B] rounded-lg p-3 bg-gray-50/70 hover:bg-[#B4915B]/5 transition-all cursor-pointer text-center group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-white shadow-xs border border-gray-200 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                          <UploadCloud className="w-5 h-5 text-[#B4915B]" />
+                        </div>
+                        <p className="text-xs font-semibold text-[#4E0707] group-hover:text-[#B4915B]">
+                          เพิ่มรูปภาพ
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          เหลืออีก {4 - imagePreview.length} รูป
+                        </p>
+                      </label>
+                    )}
+                  </div>
 
                   <input
                     id="product-image-upload"
@@ -640,7 +673,9 @@ export default function SellerProducts() {
                       <div className="flex items-center gap-3">
                         <img
                           src={
-                            product.imageUrl ||
+                            (Array.isArray(product.imageUrl)
+                              ? product.imageUrl[0]
+                              : product.imageUrl) ||
                             "https://placehold.co/150?text=No+Image"
                           }
                           alt={product.name}
@@ -817,14 +852,16 @@ export default function SellerProducts() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-[#4E0707] mb-4">
-              Product Details
+              ดูรายการสินค้า (Product Details)
             </DialogTitle>
           </DialogHeader>
           {viewProduct && (
             <div className="space-y-4">
               <img
                 src={
-                  viewProduct.imageUrl ||
+                  (Array.isArray(viewProduct.imageUrl)
+                    ? viewProduct.imageUrl[0]
+                    : viewProduct.imageUrl) ||
                   "https://placehold.co/300x200?text=No+Image"
                 }
                 alt={viewProduct.name}
@@ -870,13 +907,12 @@ export default function SellerProducts() {
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-red-600 mb-2">
-              Delete Product
+              ลบสินค้า (Delete Product)
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-gray-700">
-              Are you sure you want to delete this product? This action cannot
-              be undone.
+              คุณต้องการลบรายการสินค้านี้ใช่หรือไม่?สินค้าที่ถูกลบจะไม่สามารถกู้คืนกลับมาได้
             </p>
           </div>
           <div className="flex justify-end gap-3 mt-4">

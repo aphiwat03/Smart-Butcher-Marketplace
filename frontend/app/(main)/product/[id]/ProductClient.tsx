@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { ProductDetailProps } from "@/types/product";
 import { toast } from "react-toastify";
+import ProductImageGallery from "../ProductImageGallery";
 
 type Review = {
   id: number;
@@ -64,7 +65,7 @@ export default function ProductClient({
         method: "POST",
         body: JSON.stringify({ productId, quantity }),
       });
-      
+
       if (response.status === 401) {
         Swal.fire({
           title: "Unauthorization",
@@ -108,15 +109,10 @@ export default function ProductClient({
               <span>กลับไปเลือกซื้อสินค้า</span>
             </Link>
           </div>
-          <div className="aspect-[4/3] bg-gray-100 rounded-2xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
-            <ShopProductImage src={product.imageUrl} alt={product.name} />
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            <div className="aspect-square bg-gray-200 rounded-xl cursor-pointer border-2 border-[#B4915B] flex items-center justify-center overflow-hidden relative">
-              <ShopProductImage src={product.imageUrl} alt="thumb" />
-            </div>
-          </div>
+          <ProductImageGallery
+            mainImage={product.imageUrl}
+            productName={product.name}
+          />
         </div>
 
         <div className="lg:col-span-2 flex flex-col justify-center">

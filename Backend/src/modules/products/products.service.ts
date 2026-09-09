@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Prisma, ProductStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma-db/prisma.service';
 import { GetProductsFilterDto } from './dto/get-products-filter.dto';
@@ -8,7 +12,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: GetProductsFilterDto) {
     const search = query.q?.trim();
@@ -25,42 +29,47 @@ export class ProductsService {
       ...((maxPrice !== undefined && maxPrice > 0) || minPrice !== undefined
         ? {
             price: {
-              ...(maxPrice !== undefined && maxPrice > 0 ? { lte: maxPrice } : {}),
-              ...(minPrice !== undefined && minPrice > 0 ? { gte: minPrice } : {}),
+              ...(maxPrice !== undefined && maxPrice > 0
+                ? { lte: maxPrice }
+                : {}),
+              ...(minPrice !== undefined && minPrice > 0
+                ? { gte: minPrice }
+                : {}),
             },
           }
         : {}),
       ...(category
         ? {
-          category: {
-            name: {
-              equals: category,
-              mode: 'insensitive',
+            category: {
+              name: {
+                equals: category,
+                mode: 'insensitive',
+              },
             },
-          },
-        }
+          }
         : {}),
       ...(search
         ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-            {
-              category: {
-                name: { contains: search, mode: 'insensitive' },
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { description: { contains: search, mode: 'insensitive' } },
+              {
+                category: {
+                  name: { contains: search, mode: 'insensitive' },
+                },
               },
-            },
-          ],
-        }
+            ],
+          }
         : {}),
     };
 
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        orderBy: query.sortBy === 'popular' 
-          ? { reviews: { _count: 'desc' } } 
-          : { createdAt: 'desc' },
+        orderBy:
+          query.sortBy === 'popular'
+            ? { reviews: { _count: 'desc' } }
+            : { createdAt: 'desc' },
         skip,
         take: limit,
         include: {
@@ -83,9 +92,11 @@ export class ProductsService {
 
     const data = products.map((product) => {
       const reviewCount = product.reviews.length;
-      const averageRating = reviewCount > 0
-        ? product.reviews.reduce((sum, review) => sum + review.point, 0) / reviewCount
-        : 0;
+      const averageRating =
+        reviewCount > 0
+          ? product.reviews.reduce((sum, review) => sum + review.point, 0) /
+            reviewCount
+          : 0;
 
       const { reviews, ...rest } = product;
       return {
@@ -115,18 +126,31 @@ export class ProductsService {
     const sortBy = query.sortBy ?? 'createdAt';
     const sortOrder = query.sortOrder ?? 'desc';
 
-    const allowedSortFields = ['createdAt', 'updatedAt', 'price', 'name', 'stockQuantity'];
-    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const allowedSortFields = [
+      'createdAt',
+      'updatedAt',
+      'price',
+      'name',
+      'stockQuantity',
+    ];
+    const safeSortBy = allowedSortFields.includes(sortBy)
+      ? sortBy
+      : 'createdAt';
 
     const where: Prisma.ProductWhereInput = {
       deletedAt: null,
       ...(query.status ? { status: query.status } : {}),
       ...(query.storeId ? { storeId: query.storeId } : {}),
-      ...((query.maxPrice !== undefined && query.maxPrice > 0) || query.minPrice !== undefined
+      ...((query.maxPrice !== undefined && query.maxPrice > 0) ||
+      query.minPrice !== undefined
         ? {
             price: {
-              ...(query.maxPrice !== undefined && query.maxPrice > 0 ? { lte: query.maxPrice } : {}),
-              ...(query.minPrice !== undefined && query.minPrice > 0 ? { gte: query.minPrice } : {}),
+              ...(query.maxPrice !== undefined && query.maxPrice > 0
+                ? { lte: query.maxPrice }
+                : {}),
+              ...(query.minPrice !== undefined && query.minPrice > 0
+                ? { gte: query.minPrice }
+                : {}),
             },
           }
         : {}),
@@ -195,7 +219,11 @@ export class ProductsService {
     return product;
   }
 
-  async findMyStoreProducts(userId: number, page: number = 1, limit: number = 8) {
+  async findMyStoreProducts(
+    userId: number,
+    page: number = 1,
+    limit: number = 8,
+  ) {
     const store = await this.prisma.store.findFirst({
       where: { ownerUserId: userId },
     });
@@ -266,7 +294,7 @@ export class ProductsService {
 
   async getCategoryNameById(id: number): Promise<string> {
     const category = await this.prisma.category.findUnique({
-      where: { id }
+      where: { id },
     });
     return category?.name || '';
   }
@@ -279,10 +307,16 @@ export class ProductsService {
     });
   }
 
+  async getStoreByUserId(userId: number) {
+    return this.prisma.store.findFirst({
+      where: { ownerUserId: userId },
+    });
+  }
+
   async create(
     createProductDto: CreateProductDto,
     userId: number,
-    uploadedImageUrl?: string,
+    uploadedImageUrls: string[] = [],
   ) {
     const store = await this.prisma.store.findFirst({
       where: { ownerUserId: userId },
@@ -297,7 +331,7 @@ export class ProductsService {
         storeId: store.id,
         name: createProductDto.name,
         deletedAt: null,
-      }
+      },
     });
 
     if (existingProduct) {
@@ -312,8 +346,7 @@ export class ProductsService {
         stockQuantity: createProductDto.stockQuantity,
         categoryId: createProductDto.categoryId,
         storeId: store.id,
-        // 🌟 ถ้าระบบอัปโหลดไฟล์สำเร็จให้ใช้ค่าจากไฟล์ ถ้าไม่มีให้ใช้จากดีทีโอเดิม
-        imageUrl: uploadedImageUrl || createProductDto.imageUrl,
+        imageUrl: uploadedImageUrls.length > 0 ? uploadedImageUrls : [],
         status: 'ACTIVE',
       },
       include: {
@@ -343,7 +376,9 @@ export class ProductsService {
           categoryId: updateProductDto.categoryId,
         }),
         ...(updateProductDto.imageUrl !== undefined && {
-          imageUrl: updateProductDto.imageUrl,
+          imageUrl: Array.isArray(updateProductDto.imageUrl)
+            ? updateProductDto.imageUrl
+            : [updateProductDto.imageUrl],
         }),
         ...(updateProductDto.status && { status: updateProductDto.status }),
       },

@@ -7,7 +7,7 @@ export interface ProductDetailProps {
     description: string;
     price: number;
     stockQuantity: number;
-    imageUrl: string;
+    imageUrl: string | string[];
     status: string;
     category: {
       name: string;

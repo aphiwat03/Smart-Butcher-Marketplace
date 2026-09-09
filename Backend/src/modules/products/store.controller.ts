@@ -17,7 +17,8 @@ import { CreateProductDto } from './dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 import { SupabaseService } from '../supabase/supabase.service';
-import { UploadedFile } from '@nestjs/common';
+import { UploadedFiles } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express/multer/interceptors/files.interceptor';
 
 @Controller('stores')
 @UseGuards(JwtAuthGuard)
@@ -35,16 +36,19 @@ export class StoreController {
   }
 
   @Post('products')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('files', 4))
   async create(
     @Body() createProductDto: CreateProductDto,
     @Req() req: any,
-    @UploadedFile() file: any,
+    @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
     const userId = req.user.userId;
-    let imageUrl: string | undefined = undefined;
+    let imageUrls: string[] = [];
 
-    if (file) {
+    if (files && files.length > 0) {
+      const store = await this.productsService.getStoreByUserId(userId);
+      const storeFolder = store ? `store_${store.id}` : `store_user_${userId}`;
+
       const categoryName = await this.productsService.getCategoryNameById(
         createProductDto.categoryId,
       );
@@ -58,20 +62,27 @@ export class StoreController {
           อุปกรณ์และเครื่องเคียง: 'essentials',
           เนื้อแปรรูป: 'processed-meat',
         };
-        const folder = map[name] || 'others';
-        return `shop-pic/${folder}`;
+        return map[name] || 'others';
       };
 
-      const folderName = mapToFolder(categoryName);
-      const uploadedUrl = await this.supabaseService.uploadImage(
-        file,
-        'products',
-        folderName,
+      const categoryFolder = mapToFolder(categoryName);
+      const batchId = `item_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const targetFolder = `shop-pic/${categoryFolder}/${storeFolder}/${batchId}`;
+
+      const uploadPromises = files.map((file, index) =>
+        this.supabaseService.uploadImage(
+          file,
+          'products',
+          targetFolder,
+          `${index + 1}`,
+        ),
       );
-      imageUrl = uploadedUrl ? uploadedUrl : undefined;
+
+      const uploadedResults = await Promise.all(uploadPromises);
+      imageUrls = uploadedResults.filter((url): url is string => !!url);
     }
 
-    return this.productsService.create(createProductDto, userId, imageUrl);
+    return this.productsService.create(createProductDto, userId, imageUrls);
   }
 
   @Put('products/:id')
@@ -80,11 +91,11 @@ export class StoreController {
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
     @Req() req: any,
-    @UploadedFile() file?: any,
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    let imageUrl: string | undefined = undefined;
+    let imageUrls: string | undefined = undefined;
 
-    if (file) {
+    if (files) {
       const categoryId = updateProductDto.categoryId;
       const categoryName = categoryId
         ? await this.productsService.getCategoryNameById(Number(categoryId))
@@ -105,14 +116,14 @@ export class StoreController {
 
       const folderName = mapToFolder(categoryName);
       const uploadedUrl = await this.supabaseService.uploadImage(
-        file,
+        files,
         'products',
         folderName,
       );
-      imageUrl = uploadedUrl ? uploadedUrl : undefined;
+      imageUrls = uploadedUrl ? uploadedUrl : undefined;
 
-      if (imageUrl) {
-        updateProductDto.imageUrl = imageUrl;
+      if (imageUrls) {
+        updateProductDto.imageUrl = imageUrls;
       }
     }
 
