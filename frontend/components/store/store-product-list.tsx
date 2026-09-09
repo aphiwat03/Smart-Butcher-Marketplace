@@ -60,46 +60,57 @@ export function StoreProductList({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 min-h-[800px] content-start">
-        {filteredProducts.map((product, index) => (
-          <Link
-            key={product.id}
-            href={`/shop?q=${encodeURIComponent(product.name)}`}
-            className="group border border-gray-200 rounded-xl overflow-hidden hover:border-[#B4915B] hover:shadow-md transition-all bg-white"
-          >
-            <div className="relative aspect-square bg-gray-100">
-              {(product as any).imageUrl || product.image ? (
-                <Image
-                  src={(product as any).imageUrl || product.image!}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  priority={index < 8}
-                  className="object-cover group-hover:scale-105 transition-transform"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
-                  🥩
-                </div>
-              )}
-              {product.badge && (
-                <span className="absolute top-2 left-2 bg-[#4E0707] text-white text-[10px] px-2 py-0.5 rounded">
-                  {product.badge}
-                </span>
-              )}
-            </div>
-            <div className="p-3">
-              <p className="font-medium text-sm text-gray-800 leading-snug mb-1">
-                {product.name}
-              </p>
-              <p className="text-[#4E0707] font-bold">
-                ฿{product.price.toLocaleString()}
-                <span className="text-gray-400 font-normal text-xs ml-1">
-                  /{product.unit}
-                </span>
-              </p>
-            </div>
-          </Link>
-        ))}
+        {filteredProducts.map((product, index) => {
+          const rawImg = (product as any).imageUrl ?? product.image;
+          const imgSrc = Array.isArray(rawImg)
+            ? rawImg.find(
+                (u: any) => typeof u === "string" && u.trim().length > 0,
+              )
+            : typeof rawImg === "string" && rawImg.trim().length > 0
+              ? rawImg.trim()
+              : null;
+
+          return (
+            <Link
+              key={product.id}
+              href={`/product/${product.id}`}
+              className="group border border-gray-200 rounded-xl overflow-hidden hover:border-[#B4915B] hover:shadow-md transition-all bg-white"
+            >
+              <div className="relative aspect-square bg-gray-100">
+                {imgSrc ? (
+                  <Image
+                    src={imgSrc}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    priority={index < 8}
+                    className="object-cover group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
+                    🥩
+                  </div>
+                )}
+                {product.badge && (
+                  <span className="absolute top-2 left-2 bg-[#4E0707] text-white text-[10px] px-2 py-0.5 rounded">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+              <div className="p-3">
+                <p className="font-medium text-sm text-gray-800 leading-snug mb-1">
+                  {product.name}
+                </p>
+                <p className="text-[#4E0707] font-bold">
+                  ฿{product.price.toLocaleString()}
+                  <span className="text-gray-400 font-normal text-xs ml-1">
+                    /{product.unit}
+                  </span>
+                </p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
