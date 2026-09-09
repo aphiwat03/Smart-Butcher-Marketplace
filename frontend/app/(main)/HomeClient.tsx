@@ -51,37 +51,54 @@ export default function HomeClient() {
     },
   ];
 
-  const categoryFallbackImages = [
-    "mock/category/พรีเมียมสเต็ก.jpg",
-    "mock/category/วากิวคัดพิเศษ.webp",
-    "mock/category/ดรายเอจ.jpg",
-    "mock/category/เนื้อคัดพิเศษ.jpg",
-    "mock/category/เนื้อบด.jpg",
-    "mock/category/ชุดอุปกรณ์.jpeg",
+  const categories = [
+    {
+      name: "เนื้อดรายเอจ",
+      image: "/picture/category/Dry-Aged.png",
+      slug: "เนื้อดรายเอจ",
+    },
+    {
+      name: "เนื้อบด",
+      image: "/picture/category/minced beef.jpeg",
+      slug: "เนื้อบด",
+    },
+    {
+      name: "เนื้อแปรรูป",
+      image: "/picture/category/processed meat.jpg",
+      slug: "เนื้อแปรรูป",
+    },
+    {
+      name: "วากิว",
+      image: "/picture/category/wagyu.jpg",
+      slug: "เนื้อวากิวคัดพิเศษ",
+    },
+    {
+      name: "เสต็ก",
+      image: "/picture/category/steak.jpg",
+      slug: "เนื้อสำหรับสเต็ก",
+    },
+    {
+      name: "เครื่องครัว",
+      image: "/picture/category/kitchenware.jpg",
+      slug: "อุปกรณ์และเครื่องเคียง",
+    },
   ];
 
-  const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>(fallbackTestimonials);
   const [isLoading, setIsLoading] = useState(true);
-
-
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchData = async () => {
       try {
-        const [catRes, prodRes, revRes] = await Promise.all([
-          fetchApi(`/users/products/categories`),
+        const [prodRes, revRes] = await Promise.all([
           fetchApi(`/users/products?sortBy=popular&limit=4`),
           fetchApi(`/reviews`),
         ]);
 
-        if (catRes.ok && prodRes.ok) {
-          const cats = await catRes.json();
-          if (isMounted) setCategories(cats);
-
+        if (prodRes.ok) {
           const prods = await prodRes.json();
           if (isMounted)
             setProducts(Array.isArray(prods) ? prods : prods.data || []);
@@ -108,14 +125,11 @@ export default function HomeClient() {
               setTestimonials(combinedRevs);
             }
           }
-          // เลิกหมุน Loading ก็ต่อเมื่อดึงข้อมูลสำเร็จ 100% เท่านั้น
           if (isMounted) setIsLoading(false);
         } else {
-          // ถ้า Server ตอบกลับมาเป็น Error (เช่น 502 Bad Gateway ตอนกำลังตื่น) ให้ลองใหม่ใน 3 วินาที
           if (isMounted) setTimeout(fetchData, 3000);
         }
       } catch (error) {
-        // ถ้าเชื่อมต่อไม่ได้เลย (Network Error) ให้ลองใหม่ใน 3 วินาที
         if (isMounted) setTimeout(fetchData, 3000);
       }
     };
@@ -181,38 +195,27 @@ export default function HomeClient() {
             Category
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-            {isLoading
-              ? [...Array(6)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-full sm:w-80 aspect-4/3 bg-gray-200 animate-pulse rounded-xl"
+            {categories.map((category) => (
+              <Link
+                key={category.name}
+                href={`/shop?category=${encodeURIComponent(category.slug)}`}
+                className="block relative w-full sm:w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
+              >
+                <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                ))
-              : categories.slice(0, 6).map((category, index) => (
-                  <Link
-                    key={category.id}
-                    href={`/shop?category=${encodeURIComponent(category.name)}`}
-                    className="block relative w-full sm:w-80 overflow-hidden hover:shadow-xl transition-shadow group border border-gray-200 rounded-xl bg-white"
-                  >
-                    <div className="relative aspect-4/3 overflow-hidden bg-gray-100">
-                      <img
-                        src={
-                          categoryFallbackImages[
-                            index % categoryFallbackImages.length
-                          ]
-                        }
-                        alt={category.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
+                </div>
 
-                    <div className="flex flex-col items-center justify-center p-4 mt-2">
-                      <h3 className="text-lg font-bold text-[#4E0707] text-center transition-colors duration-300 group-hover:text-[#B4915B]">
-                        {category.name}
-                      </h3>
-                    </div>
-                  </Link>
-                ))}
+                <div className="flex flex-col items-center justify-center p-4 mt-2">
+                  <h3 className="text-lg font-bold text-[#4E0707] text-center transition-colors duration-300 group-hover:text-[#B4915B]">
+                    {category.name}
+                  </h3>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -377,7 +380,11 @@ export default function HomeClient() {
                   >
                     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
                       <img
-                        src={product.imageUrl || "mock/beef/วากิว.jpg"}
+                        src={
+                          (Array.isArray(product.imageUrl)
+                            ? product.imageUrl[0]
+                            : product.imageUrl) || "/mock/beef/วากิว.jpg"
+                        }
                         alt={product.name}
                         className="w-full h-48 object-cover hover:scale-105 transition-transform"
                       />
