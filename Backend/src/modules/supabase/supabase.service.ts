@@ -30,6 +30,7 @@ export class SupabaseService {
     file: any,
     bucket: string = 'products',
     folder: string = 'shop-pic',
+    customFileName?: string,
   ): Promise<string | null> {
     if (!this.supabase) {
       console.warn(
@@ -39,7 +40,9 @@ export class SupabaseService {
     }
 
     const fileExt = file.originalname.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const fileName = customFileName
+      ? `${customFileName}.${fileExt}`
+      : `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${folder}/${fileName}`;
 
     const { data, error } = await this.supabase.storage
