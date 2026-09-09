@@ -11,6 +11,7 @@ export function SiteHeader() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isShopOpen, setIsShopOpen] = useState(false);
   const [user, setUser] = useState<{
     fullName: string;
     avatarUrl?: string;
@@ -109,11 +110,21 @@ export function SiteHeader() {
           </Link>
 
           {/* Categories Dropdown */}
-          <div className="relative group/shop py-2" tabIndex={0}>
-            <button className="flex items-center space-x-1 hover:text-[#B4915B] group-focus-within/shop:text-[#B4915B] transition-colors font-medium cursor-pointer focus:outline-none">
+          <div
+            className="relative py-2"
+            onMouseEnter={() => setIsShopOpen(true)}
+            onMouseLeave={() => setIsShopOpen(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setIsShopOpen((prev) => !prev)}
+              className="flex items-center space-x-1 hover:text-[#B4915B] transition-colors font-medium cursor-pointer focus:outline-none"
+            >
               <span>SHOP</span>
               <svg
-                className="w-4 h-4 transition-transform group-hover/shop:rotate-180 group-focus-within/shop:rotate-180 duration-200"
+                className={`w-4 h-4 transition-transform duration-200 ${
+                  isShopOpen ? "rotate-180 text-[#B4915B]" : ""
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -128,11 +139,18 @@ export function SiteHeader() {
             </button>
 
             {/* Dropdown Items */}
-            <div className="absolute left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover/shop:visible group-focus-within/shop:visible opacity-0 group-hover/shop:opacity-100 group-focus-within/shop:opacity-100 transition-all duration-200 border border-gray-100">
+            <div
+              className={`absolute left-1/2 -translate-x-1/2 mt-1 w-52 bg-white rounded-lg shadow-xl py-2 z-50 transition-all duration-200 border border-gray-100 ${
+                isShopOpen
+                  ? "visible opacity-100 translate-y-0"
+                  : "invisible opacity-0 -translate-y-1 pointer-events-none"
+              }`}
+            >
               {categories.map((category) => (
                 <Link
                   key={category.slug}
                   href={`/shop?category=${category.slug}`}
+                  onClick={() => setIsShopOpen(false)}
                   className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors font-medium"
                 >
                   {category.name}
