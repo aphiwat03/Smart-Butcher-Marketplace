@@ -65,23 +65,7 @@ export default function HomeClient() {
   const [testimonials, setTestimonials] = useState<any[]>(fallbackTestimonials);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const applySnap = () => {
-      if (window.innerWidth >= 768) {
-        document.documentElement.classList.add("snap-y", "snap-mandatory");
-      } else {
-        document.documentElement.classList.remove("snap-y", "snap-mandatory");
-      }
-    };
 
-    applySnap();
-    window.addEventListener("resize", applySnap);
-
-    return () => {
-      document.documentElement.classList.remove("snap-y", "snap-mandatory");
-      window.removeEventListener("resize", applySnap);
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -156,7 +140,7 @@ export default function HomeClient() {
     <main>
       {/* 1. HERO SECTION */}
       <section
-        className="snap-start relative min-h-screen w-full flex items-center justify-center pt-20 text-center text-white bg-cover bg-center bg-fixed overflow-hidden"
+        className="relative min-h-screen w-full flex items-center justify-center pt-20 text-center text-white bg-cover bg-center bg-fixed overflow-hidden"
         style={{
           backgroundImage: 'url("/picture/hero-bg.jpg")',
         }}
@@ -190,7 +174,7 @@ export default function HomeClient() {
       {/* 2. OUR Category SECTION */}
       <section
         id="categories"
-        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white"
+        className="scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white"
       >
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
@@ -236,7 +220,7 @@ export default function HomeClient() {
       {/* 3. TEXT SECTION */}
       <section
         id="Promotion"
-        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-gray-50"
+        className="scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-gray-50"
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
@@ -292,7 +276,7 @@ export default function HomeClient() {
       {/* 4. Comment SECTION */}
       <section
         id="Testimonials"
-        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-[#E1E1E1]"
+        className="scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-[#E1E1E1]"
       >
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
@@ -365,7 +349,7 @@ export default function HomeClient() {
       {/* 5. POPULAR PRODUCTS SECTION */}
       <section
         id="products"
-        className="snap-start scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white"
+        className="scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white"
       >
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
