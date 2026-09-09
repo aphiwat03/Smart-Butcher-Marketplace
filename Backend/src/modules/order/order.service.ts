@@ -50,7 +50,7 @@ export class OrderService {
     }
 
     const totalAmount = cart.cartItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice;
+      return sum + item.quantity * item.product.price;
     }, 0);
 
     const order = await this.prisma.$transaction(async (tx) => {
@@ -66,8 +66,8 @@ export class OrderService {
             create: cart.cartItems.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              subtotal: item.quantity * item.unitPrice,
+              unitPrice: item.product.price,
+              subtotal: item.quantity * item.product.price,
             })),
           },
         },
@@ -158,7 +158,7 @@ export class OrderService {
     }
 
     const totalAmount = cart.cartItems.reduce((sum, item) => {
-      return sum + item.quantity * item.unitPrice;
+      return sum + item.quantity * item.product.price;
     }, 0);
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -175,8 +175,8 @@ export class OrderService {
             create: cart.cartItems.map((item) => ({
               productId: item.productId,
               quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              subtotal: item.quantity * item.unitPrice,
+              unitPrice: item.product.price,
+              subtotal: item.quantity * item.product.price,
             })),
           },
         },

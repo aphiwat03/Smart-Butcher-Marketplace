@@ -80,7 +80,6 @@ export class CartService {
           cartId: cart.id,
           productId: dto.productId,
           quantity: dto.quantity,
-          unitPrice: product.price,
         },
       });
     }
@@ -109,7 +108,7 @@ export class CartService {
       0,
     );
     const totalPrice = cart.cartItems.reduce((sum, item) => {
-      const price = item.unitPrice;
+      const price = item.product.price;
       return sum + item.quantity * price;
     }, 0);
 
@@ -131,11 +130,11 @@ export class CartService {
           select: {
             id: true,
             quantity: true,
-            unitPrice: true,
             product: {
               select: {
                 id: true,
                 name: true,
+                price: true,
                 store: true,
                 imageUrl: true,
                 category: true,
@@ -145,7 +144,13 @@ export class CartService {
         },
       },
     });
-    return cart?.cartItems || [];
+    if (!cart) return [];
+    return cart.cartItems.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+      unitPrice: item.product.price,
+      product: item.product,
+    }));
   }
 
   async updateItemQuantity(userId: number, itemId: string, quantity: number) {
