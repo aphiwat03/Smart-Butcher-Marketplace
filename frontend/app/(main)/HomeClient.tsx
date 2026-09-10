@@ -2,58 +2,44 @@
 import { fetchApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+
 
 export default function HomeClient() {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fallbackTestimonials = [
-    {
-      id: 1,
-      name: "สมชาย สุดหล่อ",
-      rating: 5,
-      comment: "เนื้อสดใหม่และคุณภาพสูง ส่งมาเร็ว ต้องขอบคุณมากค่ะ",
-      image: "https://api.dicebear.com/9.x/adventurer/svg?seed=Sadie",
-      alt: "avatar",
-    },
-    {
-      id: 2,
-      name: "ศรีลักษณ์ ใจดี",
-      rating: 5,
-      comment: "บริการยอดเยี่ยม เนื้อเนียนนุ่ม ของใจไปเลยค่ะ",
-      image: "https://api.dicebear.com/9.x/adventurer/svg?seed=Oliver",
-      alt: "avatar",
-    },
-    {
-      id: 3,
-      name: "ปิยะ อ่อนมาก",
-      rating: 4,
-      comment: "คุณภาพดี ราคาเหมาะสม แนะนำเพื่อนเยอะแล้ว",
-      image: "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery",
-      alt: "avatar",
-    },
-    {
-      id: 4,
-      name: "เอกพล สายเนื้อ",
-      rating: 5,
-      comment: "วากิวลายหินอ่อนสวยมาก ย่างแล้วละลายในปากเลยครับ สั่งอีกแน่นอน",
-      image: "https://api.dicebear.com/9.x/adventurer/svg?seed=Felix",
-      alt: "avatar",
-    },
-    {
-      id: 5,
-      name: "นฤมล คนหิว",
-      rating: 5,
-      comment:
-        "แพ็คเกจจิ้งดูดีมาก เก็บความเย็นได้เยี่ยม เนื้อไม่มีกลิ่นคาวเลยค่ะ",
-      image: "https://api.dicebear.com/9.x/adventurer/svg?seed=Avery",
-      alt: "avatar",
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        const prodRes = await fetchApi(`/users/products?sortBy=popular&limit=4`);
+
+        if (prodRes.ok) {
+          const prods = await prodRes.json();
+          if (isMounted)
+            setProducts(Array.isArray(prods) ? prods : prods.data || []);
+          if (isMounted) setIsLoading(false);
+        } else {
+          if (isMounted) setTimeout(fetchData, 3000);
+        }
+      } catch (error) {
+        if (isMounted) setTimeout(fetchData, 3000);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const categories = [
     {
       name: "เนื้อดรายเอจ",
+
       image: "/picture/category/Dry-Aged.png",
       slug: "เนื้อดรายเอจ",
     },
@@ -84,73 +70,9 @@ export default function HomeClient() {
     },
   ];
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [testimonials, setTestimonials] = useState<any[]>(fallbackTestimonials);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        const [prodRes, revRes] = await Promise.all([
-          fetchApi(`/users/products?sortBy=popular&limit=4`),
-          fetchApi(`/reviews`),
-        ]);
-
-        if (prodRes.ok) {
-          const prods = await prodRes.json();
-          if (isMounted)
-            setProducts(Array.isArray(prods) ? prods : prods.data || []);
-
-          if (revRes.ok) {
-            const revs = await revRes.json();
-            const filteredRevs = revs.filter(
-              (r: any) =>
-                r.point === 5 && r.description && r.description.trim() !== "",
-            );
-            const mappedRevs = filteredRevs.map((r: any) => ({
-              id: r.id,
-              name: r.user.fullName,
-              rating: r.point,
-              comment: r.description,
-              image: `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(r.user.fullName)}`,
-              alt: "avatar",
-            }));
-            if (isMounted) {
-              const combinedRevs = [
-                ...mappedRevs,
-                ...fallbackTestimonials,
-              ].slice(0, 5);
-              setTestimonials(combinedRevs);
-            }
-          }
-          if (isMounted) setIsLoading(false);
-        } else {
-          if (isMounted) setTimeout(fetchData, 3000);
-        }
-      } catch (error) {
-        if (isMounted) setTimeout(fetchData, 3000);
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const nextTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-  };
-  const prevTestimonial = () => {
-    setCurrentTestimonial(
-      (prev) => (prev - 1 + testimonials.length) % testimonials.length,
-    );
-  };
 
   return (
+
     <main>
       {/* 1. HERO SECTION */}
       <section
@@ -276,80 +198,9 @@ export default function HomeClient() {
         </div>
       </section>
 
-      {/* 4. Comment SECTION */}
-      <section
-        id="Testimonials"
-        className="scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-[#E1E1E1]"
-      >
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 md:mb-12 text-[#4E0707]">
-            What Our Customers Say
-          </h2>
 
-          {/* Carousel Container */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={prevTestimonial}
-              className="p-2 hover:bg-white rounded-full transition-colors"
-            >
-              <ChevronLeft size={32} className="text-[#4E0707]" />
-            </button>
+      {/* 4. POPULAR PRODUCTS SECTION */}
 
-            <div className="flex-1 mx-2 md:mx-6 bg-white rounded-lg shadow-lg p-4 md:p-8 max-w-2xl">
-              <div className="flex items-center space-x-4 mb-4">
-                <img
-                  src={testimonials[currentTestimonial].image}
-                  alt={testimonials[currentTestimonial].name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="font-bold text-sm md:text-lg text-[#4E0707]">
-                    {testimonials[currentTestimonial].name}
-                  </h3>
-                  <div className="flex items-center space-x-1">
-                    {Array.from({
-                      length: testimonials[currentTestimonial].rating,
-                    }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={18}
-                        className="text-[#B4915B] fill-[#B4915B]"
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-700 text-sm md:text-lg italic">
-                &quot;{testimonials[currentTestimonial].comment}&quot;
-              </p>
-            </div>
-
-            <button
-              onClick={nextTestimonial}
-              className="p-2 hover:bg-white rounded-full transition-colors"
-            >
-              <ChevronRight size={32} className="text-[#4E0707]" />
-            </button>
-          </div>
-
-          {/* Indicator Dots */}
-          <div className="flex justify-center space-x-2 mt-8">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentTestimonial(index)}
-                className={`h-3 rounded-full transition-all ${
-                  index === currentTestimonial
-                    ? "w-8 bg-[#4E0707]"
-                    : "w-3 bg-gray-400"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. POPULAR PRODUCTS SECTION */}
       <section
         id="products"
         className="scroll-mt-16 py-10 px-4 md:py-16 md:px-6 bg-white"
