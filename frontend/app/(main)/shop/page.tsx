@@ -14,15 +14,16 @@ export async function generateMetadata({
   searchParams: Promise<ShopSearchParams>;
 }): Promise<Metadata> {
   const params = await searchParams;
+  const normalizedCategory = normalizeCategory(params.category);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   let title = "ตลาดเนื้อพรีเมียม เลือกซื้อเนื้อวัว วากิว สเต็ก ดรายเอจ";
   let description =
     "เลือกซื้อเนื้อวัวพรีเมียม วากิว ดรายเอจ และชิ้นส่วนเนื้อคุณภาพสูงจากฟาร์มและร้านค้าชั้นนำทั่วไทย จัดส่งควบคุมอุณหภูมิ";
 
-  if (params.category) {
-    title = `${params.category} - เนื้อพรีเมียมคุณภาพสูง`;
-    description = `เลือกซื้อสินค้าในหมวดหมู่ ${params.category} สด สะอาด คุณภาพพรีเมียม ที่ Smart Butcher Marketplace`;
+  if (normalizedCategory) {
+    title = `${normalizedCategory} - เนื้อพรีเมียมคุณภาพสูง`;
+    description = `เลือกซื้อสินค้าในหมวดหมู่ ${normalizedCategory} สด สะอาด คุณภาพพรีเมียม ที่ Smart Butcher Marketplace`;
   } else if (params.q) {
     title = `ค้นหา "${params.q}" - ผลการค้นหาเนื้อสัตว์พรีเมียม`;
   }
@@ -43,6 +44,17 @@ export async function generateMetadata({
 
 const PAGE_SIZE = 12;
 
+const CATEGORY_ALIASES: Record<string, string> = {
+  "วากิว": "เนื้อวากิวคัดพิเศษ",
+  "เสต็ก": "เนื้อสำหรับสเต็ก",
+  "สเต็ก": "เนื้อสำหรับสเต็ก",
+  "เครื่องครัว": "อุปกรณ์และเครื่องเคียง",
+};
+
+function normalizeCategory(cat?: string) {
+  if (!cat) return cat;
+  return CATEGORY_ALIASES[cat] || cat;
+}
 
 async function fetchWithRetry(url: string, options: RequestInit = {}) {
   for (let i = 0; i < 60; i++) {
@@ -83,7 +95,8 @@ async function getProducts(params: {
   const query = new URLSearchParams();
 
   if (params.q) query.set("q", params.q);
-  if (params.category) query.set("category", params.category);
+  const normalizedCategory = normalizeCategory(params.category);
+  if (normalizedCategory) query.set("category", normalizedCategory);
   if (params.maxPrice) query.set("maxPrice", params.maxPrice);
   if (params.minPrice) query.set("minPrice", params.minPrice);
   query.set("page", params.page || "1");
@@ -159,8 +172,12 @@ export default async function ShopPage({
 }: {
   searchParams: ShopSearchParams;
 }) {
-  const params = await searchParams;
-  const selectedCategory = params.category ?? "";
+  const rawParams = await searchParams;
+  const selectedCategory = normalizeCategory(rawParams.category) ?? "";
+  const params = {
+    ...rawParams,
+    category: selectedCategory,
+  };
   const keyword = params.q ?? "";
   const [productsResult, categories, maxPriceLimit] = await Promise.all([
     getProducts(params),
