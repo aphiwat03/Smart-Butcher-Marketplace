@@ -1,5 +1,4 @@
 "use client";
-import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import {
@@ -8,10 +7,12 @@ import {
   X,
   Users as UsersIcon,
   CheckCircle2,
+  Search,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { fetchApi } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AdminDataTable, ColumnDef } from "@/components/admin/admin-data-table";
 
 interface UserItem {
   id: number;
@@ -59,6 +60,7 @@ function RoleBadge({ role }: { role: UserItem["role"] }) {
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,21 +76,23 @@ export default function AdminUsersPage() {
       setIsLoading(true);
       setError(null);
 
-
-      const res = await fetchApi(`/admin/users`, {
-      
-        
-      });
+      const res = await fetchApi(`/admin/users`, {});
 
       if (!res.ok) {
         throw new Error(`ไม่สามารถโหลดรายชื่อผู้ใช้ได้ (${res.status})`);
       }
 
       const json: UserItem[] = await res.json();
-      
-      const roleOrder: Record<string, number> = { ADMIN: 1, SELLER: 2, BUYER: 3 };
-      json.sort((a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99));
-      
+
+      const roleOrder: Record<string, number> = {
+        ADMIN: 1,
+        SELLER: 2,
+        BUYER: 3,
+      };
+      json.sort(
+        (a, b) => (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99),
+      );
+
       setUsers(json);
     } catch (err) {
       setError(
@@ -134,14 +138,12 @@ export default function AdminUsersPage() {
       setIsSubmitting(true);
       setFormError(null);
 
-
-      const res = await fetchApi(`/admin/users/${selectedUser.id}/change-password`,
+      const res = await fetchApi(
+        `/admin/users/${selectedUser.id}/change-password`,
         {
-      
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            
           },
           body: JSON.stringify({ newPassword }),
         },
@@ -163,6 +165,75 @@ export default function AdminUsersPage() {
     }
   };
 
+  const filteredUsers = users.filter(
+    (u) =>
+      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(u.id).includes(searchTerm),
+  );
+
+  const columns: ColumnDef<UserItem>[] = [
+    {
+      header: "ID",
+      hideOnMobileCard: true,
+      className: "w-14 text-muted-foreground",
+      cell: (user) => <span className="text-muted-foreground">{user.id}</span>,
+    },
+    {
+      header: "ชื่อ-นามสกุล",
+      mobileLabel: "ชื่อ-นามสกุล",
+      className: "w-[180px]",
+      cell: (user) => (
+        <span className="font-semibold text-foreground text-sm truncate block">
+          {user.fullName}
+        </span>
+      ),
+    },
+    {
+      header: "อีเมล",
+      mobileLabel: "อีเมล",
+      className: "w-[220px]",
+      cell: (user) => (
+        <span className="text-foreground font-medium truncate block">
+          {user.email}
+        </span>
+      ),
+    },
+    {
+      header: "วันที่สมัคร",
+      mobileLabel: "วันที่สมัคร",
+      className: "w-[110px] whitespace-nowrap text-muted-foreground",
+      cell: (user) => (
+        <span className="text-muted-foreground">
+          {formatDate(user.createdAt)}
+        </span>
+      ),
+    },
+    {
+      header: "บทบาท",
+      mobileLabel: "บทบาท",
+      className: "w-[100px]",
+      cell: (user) => <RoleBadge role={user.role} />,
+    },
+    {
+      header: "จัดการ",
+      align: "right",
+      className: "w-[130px]",
+      hideOnMobileCard: true,
+      cell: (user) => (
+        <button
+          onClick={() => openPasswordModal(user)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+        >
+          <KeyRound size={14} />
+          แก้ไขรหัสผ่าน
+        </button>
+      ),
+    },
+  ];
+
+
   return (
     <div>
       {/* Header */}
@@ -171,7 +242,9 @@ export default function AdminUsersPage() {
           <h1 className="text-2xl md:text-4xl font-bold text-[#4E0707] mb-1 md:mb-2">
             จัดการผู้ใช้งาน
           </h1>
-          <p className="text-sm md:text-base text-gray-500">รายชื่อผู้ใช้งานทั้งหมดในระบบ</p>
+          <p className="text-sm md:text-base text-gray-500">
+            รายชื่อผู้ใช้งานทั้งหมดในระบบ
+          </p>
         </div>
       </div>
 
@@ -189,92 +262,66 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-muted/50 border-b border-border">
-              <tr>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  อีเมล
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  ชื่อ-นามสกุล
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  วันที่สมัคร
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  บทบาท
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground text-right">
-                  จัดการ
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                [1, 2, 3].map((i) => (
-                  <tr
-                    key={i}
-                    className="border-b border-border last:border-b-0"
-                  >
-                    <td colSpan={6} className="px-6 py-4">
-                      <div className="h-5 w-full animate-pulse rounded bg-muted" />
-                    </td>
-                  </tr>
-                ))
-              ) : users.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-10 text-center text-sm text-muted-foreground"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <UsersIcon size={28} className="text-muted-foreground" />
-                      ยังไม่มีผู้ใช้งานในระบบ
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      #{user.id}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {user.fullName}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {formatDate(user.createdAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <RoleBadge role={user.role} />
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => openPasswordModal(user)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                      >
-                        <KeyRound size={14} />
-                        แก้ไขรหัสผ่าน
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Search Bar matching mockup (Search User) */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          />
+          <Input
+            type="text"
+            placeholder="Search User (ค้นหาชื่อ, อีเมล, บทบาท)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-card"
+          />
         </div>
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={() => setSearchTerm("")}
+            className="px-3 py-2 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted transition-colors"
+          >
+            ล้าง
+          </button>
+        )}
       </div>
+
+      {/* Shared Responsive Table & Mobile Cards */}
+      <AdminDataTable
+        data={filteredUsers}
+        columns={columns}
+        keyExtractor={(user) => user.id}
+        idExtractor={(user) => user.id}
+        isLoading={isLoading}
+        emptyMessage={
+          searchTerm
+            ? "ไม่พบผู้ใช้งานที่ตรงกับคำค้นหา"
+            : "ยังไม่มีผู้ใช้งานในระบบ"
+        }
+        emptyIcon={<UsersIcon size={28} className="text-muted-foreground" />}
+        topRightAction={(user) => (
+          <button
+            type="button"
+            onClick={() => openPasswordModal(user)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/60 dark:text-blue-400 transition-colors"
+            title="แก้ไขรหัสผ่าน"
+          >
+            <KeyRound size={15} />
+          </button>
+        )}
+        bottomAction={(user) => (
+          <button
+            type="button"
+            onClick={() => openPasswordModal(user)}
+            className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50/80 text-blue-600 hover:bg-blue-100 text-xs font-semibold dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300 transition-colors"
+          >
+            <KeyRound size={14} />
+            แก้ไขรหัสผ่าน
+          </button>
+        )}
+      />
 
       {/* Change Password Modal */}
       {selectedUser && (
