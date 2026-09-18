@@ -1,11 +1,11 @@
 "use client";
-import { fetchApi } from "@/lib/api";
 
-import { API_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import { fetchApi } from "@/lib/api";
+import { AdminDataTable, ColumnDef } from "@/components/admin/admin-data-table";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -22,15 +22,16 @@ export default function OrdersPage() {
       setLoading(true);
 
       const response = await fetchApi(`/admin/orders`, {
-      
         method: "GET",
         headers: {
-          
           "Content-Type": "application/json",
         },
       });
       if (!response.ok) throw new Error("Failed to fetch orders");
       const data = await response.json();
+      if (Array.isArray(data)) {
+        data.sort((a, b) => Number(a.id) - Number(b.id));
+      }
       setOrders(data);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -56,24 +57,20 @@ export default function OrdersPage() {
       confirmButtonColor: status === "VERIFIED" ? "#10b981" : "#ef4444",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "ตกลง",
-      cancelButtonText: "ยกเลิก"
+      cancelButtonText: "ยกเลิก",
     });
-    
+
     if (!result.isConfirmed) return;
 
     try {
       setIsVerifying(true);
-      const response = await fetchApi(`/admin/payments/${paymentId}/verify`,
-        {
-      
-          method: "PATCH",
-          headers: {
-            
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status }),
+      const response = await fetchApi(`/admin/payments/${paymentId}/verify`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({ status }),
+      });
 
       if (response.ok) {
         toast.success(`${actionText}สลิปสำเร็จ`);
@@ -111,39 +108,43 @@ export default function OrdersPage() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
       VERIFIED: {
-        color: "bg-green-100 text-green-800",
+        color:
+          "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
         label: "ชำระเงินสำเร็จ",
       },
       PAID: {
-        color: "bg-green-100 text-green-800",
+        color:
+          "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
         label: "ชำระเงินสำเร็จ",
       },
       PENDING: {
-        color: "bg-yellow-100 text-yellow-800",
+        color:
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300",
         label: "รอการอนุมัติ",
       },
       PROCESSING: {
-        color: "bg-purple-100 text-purple-800",
+        color:
+          "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300",
         label: "กำลังเตรียมจัดส่ง",
       },
       CANCELLED: {
-        color: "bg-red-100 text-red-800",
+        color: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
         label: "ยกเลิกคำสั่งซื้อ",
       },
       REJECTED: {
-        color: "bg-red-100 text-red-800",
+        color: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
         label: "ไม่ผ่านอนุมัติ",
       },
     };
 
     const config = statusMap[status?.toUpperCase()] || {
-      color: "bg-gray-100 text-gray-800",
+      color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
       label: status,
     };
 
     return (
       <span
-        className={`px-3 py-1 rounded-full text-xs font-medium ${config.color}`}
+        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${config.color}`}
       >
         {config.label}
       </span>
@@ -155,6 +156,120 @@ export default function OrdersPage() {
     pending: orders.filter((o) => o.orderStatus === "PENDING").length,
     completed: orders.filter((o) => o.orderStatus === "PAID").length,
   };
+
+  const columns: ColumnDef<any>[] = [
+    {
+      header: "ID",
+      hideOnMobileCard: true,
+      className: "w-16",
+      cell: (order) => (
+        <span className="font-bold text-[#4E0707] dark:text-red-400">
+          {order.id}
+        </span>
+      ),
+    },
+    {
+      header: "ชื่อลูกค้า",
+      mobileLabel: "ชื่อลูกค้า",
+      className: "w-[150px]",
+      cell: (order) => (
+        <span className="font-medium text-foreground truncate block">
+          {order.user?.fullName || "ไม่ระบุชื่อ"}
+        </span>
+      ),
+    },
+    {
+      header: "สินค้า",
+      mobileLabel: "สินค้า",
+      className: "w-[220px]",
+      cell: (order) => (
+        <span className="text-muted-foreground line-clamp-2">
+          {formatItems(order.orderItems)}
+        </span>
+      ),
+    },
+    {
+      header: "ยอดเงิน",
+      mobileLabel: "ยอดเงิน",
+      align: "right",
+      className: "w-[110px]",
+      cell: (order) => (
+        <span className="font-bold text-[#B4915B] whitespace-nowrap">
+          ฿{order.totalAmount?.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      header: "สถานะ",
+      mobileLabel: "สถานะ",
+      align: "center",
+      className: "w-[140px]",
+      cell: (order) => {
+        const payment = order.payments?.[0];
+        return getStatusBadge(
+          payment?.status === "REJECTED" ? "REJECTED" : order.orderStatus,
+        );
+      },
+    },
+    {
+      header: "วันที่",
+      mobileLabel: "วันที่",
+      align: "center",
+      className: "w-[120px] whitespace-nowrap text-muted-foreground",
+      cell: (order) => (
+        <span className="text-muted-foreground">
+          {formatDate(order.createdAt)}
+        </span>
+      ),
+    },
+    {
+      header: "หลักฐาน",
+      align: "center",
+      className: "w-[130px]",
+      hideOnMobileCard: true,
+      cell: (order) => {
+        const payment = order.payments?.[0];
+        return (
+          <div className="flex items-center justify-center">
+            <div className="relative inline-block">
+              <button
+                onClick={() =>
+                  setSelectedPayment({
+                    id: payment?.id,
+                    slipUrl: payment?.slipImageUrl,
+                    status: payment?.status,
+                  })
+                }
+                disabled={!payment?.slipImageUrl}
+                title="ตรวจสอบสลิป"
+                className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium ${
+                  payment?.slipImageUrl
+                    ? payment?.status === "PENDING"
+                      ? "bg-[#B4915B] text-white hover:bg-[#9A7A48] shadow-sm"
+                      : "border border-border text-foreground hover:bg-muted"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+                {payment?.status === "PENDING"
+                  ? "รอตรวจสลิป"
+                  : payment?.slipImageUrl
+                    ? "ดูสลิป"
+                    : "ไม่มีหลักฐาน"}
+              </button>
+              {payment?.status === "PENDING" && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+  ];
+
 
   return (
     <div>
@@ -172,155 +287,114 @@ export default function OrdersPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
-        <div className="bg-white border-l-4 border-blue-500 shadow-sm rounded-lg p-6">
-          <p className="text-gray-500 text-sm mb-1">คำสั่งซื้อทั้งหมด</p>
-          <p className="text-3xl font-bold text-[#4E0707]">{stats.total}</p>
+        <div className="bg-card border-l-4 border-blue-500 shadow-sm rounded-lg p-6 border border-border">
+          <p className="text-muted-foreground text-sm mb-1">
+            คำสั่งซื้อทั้งหมด
+          </p>
+          <p className="text-3xl font-bold text-[#4E0707] dark:text-foreground">
+            {stats.total}
+          </p>
         </div>
-        <div className="bg-white border-l-4 border-yellow-500 shadow-sm rounded-lg p-6">
-          <p className="text-gray-500 text-sm mb-1">รอตรวจสอบ</p>
+        <div className="bg-card border-l-4 border-yellow-500 shadow-sm rounded-lg p-6 border border-border">
+          <p className="text-muted-foreground text-sm mb-1">รอตรวจสอบ</p>
           <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
         </div>
-        <div className="bg-white border-l-4 border-green-500 shadow-sm rounded-lg p-6">
-          <p className="text-gray-500 text-sm mb-1">เสร็จสิ้น</p>
+        <div className="bg-card border-l-4 border-green-500 shadow-sm rounded-lg p-6 border border-border">
+          <p className="text-muted-foreground text-sm mb-1">เสร็จสิ้น</p>
           <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              กำลังโหลดข้อมูล...
-            </div>
-          ) : (
-            <table className="w-full min-w-[900px] whitespace-nowrap">
-              <thead className="bg-[#4E0707] text-white">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">
-                    ชื่อลูกค้า
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">
-                    สินค้า
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold">
-                    ยอดเงิน
-                  </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
-                    สถานะ
-                  </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
-                    วันที่
-                  </th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">
-                    หลักฐาน
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {orders.map((order, index) => {
-                  const payment = order.payments?.[0];
-
-                  return (
-                    <tr
-                      key={order.id}
-                      className={`transition-colors hover:bg-gray-50 ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      }`}
-                    >
-                      <td className="px-6 py-4 text-sm font-bold text-[#4E0707]">
-                        #{order.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-800">
-                        {order.user?.fullName || "ไม่ระบุชื่อ"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatItems(order.orderItems)}
-                      </td>
-                      <td className="px-6 py-4 text-right text-sm font-bold text-[#B4915B]">
-                        ฿{order.totalAmount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {getStatusBadge(
-                          payment?.status === "REJECTED"
-                            ? "REJECTED"
-                            : order.orderStatus,
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center text-sm text-gray-500">
-                        {formatDate(order.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center">
-                          <div className="relative inline-block">
-                            <button
-                              onClick={() =>
-                                setSelectedPayment({
-                                  id: payment?.id,
-                                  slipUrl: payment?.slipImageUrl,
-                                  status: payment?.status,
-                                })
-                              }
-                              disabled={!payment?.slipImageUrl}
-                              title="ตรวจสอบสลิป"
-                              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium ${
-                                payment?.slipImageUrl
-                                  ? payment?.status === "PENDING"
-                                    ? "bg-[#B4915B] text-white hover:bg-[#9A7A48] shadow-sm"
-                                    : "border border-gray-200 text-gray-600 hover:bg-gray-50"
-                                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              }`}
-                            >
-                              <Eye className="w-4 h-4" />
-                              {payment?.status === "PENDING" ? "รอตรวจสลิป" : payment?.slipImageUrl ? "ดูสลิป" : "ไม่มีหลักฐาน"}
-                            </button>
-                            {payment?.status === "PENDING" && (
-                              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-
-          {!loading && orders.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              ยังไม่มีคำสั่งซื้อในระบบ
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Shared Responsive Table & Mobile Cards */}
+      <AdminDataTable
+        data={orders}
+        columns={columns}
+        keyExtractor={(order) => order.id}
+        idExtractor={(order) => order.id}
+        isLoading={loading}
+        emptyMessage="ยังไม่มีคำสั่งซื้อในระบบ"
+        topRightAction={(order) => {
+          const payment = order.payments?.[0];
+          if (!payment?.slipImageUrl) return null;
+          return (
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedPayment({
+                  id: payment.id,
+                  slipUrl: payment.slipImageUrl,
+                  status: payment.status,
+                })
+              }
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors relative"
+              title="ดูสลิป"
+            >
+              <Eye size={15} />
+              {payment.status === "PENDING" && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+              )}
+            </button>
+          );
+        }}
+        bottomAction={(order) => {
+          const payment = order.payments?.[0];
+          if (!payment?.slipImageUrl) {
+            return (
+              <div className="w-full mt-1 py-2 text-center text-xs text-muted-foreground bg-muted/40 rounded-lg">
+                ไม่มีหลักฐานการชำระเงิน
+              </div>
+            );
+          }
+          return (
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedPayment({
+                  id: payment.id,
+                  slipUrl: payment.slipImageUrl,
+                  status: payment.status,
+                })
+              }
+              className={`w-full mt-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-colors ${
+                payment.status === "PENDING"
+                  ? "bg-[#B4915B] text-white hover:bg-[#9A7A48] shadow-sm"
+                  : "border border-border bg-muted/50 text-foreground hover:bg-muted"
+              }`}
+            >
+              <Eye size={14} />
+              {payment.status === "PENDING"
+                ? "ตรวจสอบสลิปโอนเงิน (รอดำเนินการ)"
+                : "ดูสลิปโอนเงิน"}
+            </button>
+          );
+        }}
+      />
 
       {/* Modal ตรวจสอบสลิป */}
       {selectedPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-white">
-              <h3 className="font-bold text-lg text-[#4E0707]">ตรวจสอบหลักฐานการชำระเงิน</h3>
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="p-5 border-b border-border flex justify-between items-center bg-card">
+              <h3 className="font-bold text-lg text-[#4E0707] dark:text-foreground">
+                ตรวจสอบหลักฐานการชำระเงิน
+              </h3>
               <button
                 onClick={() => !isVerifying && setSelectedPayment(null)}
                 disabled={isVerifying}
-                className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-full transition-colors disabled:opacity-50"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted p-1.5 rounded-full transition-colors disabled:opacity-50"
               >
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-6 flex flex-col items-center bg-slate-50">
+            <div className="p-6 flex flex-col items-center bg-muted/30">
               <img
                 src={selectedPayment.slipUrl}
                 alt="Slip"
-                className="max-h-[50vh] object-contain rounded-xl border border-gray-200 shadow-sm bg-white p-1"
+                className="max-h-[50vh] object-contain rounded-xl border border-border shadow-sm bg-card p-1"
                 onError={(e) => {
                   e.currentTarget.src =
                     "https://placehold.co/400x600?text=Image+Not+Found";
@@ -328,7 +402,7 @@ export default function OrdersPage() {
               />
             </div>
 
-            <div className="p-5 border-t border-gray-100 bg-white">
+            <div className="p-5 border-t border-border bg-card">
               {selectedPayment.status === "PENDING" ? (
                 <div className="flex gap-3 w-full justify-between">
                   <button
@@ -336,7 +410,7 @@ export default function OrdersPage() {
                       handleVerifyPayment(selectedPayment.id, "REJECTED")
                     }
                     disabled={isVerifying}
-                    className="flex-1 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 px-4 py-2.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 bg-card border border-rose-200 hover:bg-rose-50 text-rose-600 dark:border-rose-900/50 dark:hover:bg-rose-950/40 px-4 py-2.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <XCircle className="w-5 h-5" />
                     ปฏิเสธสลิป
@@ -354,15 +428,25 @@ export default function OrdersPage() {
                 </div>
               ) : (
                 <div className="w-full flex flex-col gap-4">
-                  <div className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-                    <span className="text-sm text-gray-500">สถานะปัจจุบัน:</span>
-                    <span className={`text-sm font-bold ${selectedPayment.status === "VERIFIED" ? "text-emerald-600" : "text-rose-600"}`}>
-                      {selectedPayment.status === "VERIFIED" ? "อนุมัติแล้ว (VERIFIED)" : "ปฏิเสธแล้ว (REJECTED)"}
+                  <div className="flex justify-between items-center p-3 rounded-lg bg-muted/40 border border-border">
+                    <span className="text-sm text-muted-foreground">
+                      สถานะปัจจุบัน:
+                    </span>
+                    <span
+                      className={`text-sm font-bold ${
+                        selectedPayment.status === "VERIFIED"
+                          ? "text-emerald-600"
+                          : "text-rose-600"
+                      }`}
+                    >
+                      {selectedPayment.status === "VERIFIED"
+                        ? "อนุมัติแล้ว (VERIFIED)"
+                        : "ปฏิเสธแล้ว (REJECTED)"}
                     </span>
                   </div>
                   <button
                     onClick={() => setSelectedPayment(null)}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2.5 rounded-xl font-semibold transition-colors"
+                    className="w-full bg-muted hover:bg-muted/80 text-foreground px-6 py-2.5 rounded-xl font-semibold transition-colors"
                   >
                     ปิดหน้าต่าง
                   </button>
