@@ -119,48 +119,12 @@ export class ProductsService {
 
   async findAllForAdmin(query: GetAdminProductsDto) {
     const search = query.q?.trim();
-    const category = query.category?.trim();
     const page = query.page ?? 1;
-    const limit = query.limit ?? 15;
+    const limit = query.limit ?? 9999;
     const skip = (page - 1) * limit;
-    const sortBy = query.sortBy ?? 'createdAt';
-    const sortOrder = query.sortOrder ?? 'desc';
-
-    const allowedSortFields = [
-      'createdAt',
-      'updatedAt',
-      'price',
-      'name',
-      'stockQuantity',
-    ];
-    const safeSortBy = allowedSortFields.includes(sortBy)
-      ? sortBy
-      : 'createdAt';
 
     const where: Prisma.ProductWhereInput = {
       deletedAt: null,
-      ...(query.status ? { status: query.status } : {}),
-      ...(query.storeId ? { storeId: query.storeId } : {}),
-      ...((query.maxPrice !== undefined && query.maxPrice > 0) ||
-      query.minPrice !== undefined
-        ? {
-            price: {
-              ...(query.maxPrice !== undefined && query.maxPrice > 0
-                ? { lte: query.maxPrice }
-                : {}),
-              ...(query.minPrice !== undefined && query.minPrice > 0
-                ? { gte: query.minPrice }
-                : {}),
-            },
-          }
-        : {}),
-      ...(category
-        ? {
-            category: {
-              name: { equals: category, mode: 'insensitive' },
-            },
-          }
-        : {}),
       ...(search
         ? {
             OR: [
@@ -176,7 +140,7 @@ export class ProductsService {
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        orderBy: { [safeSortBy]: sortOrder },
+        orderBy: { id: 'asc' },
         skip,
         take: limit,
         include: {
@@ -197,6 +161,7 @@ export class ProductsService {
       },
     };
   }
+
 
   async findById(id: number) {
     const product = await this.prisma.product.findUnique({

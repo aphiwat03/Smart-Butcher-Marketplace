@@ -34,6 +34,12 @@ export interface ProductTableProps {
   products: AdminProduct[];
   onDelete?: (id: number) => Promise<void>;
   isLoading?: boolean;
+  serverPagination?: {
+    page: number;
+    totalPages: number;
+    totalItems: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 export type ProductFormData = {
