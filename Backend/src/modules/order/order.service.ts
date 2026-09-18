@@ -306,7 +306,7 @@ export class OrderService {
   async getAllOrders(status?: OrderStatus) {
     const orders = await this.prisma.order.findMany({
       where: status ? { orderStatus: status } : {},
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
       select: {
         id: true,
         totalAmount: true,
