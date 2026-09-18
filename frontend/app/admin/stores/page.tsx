@@ -1,10 +1,12 @@
 "use client";
-import { fetchApi } from "@/lib/api";
 
 import { useEffect, useState } from "react";
-import { Ban, Store as StoreIcon, AlertCircle } from "lucide-react";
+import { Ban, Store as StoreIcon, AlertCircle, Search } from "lucide-react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
+import { Input } from "@/components/ui/input";
+import { fetchApi } from "@/lib/api";
+import { AdminDataTable, ColumnDef } from "@/components/admin/admin-data-table";
 
 interface StoreItem {
   id: number;
@@ -13,8 +15,6 @@ interface StoreItem {
   createdAt: string;
   status: "OPEN" | "CLOSED" | "SUSPENDED";
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString("th-TH", {
@@ -53,6 +53,7 @@ function StatusBadge({ status }: { status: StoreItem["status"] }) {
 
 export default function AdminStoresPage() {
   const [stores, setStores] = useState<StoreItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suspendingId, setSuspendingId] = useState<number | null>(null);
@@ -61,12 +62,7 @@ export default function AdminStoresPage() {
     try {
       setIsLoading(true);
       setError(null);
-
-
-      const res = await fetchApi(`/admin/stores`, {
-      
-        
-      });
+      const res = await fetchApi(`/admin/stores`, {});
 
       if (!res.ok) {
         throw new Error(`ไม่สามารถโหลดรายชื่อร้านค้าได้ (${res.status})`);
@@ -96,19 +92,16 @@ export default function AdminStoresPage() {
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "ระงับการใช้งาน",
-      cancelButtonText: "ยกเลิก"
+      cancelButtonText: "ยกเลิก",
     });
-    
+
     if (!result.isConfirmed) return;
 
     try {
       setSuspendingId(store.id);
 
-
       const res = await fetchApi(`/admin/stores/${store.id}/suspend`, {
-      
         method: "PATCH",
-        
       });
 
       if (!res.ok) {
@@ -129,6 +122,71 @@ export default function AdminStoresPage() {
     }
   };
 
+  const filteredStores = stores.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(s.id).includes(searchTerm),
+  );
+
+  const columns: ColumnDef<StoreItem>[] = [
+    {
+      header: "ID",
+      hideOnMobileCard: true,
+      className: "w-16 text-muted-foreground",
+      cell: (store) => <span className="text-muted-foreground">{store.id}</span>,
+    },
+    {
+      header: "ชื่อร้าน",
+      mobileLabel: "ชื่อร้าน",
+      cell: (store) => (
+        <span className="font-semibold text-foreground text-sm truncate">
+          {store.name}
+        </span>
+      ),
+    },
+    {
+      header: "เจ้าของร้าน",
+      mobileLabel: "เจ้าของร้าน",
+      cell: (store) => (
+        <span className="text-foreground font-medium">{store.ownerName}</span>
+      ),
+    },
+    {
+      header: "วันที่สร้าง",
+      mobileLabel: "วันที่สร้าง",
+      className: "text-muted-foreground",
+      cell: (store) => (
+        <span className="text-muted-foreground">
+          {formatDate(store.createdAt)}
+        </span>
+      ),
+    },
+    {
+      header: "สถานะ",
+      mobileLabel: "สถานะ",
+      cell: (store) => <StatusBadge status={store.status} />,
+    },
+    {
+      header: "จัดการ",
+      align: "right",
+      hideOnMobileCard: true,
+      cell: (store) =>
+        store.status === "SUSPENDED" ? (
+          <span className="text-xs text-muted-foreground">ระงับแล้ว</span>
+        ) : (
+          <button
+            onClick={() => handleSuspend(store)}
+            disabled={suspendingId === store.id}
+            className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:bg-red-950 dark:text-red-300 dark:border-red-900"
+          >
+            <Ban size={14} />
+            {suspendingId === store.id ? "กำลังระงับ..." : "ระงับการใช้งาน"}
+          </button>
+        ),
+    },
+  ];
+
   return (
     <div>
       {/* Header */}
@@ -137,7 +195,9 @@ export default function AdminStoresPage() {
           <h1 className="text-2xl md:text-4xl font-bold text-[#4E0707] mb-1 md:mb-2">
             จัดการร้านค้า
           </h1>
-          <p className="text-sm md:text-base text-gray-500">รายชื่อร้านค้าทั้งหมดในระบบ</p>
+          <p className="text-sm md:text-base text-gray-500">
+            รายชื่อร้านค้าทั้งหมดในระบบ
+          </p>
         </div>
       </div>
 
@@ -148,101 +208,80 @@ export default function AdminStoresPage() {
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-muted/50 border-b border-border">
-              <tr>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  ชื่อร้าน
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  เจ้าของร้าน
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  วันที่สร้าง
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground">
-                  สถานะ
-                </th>
-                <th className="px-6 py-3 text-sm font-semibold text-muted-foreground text-right">
-                  จัดการ
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                [1, 2, 3].map((i) => (
-                  <tr
-                    key={i}
-                    className="border-b border-border last:border-b-0"
-                  >
-                    <td colSpan={6} className="px-6 py-4">
-                      <div className="h-5 w-full animate-pulse rounded bg-muted" />
-                    </td>
-                  </tr>
-                ))
-              ) : stores.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-10 text-center text-sm text-muted-foreground"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <StoreIcon size={28} className="text-muted-foreground" />
-                      ยังไม่มีร้านค้าในระบบ
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                stores.map((store) => (
-                  <tr
-                    key={store.id}
-                    className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      #{store.id}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {store.name}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-foreground">
-                      {store.ownerName}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {formatDate(store.createdAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={store.status} />
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {store.status === "SUSPENDED" ? (
-                        <span className="text-xs text-muted-foreground">
-                          ระงับแล้ว
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleSuspend(store)}
-                          disabled={suspendingId === store.id}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:bg-red-950 dark:text-red-300 dark:border-red-900"
-                        >
-                          <Ban size={14} />
-                          {suspendingId === store.id
-                            ? "กำลังระงับ..."
-                            : "ระงับการใช้งาน"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Search Bar matching mockup */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          />
+          <Input
+            type="text"
+            placeholder="ค้นหาชื่อร้าน, เจ้าของร้าน..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-card"
+          />
         </div>
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={() => setSearchTerm("")}
+            className="px-3 py-2 rounded-lg border border-border text-xs text-muted-foreground hover:bg-muted transition-colors"
+          >
+            ล้าง
+          </button>
+        )}
       </div>
+
+      {/* Shared Responsive Table & Mobile Cards */}
+      <AdminDataTable
+        data={filteredStores}
+        columns={columns}
+        keyExtractor={(store) => store.id}
+        idExtractor={(store) => store.id}
+        isLoading={isLoading}
+        emptyMessage={
+          searchTerm
+            ? "ไม่พบร้านค้าที่ตรงกับคำค้นหา"
+            : "ยังไม่มีร้านค้าในระบบ"
+        }
+        emptyIcon={<StoreIcon size={28} className="text-muted-foreground" />}
+        topRightAction={(store) =>
+          store.status !== "SUSPENDED" ? (
+            <button
+              type="button"
+              onClick={() => handleSuspend(store)}
+              disabled={suspendingId === store.id}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/60 dark:text-red-400 disabled:opacity-50 transition-colors"
+              title="ระงับการใช้งาน"
+            >
+              <Ban size={15} />
+            </button>
+          ) : (
+            <span className="px-2 py-0.5 text-xs text-muted-foreground bg-muted rounded-md">
+              ระงับแล้ว
+            </span>
+          )
+        }
+        bottomAction={(store) =>
+          store.status === "SUSPENDED" ? (
+            <div className="w-full mt-1 py-2 text-center text-xs font-semibold text-muted-foreground bg-muted/40 rounded-lg">
+              ร้านค้าถูกระงับการใช้งานแล้ว
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleSuspend(store)}
+              disabled={suspendingId === store.id}
+              className="w-full mt-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-red-200 bg-red-50/70 text-red-600 hover:bg-red-100 text-xs font-semibold dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300 disabled:opacity-50 transition-colors"
+            >
+              <Ban size={14} />
+              {suspendingId === store.id ? "กำลังระงับ..." : "ระงับการใช้งาน"}
+            </button>
+          )
+        }
+      />
     </div>
   );
 }
