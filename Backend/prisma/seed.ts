@@ -405,7 +405,7 @@ async function main() {
         description: product.description,
         price: product.price,
         stockQuantity: 50,
-        imageUrl: product.imageUrl || categoryMock.image,
+        imageUrl: [product.imageUrl || categoryMock.image],
         status: ProductStatus.ACTIVE,
       })),
     });
