@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Check, Circle } from "lucide-react";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify/unstyled";
-//function show checklist password requirement
+
 function RequirementItem({ label, met }: { label: string; met: boolean }) {
   return (
     <div
@@ -38,7 +37,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  // Check password requirements
   const checks = {
     length: password.length >= 8,
     hasUpper: /[A-Z]/.test(password),
@@ -47,7 +45,7 @@ export default function RegisterPage() {
     hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
     isEnglish: /^[a-zA-Z0-9!@#$%^&*(),.?":{}|<>]*$/.test(password),
   };
-  // Check if all requirements are met
+
   const isAllValid =
     Object.values(checks).every(Boolean) &&
     name.trim() !== "" &&
@@ -57,16 +55,23 @@ export default function RegisterPage() {
   password === confirmPassword;
   const isPasswordMatching = () => password === confirmPassword;
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPasswordMatching) {
-      alert("Password don't match!");
+      Swal.fire({
+        title: "Password Mismatch",
+        text: "กรุณากรอกช่อง Password และ Confirm Password ให้ตรงกัน ",
+        icon: "error",
+        confirmButtonColor: "#4E0707",
+        backdrop: `rgba(0,0,0,0.4)`,
+        customClass: {
+          container: "backdrop-blur-sm",
+        },
+      })
       return;
     }
     try {
       const response = await fetchApi(`/auth/register`, {
-      
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
