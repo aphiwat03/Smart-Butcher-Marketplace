@@ -189,7 +189,7 @@ export default function HomeClient() {
             {/* Right Column */}
             <div>
               <img
-                src="mock/beef/beef-fresh.jpg"
+                src="/picture/category/beef-fresh.jpg"
                 alt="Premium Meat"
                 className="w-full h-96 object-cover rounded-lg shadow-lg"
               />
