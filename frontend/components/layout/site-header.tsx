@@ -12,6 +12,7 @@ export function SiteHeader() {
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isMenuHover, setMenuHover] = useState(false);
   const [user, setUser] = useState<{
     fullName: string;
     avatarUrl?: string;
@@ -202,12 +203,16 @@ export function SiteHeader() {
           </Link>
 
           {/* User dropdown — Desktop */}
-          <div className="relative group hidden lg:block" tabIndex={0}>
+          <div className="relative group hidden lg:block" 
+          onMouseEnter={() => setMenuHover(true)}
+          onMouseLeave={() => setMenuHover(false)}
+          tabIndex={0}>
             <button className="hover:text-[#B4915B] group-focus-within:text-[#B4915B] transition-colors p-2 flex items-center focus:outline-none">
               <User size={20} />
             </button>
 
-            <div className="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-xl py-2 z-50 invisible group-hover:visible group-focus-within:visible opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-200 border border-gray-100">
+            <div className={`absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-xl py-2 z-50 invisible opacity-0 transition-all duration-200 border border-gray-100 
+              ${isMenuHover ? "visible opacity-100 translate-y-0" : "invisible opacity-0 translate-y-1 pointer-events-none"}`}>
               {isLoading ? (
                 <div className="px-4 py-2 text-sm text-[#4E0707]/70">
                   Checking account...
@@ -240,6 +245,7 @@ export function SiteHeader() {
 
                   <Link
                     href="/profile"
+                    onClick={() => setMenuHover(false)}
                     className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
                   >
                     โปรไฟล์ของคุณ
@@ -247,6 +253,7 @@ export function SiteHeader() {
 
                   <Link
                     href="/orders"
+                    onClick={() => setMenuHover(false)}
                     className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
                   >
                     รายการคำสั่งซื้อ
@@ -255,6 +262,7 @@ export function SiteHeader() {
                   {role === "SELLER" || role === "ADMIN" ? (
                     <Link
                       href="/seller"
+                      onClick={() => setMenuHover(false)}
                       className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
                     >
                       Seller Center
@@ -262,6 +270,7 @@ export function SiteHeader() {
                   ) : (
                     <Link
                       href="/create-store"
+                      onClick={() => setMenuHover(false)}
                       className="block px-4 py-2 text-sm text-[#4E0707] hover:bg-gray-100 hover:text-[#B4915B] transition-colors"
                     >
                       เปิดร้านค้าฟรี
