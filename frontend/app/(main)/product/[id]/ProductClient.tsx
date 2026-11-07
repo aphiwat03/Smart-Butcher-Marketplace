@@ -225,7 +225,7 @@ export default function ProductClient({
           คะแนนและรีวิวสินค้า
         </h2>
 
-        <div className="bg-[#F9A6A6] rounded-2xl p-6 flex flex-col md:flex-row items-center gap-8 shadow-sm">
+        <div className="bg-gradient-to-br from-[#4E0707] via-[#380505] to-[#1f0202] rounded-2xl p-6 flex flex-col md:flex-row items-center gap-8 shadow-lg text-white">
           {/* Average Score */}
           <div className="flex flex-col items-center justify-center bg-white/60 py-4 px-8 rounded-xl min-w-[150px]">
             <span className="text-5xl font-bold text-[#4E0707]">
