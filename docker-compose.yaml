@@ -13,5 +13,63 @@ services:
       - "5433:5432"
     volumes:
       - butcher_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U butcher -d butcher_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - butcher_network
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: butcher_backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://butcher:butcher@postgres:5432/butcher_db?schema=public
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET:-smart-butcher-dev-secret-key-2026}
+      - FRONTEND_URL=http://localhost:3000
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://jzooxdbfxpppndackkjq.supabase.co}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6b294ZGJmeHBwcG5kYWNra2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMTIwMjEsImV4cCI6MjEwMDg4ODAyMX0.5beA3yGXVuzzfsXdQXvDNRBD4M5rPS1fi0yvvm3rqiU}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - butcher_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:3001
+        - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://jzooxdbfxpppndackkjq.supabase.co}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6b294ZGJmeHBwcG5kYWNra2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMTIwMjEsImV4cCI6MjEwMDg4ODAyMX0.5beA3yGXVuzzfsXdQXvDNRBD4M5rPS1fi0yvvm3rqiU}
+    container_name: butcher_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - INTERNAL_API_URL=http://backend:3001
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://jzooxdbfxpppndackkjq.supabase.co}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6b294ZGJmeHBwcG5kYWNra2pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMTIwMjEsImV4cCI6MjEwMDg4ODAyMX0.5beA3yGXVuzzfsXdQXvDNRBD4M5rPS1fi0yvvm3rqiU}
+    depends_on:
+      - backend
+    networks:
+      - butcher_network
+
 volumes:
   butcher_data:
+
+networks:
+  butcher_network:
+    driver: bridge
