@@ -1,5 +1,7 @@
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const isServer = typeof window === "undefined";
+export const API_URL = isServer
+  ? (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001")
+  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001");
 
 export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
   const isFormData = options.body instanceof FormData;
